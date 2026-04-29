@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { doc, updateDoc } from 'firebase/firestore'
-import { db } from '../../lib/firebase'
 import { useToast } from '../../lib/toast'
+import { dmUpdate } from '../../lib/campaign'
 
 function ClearModal({ totalXp, defaultPartySize, graveyard, questXp, onConfirm, onClose }) {
   const [partySize, setPartySize] = useState(String(defaultPartySize))
@@ -105,7 +104,7 @@ export default function Graveyard({ campaign, campaignCode }) {
   async function handleReturn(entry) {
     const { xp: _xp, killedAt: _kt, ...unit } = entry
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), {
+      await dmUpdate(campaignCode, {
         initiative: [...(campaign.initiative ?? []), unit],
         graveyard: graveyard.filter((e) => e.id !== entry.id),
       })
@@ -116,7 +115,7 @@ export default function Graveyard({ campaign, campaignCode }) {
 
   async function handleDelete(id) {
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), {
+      await dmUpdate(campaignCode, {
         graveyard: graveyard.filter((e) => e.id !== id),
       })
     } catch {
@@ -133,7 +132,7 @@ export default function Graveyard({ campaign, campaignCode }) {
       awardedAt: Date.now(),
     }
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), {
+      await dmUpdate(campaignCode, {
         questXp: [...questXp, entry],
       })
       setQuestLabel('')
@@ -145,7 +144,7 @@ export default function Graveyard({ campaign, campaignCode }) {
 
   async function handleDeleteQuest(id) {
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), {
+      await dmUpdate(campaignCode, {
         questXp: questXp.filter((e) => e.id !== id),
       })
     } catch {
@@ -164,7 +163,7 @@ export default function Graveyard({ campaign, campaignCode }) {
       questXpEntries: [...questXp],
     }
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), {
+      await dmUpdate(campaignCode, {
         graveyard: [],
         questXp: [],
         sessionLogs: [...(campaign.sessionLogs ?? []), log],

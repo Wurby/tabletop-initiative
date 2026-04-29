@@ -36,8 +36,9 @@ test-results/
 .claude/settings.local.json
 .claude/skills/
 
-# Playwright MCP runtime cache
+# Playwright
 .playwright-mcp/
+playwright/.auth/
 
 # editor
 .vscode/

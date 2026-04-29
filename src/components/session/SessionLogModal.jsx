@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { doc, updateDoc, deleteField } from 'firebase/firestore'
-import { db } from '../../lib/firebase'
+import { deleteField } from 'firebase/firestore'
 import { useToast } from '../../lib/toast'
+import { dmUpdate } from '../../lib/campaign'
 
 function formatDate(ts) {
   return new Date(ts).toLocaleDateString('en-US', {
@@ -20,7 +20,7 @@ export default function SessionLogModal({ campaign, campaignCode, onClose }) {
 
   async function handleClearAll() {
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), {
+      await dmUpdate(campaignCode, {
         sessionLogs: [],
         'combat.lastSplit': deleteField(),
       })

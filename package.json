@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "deploy": "cd functions && npm run deploy",
     "preview": "vite preview"
   },
   "dependencies": {

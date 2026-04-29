@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { doc, updateDoc } from 'firebase/firestore'
-import { db } from '../../lib/firebase'
 import { useToast } from '../../lib/toast'
+import { dmUpdate } from '../../lib/campaign'
 
 function MemberRow({ member, onUpdate, onDelete }) {
   const [local, setLocal] = useState(member)
@@ -75,7 +74,7 @@ export default function PartyModal({ campaign, campaignCode, onClose }) {
       return synced
     })
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), {
+      await dmUpdate(campaignCode, {
         party: nextParty,
         initiative: nextInit,
       })
@@ -88,7 +87,7 @@ export default function PartyModal({ campaign, campaignCode, onClose }) {
     const nextParty = party.filter((m) => m.id !== id)
     const nextInit = (campaign.initiative ?? []).filter((u) => u.id !== id)
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), {
+      await dmUpdate(campaignCode, {
         party: nextParty,
         initiative: nextInit,
       })
@@ -124,7 +123,7 @@ export default function PartyModal({ campaign, campaignCode, onClose }) {
       deathSaves: { s: [false, false, false], f: [false, false, false] },
     }
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), {
+      await dmUpdate(campaignCode, {
         party: [...party, member],
         initiative: [...(campaign.initiative ?? []), unit],
       })

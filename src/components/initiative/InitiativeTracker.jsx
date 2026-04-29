@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { doc, updateDoc } from 'firebase/firestore'
-import { db } from '../../lib/firebase'
 import { useToast } from '../../lib/toast'
+import { dmUpdate } from '../../lib/campaign'
 import UnitCard from './UnitCard'
 
 const MIN_SLOTS = 5
@@ -136,7 +135,7 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
   async function setActiveIndex(next) {
     const idx = units.length > 0 ? ((next % units.length) + units.length) % units.length : 0
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), { 'combat.activeIndex': idx })
+      await dmUpdate(campaignCode, { 'combat.activeIndex': idx })
     } catch {
       showError('Failed to save — check your connection.')
     }
@@ -144,7 +143,7 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
 
   async function setRound(next) {
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), { 'combat.round': Math.max(1, next) })
+      await dmUpdate(campaignCode, { 'combat.round': Math.max(1, next) })
     } catch {
       showError('Failed to save — check your connection.')
     }
@@ -155,7 +154,7 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
       (u) => u.type === 'party' || u.type === 'follower'
     )
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), {
+      await dmUpdate(campaignCode, {
         initiative: survivors,
         'combat.activeIndex': 0,
         'combat.round': 1,
@@ -182,7 +181,7 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
       deathSaves: { s: [false, false, false], f: [false, false, false] },
     }
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), {
+      await dmUpdate(campaignCode, {
         initiative: [...(campaign.initiative ?? []), unit],
       })
     } catch {
@@ -193,7 +192,7 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
   async function handleUpdate(updated) {
     const next = (campaign.initiative ?? []).map((u) => (u.id === updated.id ? updated : u))
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), { initiative: next })
+      await dmUpdate(campaignCode, { initiative: next })
     } catch {
       showError('Failed to save — check your connection.')
     }
@@ -202,7 +201,7 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
   async function handleDelete(id) {
     const next = (campaign.initiative ?? []).filter((u) => u.id !== id)
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), { initiative: next })
+      await dmUpdate(campaignCode, { initiative: next })
     } catch {
       showError('Failed to save — check your connection.')
     }
@@ -211,7 +210,7 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
   async function handleKill(unit, xp) {
     const entry = { ...unit, xp, killedAt: Date.now() }
     try {
-      await updateDoc(doc(db, 'campaigns', campaignCode), {
+      await dmUpdate(campaignCode, {
         initiative: (campaign.initiative ?? []).filter((u) => u.id !== unit.id),
         graveyard: [...(campaign.graveyard ?? []), entry],
       })

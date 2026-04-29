@@ -1,32 +1,108 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
 import { setGlobalOptions } from 'firebase-functions'
-import { onRequest } from 'firebase-functions/https'
-import * as logger from 'firebase-functions/logger'
+import { onCall, HttpsError } from 'firebase-functions/v2/https'
+import { onSchedule } from 'firebase-functions/v2/scheduler'
+import { defineSecret } from 'firebase-functions/params'
+import * as admin from 'firebase-admin'
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+admin.initializeApp()
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
+const db = admin.firestore()
+const adminAuth = admin.auth()
+const adminStorage = admin.storage()
+
+const adminSecret = defineSecret('ADMIN_SECRET')
+
 setGlobalOptions({ maxInstances: 10 })
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+function verifyAdmin(password: string) {
+  if (!adminSecret.value() || password !== adminSecret.value()) {
+    throw new HttpsError('permission-denied', 'Unauthorized')
+  }
+}
+
+async function deleteStale(thresholdDays: number): Promise<{
+  deleted: number
+  errors: number
+  skipped: number
+}> {
+  const cutoff = admin.firestore.Timestamp.fromMillis(
+    Date.now() - thresholdDays * 24 * 60 * 60 * 1000
+  )
+
+  const snapshot = await db
+    .collection('campaigns')
+    .where('meta.lastActiveAt', '<', cutoff)
+    .get()
+
+  const toDelete = snapshot.docs.filter((d) => d.data().meta?.locked !== true)
+  const skipped = snapshot.docs.length - toDelete.length
+  let deleted = 0
+  let errors = 0
+
+  for (const docSnap of toDelete) {
+    const data = docSnap.data()
+    const code = docSnap.id
+    try {
+      const bucket = adminStorage.bucket()
+      await bucket.deleteFiles({ prefix: `campaigns/${code}/` }).catch(() => {})
+
+      const dmUid: string | undefined = data.meta?.dmUid
+      if (dmUid) await adminAuth.deleteUser(dmUid).catch(() => {})
+
+      await docSnap.ref.delete()
+      deleted++
+    } catch {
+      errors++
+    }
+  }
+
+  return { deleted, errors, skipped }
+}
+
+export const adminListCampaigns = onCall(
+  { secrets: [adminSecret] },
+  async (req) => {
+    verifyAdmin(req.data.password)
+    const snapshot = await db.collection('campaigns').get()
+    const now = Date.now()
+    return snapshot.docs.map((docSnap) => {
+      const data = docSnap.data()
+      const lastActiveAt: number | null = data.meta?.lastActiveAt?.toMillis?.() ?? null
+      const staleDays =
+        lastActiveAt !== null ? Math.floor((now - lastActiveAt) / 86400000) : null
+      return {
+        code: docSnap.id,
+        name: (data.meta?.name as string) ?? docSnap.id,
+        lastActiveAt,
+        staleDays,
+        locked: (data.meta?.locked as boolean) ?? false,
+      }
+    })
+  }
+)
+
+export const adminToggleLock = onCall(
+  { secrets: [adminSecret] },
+  async (req) => {
+    verifyAdmin(req.data.password)
+    const { campaignCode, locked } = req.data as { campaignCode: string; locked: boolean }
+    await db.doc(`campaigns/${campaignCode}`).update({ 'meta.locked': locked })
+    return { success: true }
+  }
+)
+
+export const adminRunCleanup = onCall(
+  { secrets: [adminSecret] },
+  async (req) => {
+    verifyAdmin(req.data.password)
+    const thresholdDays = Number(req.data.thresholdDays) || 30
+    return deleteStale(thresholdDays)
+  }
+)
+
+export const scheduledCleanup = onSchedule(
+  { schedule: '0 0 1 * *', secrets: [adminSecret] },
+  async () => {
+    await deleteStale(30)
+  }
+)

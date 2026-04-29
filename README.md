@@ -82,6 +82,50 @@ VITE_FIREBASE_APP_ID=
 2. Create a **Firestore** database
 3. Set Firestore rules to allow authenticated reads/writes (anonymous auth counts)
 
+### Admin Setup
+
+The admin dashboard is accessed via a hidden button in the DM header (the faint `·` at the far right). It is protected by a server-side secret stored in **Google Cloud Secret Manager** — the password never touches the client bundle.
+
+**One-time setup:**
+
+1. Install the Firebase CLI and log in:
+   ```bash
+   npm install -g firebase-tools
+   firebase login
+   ```
+
+2. Set the admin secret (you'll be prompted to enter the password):
+   ```bash
+   firebase functions:secrets:set ADMIN_SECRET
+   ```
+
+3. Deploy the functions:
+   ```bash
+   cd functions && npm run deploy
+   ```
+
+**Optional — skip the password prompt locally:**
+
+Add the password to `.env.local` and the dashboard will auto-authenticate when you open it:
+
+```
+VITE_ADMIN_SECRET=your-password-here
+```
+
+This is safe because `.env.local` is gitignored. Do not add it to `.env` or any committed file.
+
+**To change the password later:**
+```bash
+firebase functions:secrets:set ADMIN_SECRET
+firebase deploy --only functions
+```
+
+**What the admin dashboard does:**
+- Lists all campaigns with their staleness (days since last DM activity) and lock status
+- Lock/unlock campaigns — locked campaigns are never deleted by cleanup
+- Run cleanup manually with a configurable age threshold
+- Campaigns are also automatically cleaned up on the 1st of every month (any campaign with no DM activity in 30+ days that isn't locked is deleted — Firestore doc, Storage files, and the anonymous Auth user)
+
 ### Development
 
 ```bash

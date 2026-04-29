@@ -19,7 +19,9 @@ export default function TableView({ campaign, campaignCode, onLeave }) {
     async function acquire() {
       try {
         wakeLockRef.current = await navigator.wakeLock.request('screen')
-      } catch {}
+      } catch {
+        // wake lock unsupported or denied — silently no-op
+      }
     }
 
     acquire()

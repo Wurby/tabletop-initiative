@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
-import { doc, updateDoc } from 'firebase/firestore'
-import { db, storage } from '../../lib/firebase'
+import { storage } from '../../lib/firebase'
+import { dmUpdate } from '../../lib/campaign'
 import { Trash } from '../icons'
 
 export default function ImageLibrary({ campaign, campaignCode }) {
@@ -40,7 +40,7 @@ export default function ImageLibrary({ campaign, campaignCode }) {
           label: labelInput.trim() || file.name,
           uploadedAt: Date.now(),
         }
-        await updateDoc(doc(db, 'campaigns', campaignCode), {
+        await dmUpdate(campaignCode, {
           images: [...images, entry],
         })
         setUploading(false)
@@ -52,13 +52,13 @@ export default function ImageLibrary({ campaign, campaignCode }) {
   }
 
   async function handleSelect(image) {
-    await updateDoc(doc(db, 'campaigns', campaignCode), {
+    await dmUpdate(campaignCode, {
       'combat.display': { type: 'image', url: image.url, label: image.label },
     })
   }
 
   async function handleClear() {
-    await updateDoc(doc(db, 'campaigns', campaignCode), {
+    await dmUpdate(campaignCode, {
       'combat.display': { type: 'none', url: '', label: '' },
     })
   }
@@ -74,7 +74,7 @@ export default function ImageLibrary({ campaign, campaignCode }) {
     if (display?.url === image.url) {
       updates['combat.display'] = { type: 'none', url: '', label: '' }
     }
-    await updateDoc(doc(db, 'campaigns', campaignCode), updates)
+    await dmUpdate(campaignCode, updates)
   }
 
   return (
