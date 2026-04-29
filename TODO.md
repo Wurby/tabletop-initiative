@@ -61,28 +61,41 @@
 - [x] Session summary modal — auto-shows on both DM and table when session is cleared; DM-only dismiss syncs close to table via `combat.lastSplit.dismissed`
 - [x] Build `GraveyardView` component (Table) — read-only list, running total, last session split banner
 - [x] Build `SessionLogModal` — past cleared sessions, accessible from DM header "Log" button
+- [x] Session log — "Clear all sessions" in `SessionLogModal` header with inline confirmation; wipes `sessionLogs[]` from Firestore
+- [x] `GraveyardView` (Table) — last session compact in header right (`Last: X XP ea`); total XP moved to top of kill list as a subtle `Total` row
 
 ---
 
-## Phase 5 — Image System
+## Phase 5 — Image System ✓
 
-- [ ] Build `ImageUploader` component — file input, upload to `campaigns/{code}/images/{filename}` in Storage, append `{ url, label, uploadedAt }` to `images[]` in Firestore
-- [ ] Build `ImageLibrary` component (DM) — grid of `images[]` entries, click triggers display
-- [ ] On image select: write `combat.display = { type: "image", url, label }` to Firestore
-- [ ] Clear display button: write `combat.display = { type: "none", url: "", label: "" }`
-- [ ] Build `ImageModal` component (Table view) — subscribes to `combat.display`, renders full-screen overlay when `type === "image"`
-- [ ] Smoke test: DM selects image, modal appears on table view tab
+- [x] Build `ImageLibrary` component (DM) — label input + upload button with progress, image grid, active image indicator, delete on hover, Clear button when image is displaying
+- [x] Upload: file → Firebase Storage at `campaigns/{code}/images/{uuid}-{filename}`, append `{ id, url, storagePath, label, uploadedAt }` to `images[]`
+- [x] On image select: write `combat.display = { type: "image", url, label }` to Firestore
+- [x] Clear display button: write `combat.display = { type: "none", url: "", label: "" }`
+- [x] Delete image: remove from Storage + Firestore; clears display if that image was active
+- [x] Build `ImageModal` component (Table view) — full-screen black overlay when `combat.display.type === "image"`; label shown in bottom bar if present
+- [x] Smoke test: DM selects image, modal appears on table view tab
 
 ---
 
-## Phase 6 — Follower Type & Party Corrections
+## Phase 6 — Follower Type & Party Corrections ✓
 
-- [ ] Add `follower` unit type — HP tracking (ally behavior), no death saves, forest header color with inner rivulet border, configured only via party modal
-- [ ] Party modal — support adding followers (name + HP max + AC); distinguish from PC party members
-- [ ] Removing a follower from party config also removes them from `initiative[]` if present
-- [ ] End combat — clear only non-party, non-follower units (allies and mobs); party and followers persist
-- [ ] Cycle button on `UnitCard` header narrowed to ally ↔ mob only (party and follower are party-config-only)
-- [ ] Follower color: forest background with a thin rivulet inner border, visually distinct from pure party green and not interfering with the active turn outline
+- [x] Add `follower` unit type — HP tracking (ally behavior), no death saves, forest header color with inner rivulet border, configured only via party modal
+- [x] Party modal — support adding followers (name + HP max + AC); distinguish from PC party members
+- [x] Removing a follower from party config also removes them from `initiative[]` if present
+- [x] End combat — clear only non-party, non-follower units (allies and mobs); party and followers persist
+- [x] Cycle button on `UnitCard` header narrowed to ally ↔ mob only (party and follower are party-config-only)
+- [x] Follower color: forest background with a thin rivulet inner border, visually distinct from pure party green and not interfering with the active turn outline
+
+---
+
+## E2E Test Fixes (Remaining)
+
+- [ ] `graveyard.spec.js` — strict mode: `getByText('200 XP')` and `getByPlaceholder('XP')` match multiple elements; scope to graveyard section or use `.first()`
+- [ ] `graveyard.spec.js` — `locator('spinbutton').last()` times out in "changing party size updates per player split"; needs a better locator for the End Session party size input
+- [ ] `graveyard.spec.js` — `getByDisplayValue('Skeleton')` replaced with `getByRole('textbox')` but confirm no remaining `getByDisplayValue` usage
+- [ ] `initiative.spec.js` — HP `+` stepper test intermittently fails (value stays at 20); investigate whether popover state or Firebase write timing causes the miss
+- [ ] `sync.spec.js` — "unit added on DM appears on Table" occasionally slow; may need a short wait after `joinAsTable` before adding the unit to ensure Firestore listener is established
 
 ---
 
@@ -92,21 +105,30 @@
 - [ ] Session notes — persistent DM scratchpad per campaign
 - [ ] Encounter presets — DM saves a unit group as a named encounter, drops them all into initiative at once
 - [ ] Inspiration tracker — per-party-member inspiration tokens, DM awards/removes
+- [ ] Image annotation — DM full-screen view with drawing/annotation tools; annotations broadcast live to table view overlay
 
 ---
 
-## Phase 8 — Polish & LAN Test
+## Phase 8 — Polish & LAN Test ✓
 
-- [ ] Fix `useEffect` dependency arrays in `DMView` and `TableView` (`shownAt` missing from deps)
-- [ ] Firebase error toast component — fixed bottom-right, `bg-brand-danger`, auto-dismiss
-- [ ] Wrap all Firestore writes in try/catch and surface errors to toast
-- [ ] LAN test: run `npm run dev -- --host`, connect iPad to same network, verify both views work
-- [ ] Final `npm run lint` — fix all warnings
-- [ ] Final `npm run format` — format all files
+- [x] Fix `useEffect` dependency arrays in `DMView` and `TableView` (`shownAt` missing from deps)
+- [x] Firebase error toast component — fixed bottom-right, `bg-brand-danger`, auto-dismiss
+- [x] Wrap all Firestore writes in try/catch and surface errors to toast
+- [x] LAN test: run `npm run dev -- --host`, connect iPad to same network, verify both views work
+- [x] Final `npm run lint` — fix all warnings
+- [x] Final `npm run format` — format all files
 
 ---
 
-## Phase 9 — Combat Controls (Optional)
+## Phase 9 — Backend Maintenance
+
+- [ ] Firebase scheduled function — delete campaigns with no activity in the past 30 days (`meta.lastActiveAt` timestamp, updated on any write)
+- [ ] Firebase scheduled function — delete orphaned Storage files for campaigns that no longer exist in Firestore
+- [ ] Add `meta.lastActiveAt` write to campaign on any DM action (can batch with existing `updateDoc` calls)
+
+---
+
+## Phase 10 — Combat Controls (Optional)
 
 > May be cut. Evaluate after Phase 8.
 

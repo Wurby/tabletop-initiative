@@ -46,6 +46,7 @@ src/
 **Auth:** Anonymous sign-in only. First user to join a campaign becomes the DM — their UID is written to `campaigns/{joinCode}/meta.dmUid`. All subsequent joins get the table view.
 
 **Firestore schema:**
+
 ```
 campaigns/{joinCode}/
 ├── meta:        { name, dmUid }

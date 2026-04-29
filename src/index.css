@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-brand-mint: #edf7f2;
@@ -11,7 +11,7 @@
   --color-brand-danger-dark: #9b1c1c;
   --color-brand-ink: #1a3d2a;
 
-  --font-family-serif: "BespokeSerif", Georgia, serif;
+  --font-family-serif: 'BespokeSerif', Georgia, serif;
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-modal: 0 10px 25px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.08);
@@ -19,83 +19,91 @@
 }
 
 @layer base {
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button {
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
-  input[type=number] {
+  input[type='number'] {
     -moz-appearance: textfield;
   }
 }
 
 @font-face {
-  font-family: "BespokeSerif";
-  src: url("/src/assets/fonts/BespokeSerif-Light.woff2") format("woff2"),
-       url("/src/assets/fonts/BespokeSerif-Light.woff") format("woff");
+  font-family: 'BespokeSerif';
+  src:
+    url('/src/assets/fonts/BespokeSerif-Light.woff2') format('woff2'),
+    url('/src/assets/fonts/BespokeSerif-Light.woff') format('woff');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "BespokeSerif";
-  src: url("/src/assets/fonts/BespokeSerif-LightItalic.woff2") format("woff2"),
-       url("/src/assets/fonts/BespokeSerif-LightItalic.woff") format("woff");
+  font-family: 'BespokeSerif';
+  src:
+    url('/src/assets/fonts/BespokeSerif-LightItalic.woff2') format('woff2'),
+    url('/src/assets/fonts/BespokeSerif-LightItalic.woff') format('woff');
   font-weight: 300;
   font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "BespokeSerif";
-  src: url("/src/assets/fonts/BespokeSerif-Regular.woff2") format("woff2"),
-       url("/src/assets/fonts/BespokeSerif-Regular.woff") format("woff");
+  font-family: 'BespokeSerif';
+  src:
+    url('/src/assets/fonts/BespokeSerif-Regular.woff2') format('woff2'),
+    url('/src/assets/fonts/BespokeSerif-Regular.woff') format('woff');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "BespokeSerif";
-  src: url("/src/assets/fonts/BespokeSerif-Italic.woff2") format("woff2"),
-       url("/src/assets/fonts/BespokeSerif-Italic.woff") format("woff");
+  font-family: 'BespokeSerif';
+  src:
+    url('/src/assets/fonts/BespokeSerif-Italic.woff2') format('woff2'),
+    url('/src/assets/fonts/BespokeSerif-Italic.woff') format('woff');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "BespokeSerif";
-  src: url("/src/assets/fonts/BespokeSerif-Medium.woff2") format("woff2"),
-       url("/src/assets/fonts/BespokeSerif-Medium.woff") format("woff");
+  font-family: 'BespokeSerif';
+  src:
+    url('/src/assets/fonts/BespokeSerif-Medium.woff2') format('woff2'),
+    url('/src/assets/fonts/BespokeSerif-Medium.woff') format('woff');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "BespokeSerif";
-  src: url("/src/assets/fonts/BespokeSerif-MediumItalic.woff2") format("woff2"),
-       url("/src/assets/fonts/BespokeSerif-MediumItalic.woff") format("woff");
+  font-family: 'BespokeSerif';
+  src:
+    url('/src/assets/fonts/BespokeSerif-MediumItalic.woff2') format('woff2'),
+    url('/src/assets/fonts/BespokeSerif-MediumItalic.woff') format('woff');
   font-weight: 500;
   font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "BespokeSerif";
-  src: url("/src/assets/fonts/BespokeSerif-Bold.woff2") format("woff2"),
-       url("/src/assets/fonts/BespokeSerif-Bold.woff") format("woff");
+  font-family: 'BespokeSerif';
+  src:
+    url('/src/assets/fonts/BespokeSerif-Bold.woff2') format('woff2'),
+    url('/src/assets/fonts/BespokeSerif-Bold.woff') format('woff');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "BespokeSerif";
-  src: url("/src/assets/fonts/BespokeSerif-BoldItalic.woff2") format("woff2"),
-       url("/src/assets/fonts/BespokeSerif-BoldItalic.woff") format("woff");
+  font-family: 'BespokeSerif';
+  src:
+    url('/src/assets/fonts/BespokeSerif-BoldItalic.woff2') format('woff2'),
+    url('/src/assets/fonts/BespokeSerif-BoldItalic.woff') format('woff');
   font-weight: 700;
   font-style: italic;
   font-display: swap;

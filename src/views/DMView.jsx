@@ -1,26 +1,36 @@
 import { useState, useEffect } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
+import { useToast } from '../lib/toast'
 import InitiativeTracker from '../components/initiative/InitiativeTracker'
 import PartyModal from '../components/party/PartyModal'
 import Graveyard from '../components/graveyard/Graveyard'
 import SessionLogModal from '../components/session/SessionLogModal'
 import SplitModal from '../components/session/SplitModal'
+import ImageLibrary from '../components/images/ImageLibrary'
 
 export default function DMView({ campaign, campaignCode, onLeave }) {
-  const [partyOpen,      setPartyOpen]      = useState(false)
+  const showError = useToast()
+  const [partyOpen, setPartyOpen] = useState(false)
   const [sessionLogOpen, setSessionLogOpen] = useState(false)
 
   const lastSplit = campaign.combat?.lastSplit
-  const [shownAt,        setShownAt]        = useState(lastSplit?.clearedAt ?? null)
+  const tableError = campaign.combat?.tableError
+  const [shownAt, setShownAt] = useState(lastSplit?.clearedAt ?? null)
   const [showSplitModal, setShowSplitModal] = useState(false)
+
+  useEffect(() => {
+    if (!tableError) return
+    showError(`Table: ${tableError}`)
+    updateDoc(doc(db, 'campaigns', campaignCode), { 'combat.tableError': null }).catch(() => {})
+  }, [tableError, showError, campaignCode])
 
   useEffect(() => {
     if (lastSplit?.clearedAt && lastSplit.clearedAt !== shownAt) {
       setShownAt(lastSplit.clearedAt)
       setShowSplitModal(true)
     }
-  }, [lastSplit?.clearedAt])
+  }, [lastSplit?.clearedAt, shownAt])
 
   useEffect(() => {
     if (lastSplit?.dismissed) setShowSplitModal(false)
@@ -28,7 +38,11 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
 
   async function handleDismissSplit() {
     setShowSplitModal(false)
-    await updateDoc(doc(db, 'campaigns', campaignCode), { 'combat.lastSplit.dismissed': true })
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), { 'combat.lastSplit.dismissed': true })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   return (
@@ -65,7 +79,7 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
         <InitiativeTracker campaign={campaign} campaignCode={campaignCode} />
         <div className="grid grid-cols-2 gap-8 items-start">
           <Graveyard campaign={campaign} campaignCode={campaignCode} />
-          <div>{/* Images — Phase 5 */}</div>
+          <ImageLibrary campaign={campaign} campaignCode={campaignCode} />
         </div>
       </div>
 
@@ -79,6 +93,7 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
       {sessionLogOpen && (
         <SessionLogModal
           campaign={campaign}
+          campaignCode={campaignCode}
           onClose={() => setSessionLogOpen(false)}
         />
       )}

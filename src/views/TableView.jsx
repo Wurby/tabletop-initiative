@@ -1,21 +1,47 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import InitiativeList from '../components/initiative/InitiativeList'
 import GraveyardView from '../components/graveyard/GraveyardView'
 import SplitModal from '../components/session/SplitModal'
+import ImageModal from '../components/images/ImageModal'
 
 export default function TableView({ campaign, campaignCode, onLeave }) {
   const lastSplit = campaign.combat?.lastSplit
-  const [shownAt,        setShownAt]        = useState(lastSplit?.clearedAt ?? null)
+  const [shownAt, setShownAt] = useState(lastSplit?.clearedAt ?? null)
   const [showSplitModal, setShowSplitModal] = useState(false)
+  const wakeLockRef = useRef(null)
+
+  useEffect(() => {
+    if (!('wakeLock' in navigator)) return
+    let active = true
+
+    async function acquire() {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request('screen')
+      } catch {}
+    }
+
+    acquire()
+
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible' && active) acquire()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      active = false
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      wakeLockRef.current?.release()
+    }
+  }, [])
 
   useEffect(() => {
     if (lastSplit?.clearedAt && lastSplit.clearedAt !== shownAt) {
       setShownAt(lastSplit.clearedAt)
       setShowSplitModal(true)
     }
-  }, [lastSplit?.clearedAt])
+  }, [lastSplit?.clearedAt, shownAt])
 
   useEffect(() => {
     if (lastSplit?.dismissed) setShowSplitModal(false)
@@ -23,7 +49,13 @@ export default function TableView({ campaign, campaignCode, onLeave }) {
 
   async function handleDismissSplit() {
     setShowSplitModal(false)
-    await updateDoc(doc(db, 'campaigns', campaignCode), { 'combat.lastSplit.dismissed': true })
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), { 'combat.lastSplit.dismissed': true })
+    } catch {
+      updateDoc(doc(db, 'campaigns', campaignCode), {
+        'combat.tableError': 'Failed to save — check your connection.',
+      }).catch(() => {})
+    }
   }
 
   return (
@@ -46,9 +78,8 @@ export default function TableView({ campaign, campaignCode, onLeave }) {
         <GraveyardView campaign={campaign} />
       </div>
 
-      {showSplitModal && lastSplit && (
-        <SplitModal split={lastSplit} onClose={handleDismissSplit} />
-      )}
+      {showSplitModal && lastSplit && <SplitModal split={lastSplit} onClose={handleDismissSplit} />}
+      <ImageModal campaign={campaign} />
     </div>
   )
 }

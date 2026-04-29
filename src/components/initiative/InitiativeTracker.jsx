@@ -1,13 +1,19 @@
 import { useState } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
+import { useToast } from '../../lib/toast'
 import UnitCard from './UnitCard'
 
 const MIN_SLOTS = 5
 
-const TYPE_HEADER = { party: 'bg-brand-forest', ally: 'bg-brand-rivulet', mob: 'bg-brand-danger' }
-const TYPE_CYCLE  = { party: 'ally', ally: 'mob', mob: 'party' }
-const TYPE_LABEL  = { party: 'P', ally: 'A', mob: 'M' }
+const TYPE_HEADER = {
+  party: 'bg-brand-forest',
+  follower: 'bg-brand-forest',
+  ally: 'bg-brand-rivulet',
+  mob: 'bg-brand-danger',
+}
+const TYPE_CYCLE = { ally: 'mob', mob: 'ally' }
+const TYPE_LABEL = { party: 'P', follower: 'F', ally: 'A', mob: 'M' }
 
 function AddCard({ onAdd }) {
   const [form, setForm] = useState({ name: '', initiative: '', hpMax: '', ac: '', type: 'mob' })
@@ -34,7 +40,9 @@ function AddCard({ onAdd }) {
 
   const err = 'border-b border-brand-danger placeholder-brand-danger/50'
   const ok = 'border-b border-brand-ink/20 placeholder-brand-ink/30'
-  const headerBg = errors.initiative ? 'bg-brand-danger' : (TYPE_HEADER[form.type] ?? TYPE_HEADER.mob)
+  const headerBg = errors.initiative
+    ? 'bg-brand-danger'
+    : (TYPE_HEADER[form.type] ?? TYPE_HEADER.mob)
 
   return (
     <div className="flex-shrink-0 w-48 bg-brand-mint-dark shadow-card flex flex-col opacity-60 hover:opacity-100 transition-opacity focus-within:opacity-100">
@@ -67,7 +75,11 @@ function AddCard({ onAdd }) {
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
         />
         <div className="flex items-center gap-1">
-          <span className={`text-xs font-normal w-6 ${errors.hpMax ? 'text-brand-danger' : 'text-brand-forest'}`}>HP</span>
+          <span
+            className={`text-xs font-normal w-6 ${errors.hpMax ? 'text-brand-danger' : 'text-brand-forest'}`}
+          >
+            HP
+          </span>
           <input
             className={`bg-transparent text-brand-ink font-normal text-center focus:outline-none w-14 text-sm ${errors.hpMax ? err : ok}`}
             type="number"
@@ -114,6 +126,7 @@ function EmptyCard() {
 }
 
 export default function InitiativeTracker({ campaign, campaignCode }) {
+  const showError = useToast()
   const units = [...(campaign.initiative ?? [])].sort((a, b) => b.initiative - a.initiative)
   const emptyCount = Math.max(0, MIN_SLOTS - units.length - 1)
   const activeIndex = campaign.combat?.activeIndex ?? 0
@@ -122,20 +135,35 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
 
   async function setActiveIndex(next) {
     const idx = units.length > 0 ? ((next % units.length) + units.length) % units.length : 0
-    await updateDoc(doc(db, 'campaigns', campaignCode), { 'combat.activeIndex': idx })
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), { 'combat.activeIndex': idx })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   async function setRound(next) {
-    await updateDoc(doc(db, 'campaigns', campaignCode), { 'combat.round': Math.max(1, next) })
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), { 'combat.round': Math.max(1, next) })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   async function endCombat() {
-    await updateDoc(doc(db, 'campaigns', campaignCode), {
-      initiative: [],
-      'combat.activeIndex': 0,
-      'combat.round': 1,
-    })
-    setConfirmEnd(false)
+    const survivors = (campaign.initiative ?? []).filter(
+      (u) => u.type === 'party' || u.type === 'follower'
+    )
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), {
+        initiative: survivors,
+        'combat.activeIndex': 0,
+        'combat.round': 1,
+      })
+      setConfirmEnd(false)
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   async function handleAdd(form) {
@@ -153,27 +181,43 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
       showDeathSaves: false,
       deathSaves: { s: [false, false, false], f: [false, false, false] },
     }
-    await updateDoc(doc(db, 'campaigns', campaignCode), {
-      initiative: [...(campaign.initiative ?? []), unit],
-    })
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), {
+        initiative: [...(campaign.initiative ?? []), unit],
+      })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   async function handleUpdate(updated) {
     const next = (campaign.initiative ?? []).map((u) => (u.id === updated.id ? updated : u))
-    await updateDoc(doc(db, 'campaigns', campaignCode), { initiative: next })
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), { initiative: next })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   async function handleDelete(id) {
     const next = (campaign.initiative ?? []).filter((u) => u.id !== id)
-    await updateDoc(doc(db, 'campaigns', campaignCode), { initiative: next })
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), { initiative: next })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   async function handleKill(unit, xp) {
     const entry = { ...unit, xp, killedAt: Date.now() }
-    await updateDoc(doc(db, 'campaigns', campaignCode), {
-      initiative: (campaign.initiative ?? []).filter((u) => u.id !== unit.id),
-      graveyard: [...(campaign.graveyard ?? []), entry],
-    })
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), {
+        initiative: (campaign.initiative ?? []).filter((u) => u.id !== unit.id),
+        graveyard: [...(campaign.graveyard ?? []), entry],
+      })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   return (
@@ -184,19 +228,42 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
           {/* Round counter */}
           <div className="flex items-center gap-1.5">
             <span className="text-white/60 text-xs font-normal">Round</span>
-            <button onClick={() => setRound(round - 1)} className="text-white/60 hover:text-white text-sm transition-colors w-4 text-center">−</button>
+            <button
+              onClick={() => setRound(round - 1)}
+              className="text-white/60 hover:text-white text-sm transition-colors w-4 text-center"
+            >
+              −
+            </button>
             <span className="text-white font-light text-lg w-6 text-center">{round}</span>
-            <button onClick={() => setRound(round + 1)} className="text-white/60 hover:text-white text-sm transition-colors w-4 text-center">+</button>
+            <button
+              onClick={() => setRound(round + 1)}
+              className="text-white/60 hover:text-white text-sm transition-colors w-4 text-center"
+            >
+              +
+            </button>
           </div>
           {/* End combat */}
           {confirmEnd ? (
             <div className="flex items-center gap-2">
               <span className="text-white/70 text-xs font-normal">End combat?</span>
-              <button onClick={endCombat} className="text-xs font-normal text-white bg-brand-danger px-2 py-0.5 hover:bg-brand-danger-dark transition-colors">Yes</button>
-              <button onClick={() => setConfirmEnd(false)} className="text-xs font-normal text-white/60 hover:text-white transition-colors">No</button>
+              <button
+                onClick={endCombat}
+                className="text-xs font-normal text-white bg-brand-danger px-2 py-0.5 hover:bg-brand-danger-dark transition-colors"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setConfirmEnd(false)}
+                className="text-xs font-normal text-white/60 hover:text-white transition-colors"
+              >
+                No
+              </button>
             </div>
           ) : (
-            <button onClick={() => setConfirmEnd(true)} className="text-xs font-normal text-white opacity-50 hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => setConfirmEnd(true)}
+              className="text-xs font-normal text-white opacity-50 hover:opacity-100 transition-opacity"
+            >
               End
             </button>
           )}

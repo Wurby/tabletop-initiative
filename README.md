@@ -5,6 +5,7 @@ A real-time D&D combat tracker with separate views for the DM and the table. Bui
 ## Features
 
 **DM View**
+
 - Initiative tracker — add units (party, ally, mob), set HP/AC/initiative, track active turn and round count
 - Per-unit controls — kill confirmation with CR-to-XP lookup, visibility toggle, death saves for party members
 - Graveyard — killed units accumulate XP; bonus quest XP can be added manually
@@ -13,6 +14,7 @@ A real-time D&D combat tracker with separate views for the DM and the table. Bui
 - Session log — full history of past session clears with XP breakdowns
 
 **Table View**
+
 - Live initiative display — cards update in real-time as the DM makes changes
 - Hidden unit support — units the DM marks hidden show as a placeholder, with active turn indicator still visible
 - Graveyard display — read-only kill list with last session XP summary
@@ -20,14 +22,14 @@ A real-time D&D combat tracker with separate views for the DM and the table. Bui
 
 ## Tech Stack
 
-| Layer | Choice |
-|---|---|
-| Framework | React 19 |
-| Build | Vite 6 |
-| Styling | Tailwind CSS v4 |
-| Backend | Firebase (Firestore, Auth, Storage) |
-| Auth | Anonymous Firebase auth (no login required) |
-| Real-time sync | Firestore `onSnapshot` |
+| Layer          | Choice                                      |
+| -------------- | ------------------------------------------- |
+| Framework      | React 19                                    |
+| Build          | Vite 6                                      |
+| Styling        | Tailwind CSS v4                             |
+| Backend        | Firebase (Firestore, Auth, Storage)         |
+| Auth           | Anonymous Firebase auth (no login required) |
+| Real-time sync | Firestore `onSnapshot`                      |
 
 ## Project Structure
 

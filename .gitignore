@@ -29,6 +29,15 @@ pnpm-debug.log*
 
 # test coverage
 coverage/
+test-results/
+
+# Claude Code
+.agents/
+.claude/settings.local.json
+.claude/skills/
+
+# Playwright MCP runtime cache
+.playwright-mcp/
 
 # editor
 .vscode/

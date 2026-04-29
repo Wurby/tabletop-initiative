@@ -39,7 +39,7 @@ export default function JoinScreen({ uid, onJoin }) {
         ...EMPTY_CAMPAIGN,
       })
       onJoin(joinCode, 'dm')
-    } catch (e) {
+    } catch {
       setError('Failed to create campaign. Check your Firebase config.')
       setLoading(false)
     }
@@ -62,7 +62,7 @@ export default function JoinScreen({ uid, onJoin }) {
       }
       const viewMode = snap.data().meta.dmUid === uid ? 'dm' : 'table'
       onJoin(trimmed, viewMode)
-    } catch (e) {
+    } catch {
       setError('Failed to join. Check your Firebase config.')
       setLoading(false)
     }
@@ -80,7 +80,10 @@ export default function JoinScreen({ uid, onJoin }) {
                 ? 'bg-brand-forest text-white'
                 : 'text-brand-forest hover:bg-brand-mint'
             }`}
-            onClick={() => { setMode('join'); setError('') }}
+            onClick={() => {
+              setMode('join')
+              setError('')
+            }}
           >
             Join
           </button>
@@ -90,7 +93,10 @@ export default function JoinScreen({ uid, onJoin }) {
                 ? 'bg-brand-forest text-white'
                 : 'text-brand-forest hover:bg-brand-mint'
             }`}
-            onClick={() => { setMode('create'); setError('') }}
+            onClick={() => {
+              setMode('create')
+              setError('')
+            }}
           >
             Create
           </button>
@@ -133,9 +139,7 @@ export default function JoinScreen({ uid, onJoin }) {
           </div>
         )}
 
-        {error && (
-          <p className="mt-4 text-sm text-brand-danger font-normal">{error}</p>
-        )}
+        {error && <p className="mt-4 text-sm text-brand-danger font-normal">{error}</p>}
       </div>
     </div>
   )

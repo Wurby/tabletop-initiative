@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
+import { useToast } from '../../lib/toast'
 
 function ClearModal({ totalXp, defaultPartySize, graveyard, questXp, onConfirm, onClose }) {
   const [partySize, setPartySize] = useState(String(defaultPartySize))
@@ -12,20 +13,37 @@ function ClearModal({ totalXp, defaultPartySize, graveyard, questXp, onConfirm, 
       <div className="bg-brand-mint-dark shadow-modal w-80 flex flex-col max-h-[85vh]">
         <div className="bg-brand-forest px-4 py-3 flex items-center justify-between shrink-0">
           <h2 className="text-white font-normal text-base">End Session</h2>
-          <button onClick={onClose} className="text-white opacity-60 hover:opacity-100 transition-opacity text-sm">✕</button>
+          <button
+            onClick={onClose}
+            className="text-white opacity-60 hover:opacity-100 transition-opacity text-sm"
+          >
+            ✕
+          </button>
         </div>
 
         <div className="overflow-y-auto flex-1">
           {graveyard.map((e) => (
-            <div key={e.id} className="flex items-center justify-between px-4 py-1.5 border-b border-brand-mint">
+            <div
+              key={e.id}
+              className="flex items-center justify-between px-4 py-1.5 border-b border-brand-mint"
+            >
               <span className="text-brand-ink text-sm font-normal truncate flex-1">{e.name}</span>
-              <span className="text-brand-ink/50 text-xs shrink-0 ml-2">{(e.xp || 0).toLocaleString()} XP</span>
+              <span className="text-brand-ink/50 text-xs shrink-0 ml-2">
+                {(e.xp || 0).toLocaleString()} XP
+              </span>
             </div>
           ))}
           {questXp.map((e) => (
-            <div key={e.id} className="flex items-center justify-between px-4 py-1.5 border-b border-brand-mint">
-              <span className="text-brand-rivulet text-sm font-normal truncate flex-1">{e.label}</span>
-              <span className="text-brand-ink/50 text-xs shrink-0 ml-2">{(e.xp || 0).toLocaleString()} XP</span>
+            <div
+              key={e.id}
+              className="flex items-center justify-between px-4 py-1.5 border-b border-brand-mint"
+            >
+              <span className="text-brand-rivulet text-sm font-normal truncate flex-1">
+                {e.label}
+              </span>
+              <span className="text-brand-ink/50 text-xs shrink-0 ml-2">
+                {(e.xp || 0).toLocaleString()} XP
+              </span>
             </div>
           ))}
         </div>
@@ -46,7 +64,9 @@ function ClearModal({ totalXp, defaultPartySize, graveyard, questXp, onConfirm, 
           </div>
           <div className="flex items-center justify-between border-t border-brand-mint pt-3">
             <span className="text-brand-ink/60 text-xs font-normal">Per player</span>
-            <span className="text-brand-ink text-lg font-light">{perMember.toLocaleString()} XP</span>
+            <span className="text-brand-ink text-lg font-light">
+              {perMember.toLocaleString()} XP
+            </span>
           </div>
         </div>
 
@@ -70,45 +90,67 @@ function ClearModal({ totalXp, defaultPartySize, graveyard, questXp, onConfirm, 
 }
 
 export default function Graveyard({ campaign, campaignCode }) {
+  const showError = useToast()
   const graveyard = campaign.graveyard ?? []
-  const questXp   = campaign.questXp   ?? []
-  const [questLabel,  setQuestLabel]  = useState('')
+  const questXp = campaign.questXp ?? []
+  const [questLabel, setQuestLabel] = useState('')
   const [questAmount, setQuestAmount] = useState('')
-  const [showClear,   setShowClear]   = useState(false)
+  const [showClear, setShowClear] = useState(false)
 
-  const killTotal  = graveyard.reduce((s, e) => s + (e.xp || 0), 0)
+  const killTotal = graveyard.reduce((s, e) => s + (e.xp || 0), 0)
   const questTotal = questXp.reduce((s, e) => s + (e.xp || 0), 0)
-  const totalXp    = killTotal + questTotal
-  const isEmpty    = graveyard.length === 0 && questXp.length === 0
+  const totalXp = killTotal + questTotal
+  const isEmpty = graveyard.length === 0 && questXp.length === 0
 
   async function handleReturn(entry) {
-    const { xp, killedAt, ...unit } = entry
-    await updateDoc(doc(db, 'campaigns', campaignCode), {
-      initiative: [...(campaign.initiative ?? []), unit],
-      graveyard: graveyard.filter((e) => e.id !== entry.id),
-    })
+    const { xp: _xp, killedAt: _kt, ...unit } = entry
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), {
+        initiative: [...(campaign.initiative ?? []), unit],
+        graveyard: graveyard.filter((e) => e.id !== entry.id),
+      })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   async function handleDelete(id) {
-    await updateDoc(doc(db, 'campaigns', campaignCode), {
-      graveyard: graveyard.filter((e) => e.id !== id),
-    })
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), {
+        graveyard: graveyard.filter((e) => e.id !== id),
+      })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   async function handleAddQuest() {
     if (!questLabel.trim() || questAmount === '') return
-    const entry = { id: crypto.randomUUID(), label: questLabel.trim(), xp: Number(questAmount), awardedAt: Date.now() }
-    await updateDoc(doc(db, 'campaigns', campaignCode), {
-      questXp: [...questXp, entry],
-    })
-    setQuestLabel('')
-    setQuestAmount('')
+    const entry = {
+      id: crypto.randomUUID(),
+      label: questLabel.trim(),
+      xp: Number(questAmount),
+      awardedAt: Date.now(),
+    }
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), {
+        questXp: [...questXp, entry],
+      })
+      setQuestLabel('')
+      setQuestAmount('')
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   async function handleDeleteQuest(id) {
-    await updateDoc(doc(db, 'campaigns', campaignCode), {
-      questXp: questXp.filter((e) => e.id !== id),
-    })
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), {
+        questXp: questXp.filter((e) => e.id !== id),
+      })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   async function handleClear(partySize, xpPerMember) {
@@ -121,13 +163,24 @@ export default function Graveyard({ campaign, campaignCode }) {
       graveyardEntries: [...graveyard],
       questXpEntries: [...questXp],
     }
-    await updateDoc(doc(db, 'campaigns', campaignCode), {
-      graveyard: [],
-      questXp: [],
-      sessionLogs: [...(campaign.sessionLogs ?? []), log],
-      'combat.lastSplit': { xpPerMember, totalXp, clearedAt: log.clearedAt, graveyardEntries: [...graveyard], questXpEntries: [...questXp], dismissed: false },
-    })
-    setShowClear(false)
+    try {
+      await updateDoc(doc(db, 'campaigns', campaignCode), {
+        graveyard: [],
+        questXp: [],
+        sessionLogs: [...(campaign.sessionLogs ?? []), log],
+        'combat.lastSplit': {
+          xpPerMember,
+          totalXp,
+          clearedAt: log.clearedAt,
+          graveyardEntries: [...graveyard],
+          questXpEntries: [...questXp],
+          dismissed: false,
+        },
+      })
+      setShowClear(false)
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
   }
 
   return (
@@ -149,13 +202,20 @@ export default function Graveyard({ campaign, campaignCode }) {
 
       <div className="px-6 flex flex-col">
         {isEmpty && (
-          <p className="text-brand-ink opacity-40 font-light text-sm py-4 text-center">No kills yet…</p>
+          <p className="text-brand-ink opacity-40 font-light text-sm py-4 text-center">
+            No kills yet…
+          </p>
         )}
 
         {graveyard.map((entry) => (
-          <div key={entry.id} className="flex items-center gap-2 py-1.5 border-b border-brand-ink/10">
+          <div
+            key={entry.id}
+            className="flex items-center gap-2 py-1.5 border-b border-brand-ink/10"
+          >
             <span className="flex-1 text-sm font-normal text-brand-ink truncate">{entry.name}</span>
-            <span className="text-brand-ink/50 text-xs font-normal shrink-0">{(entry.xp || 0).toLocaleString()} XP</span>
+            <span className="text-brand-ink/50 text-xs font-normal shrink-0">
+              {(entry.xp || 0).toLocaleString()} XP
+            </span>
             <button
               onClick={() => handleReturn(entry)}
               title="Return to initiative"
@@ -173,9 +233,16 @@ export default function Graveyard({ campaign, campaignCode }) {
         ))}
 
         {questXp.map((entry) => (
-          <div key={entry.id} className="flex items-center gap-2 py-1.5 border-b border-brand-ink/10">
-            <span className="flex-1 text-sm font-normal text-brand-rivulet truncate">{entry.label}</span>
-            <span className="text-brand-ink/50 text-xs font-normal shrink-0">{(entry.xp || 0).toLocaleString()} XP</span>
+          <div
+            key={entry.id}
+            className="flex items-center gap-2 py-1.5 border-b border-brand-ink/10"
+          >
+            <span className="flex-1 text-sm font-normal text-brand-rivulet truncate">
+              {entry.label}
+            </span>
+            <span className="text-brand-ink/50 text-xs font-normal shrink-0">
+              {(entry.xp || 0).toLocaleString()} XP
+            </span>
             <div className="w-[18px]" />
             <button
               onClick={() => handleDeleteQuest(entry.id)}
