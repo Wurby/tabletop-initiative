@@ -60,7 +60,7 @@ async function deleteStale(thresholdDays: number): Promise<{
 }
 
 export const adminListCampaigns = onCall(
-  { secrets: [adminSecret] },
+  { secrets: [adminSecret], invoker: 'public' },
   async (req) => {
     verifyAdmin(req.data.password)
     const snapshot = await db.collection('campaigns').get()
@@ -82,7 +82,7 @@ export const adminListCampaigns = onCall(
 )
 
 export const adminToggleLock = onCall(
-  { secrets: [adminSecret] },
+  { secrets: [adminSecret], invoker: 'public' },
   async (req) => {
     verifyAdmin(req.data.password)
     const { campaignCode, locked } = req.data as { campaignCode: string; locked: boolean }
@@ -92,7 +92,7 @@ export const adminToggleLock = onCall(
 )
 
 export const adminRunCleanup = onCall(
-  { secrets: [adminSecret] },
+  { secrets: [adminSecret], invoker: 'public' },
   async (req) => {
     verifyAdmin(req.data.password)
     const thresholdDays = Number(req.data.thresholdDays) || 30
