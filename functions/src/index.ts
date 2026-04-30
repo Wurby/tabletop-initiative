@@ -25,34 +25,47 @@ async function deleteStale(thresholdDays: number): Promise<{
   errors: number
   skipped: number
 }> {
-  const cutoff = admin.firestore.Timestamp.fromMillis(
-    Date.now() - thresholdDays * 24 * 60 * 60 * 1000
-  )
+  const cutoffMs = Date.now() - thresholdDays * 24 * 60 * 60 * 1000
 
-  const snapshot = await db
-    .collection('campaigns')
-    .where('meta.lastActiveAt', '<', cutoff)
-    .get()
+  const snapshot = await db.collection('campaigns').get()
 
-  const toDelete = snapshot.docs.filter((d) => d.data().meta?.locked !== true)
+  const toDelete = snapshot.docs.filter((d) => {
+    const data = d.data()
+    if (data.meta?.locked === true) return false
+    const lastActiveAt = data.meta?.lastActiveAt
+    if (!lastActiveAt) return true
+    return lastActiveAt.toMillis() < cutoffMs
+  })
   const skipped = snapshot.docs.length - toDelete.length
   let deleted = 0
   let errors = 0
 
-  for (const docSnap of toDelete) {
-    const data = docSnap.data()
-    const code = docSnap.id
+  // Batch delete all anonymous auth users in one call (up to 1000 per call)
+  const uids = toDelete
+    .map((d) => d.data().meta?.dmUid as string | undefined)
+    .filter((uid): uid is string => !!uid)
+  for (let i = 0; i < uids.length; i += 1000) {
+    await adminAuth.deleteUsers(uids.slice(i, i + 1000)).catch(() => {})
+  }
+
+  // Parallel Storage deletes + Firestore batch deletes in chunks
+  const bucket = adminStorage.bucket()
+  const CHUNK = 25
+
+  for (let i = 0; i < toDelete.length; i += CHUNK) {
+    const chunk = toDelete.slice(i, i + CHUNK)
+
+    await Promise.allSettled(
+      chunk.map((d) => bucket.deleteFiles({ prefix: `campaigns/${d.id}/` }).catch(() => {}))
+    )
+
+    const batch = db.batch()
+    chunk.forEach((d) => batch.delete(d.ref))
     try {
-      const bucket = adminStorage.bucket()
-      await bucket.deleteFiles({ prefix: `campaigns/${code}/` }).catch(() => {})
-
-      const dmUid: string | undefined = data.meta?.dmUid
-      if (dmUid) await adminAuth.deleteUser(dmUid).catch(() => {})
-
-      await docSnap.ref.delete()
-      deleted++
+      await batch.commit()
+      deleted += chunk.length
     } catch {
-      errors++
+      errors += chunk.length
     }
   }
 

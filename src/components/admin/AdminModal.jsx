@@ -24,6 +24,40 @@ export default function AdminModal({ onClose }) {
   const [thresholdDays, setThresholdDays] = useState('30')
   const [cleanupLoading, setCleanupLoading] = useState(false)
   const [cleanupResult, setCleanupResult] = useState(null)
+  const [sortCol, setSortCol] = useState('staleDays')
+  const [sortDir, setSortDir] = useState('desc')
+
+  function handleSort(col) {
+    if (sortCol === col) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortCol(col)
+      setSortDir(col === 'staleDays' ? 'desc' : 'asc')
+    }
+  }
+
+  const sorted = [...campaigns].sort((a, b) => {
+    let av = a[sortCol]
+    let bv = b[sortCol]
+    if (sortCol === 'staleDays') {
+      av = av ?? -1
+      bv = bv ?? -1
+    } else if (sortCol === 'locked') {
+      av = av ? 1 : 0
+      bv = bv ? 1 : 0
+    } else {
+      av = (av ?? '').toLowerCase()
+      bv = (bv ?? '').toLowerCase()
+    }
+    if (av < bv) return sortDir === 'asc' ? -1 : 1
+    if (av > bv) return sortDir === 'asc' ? 1 : -1
+    return 0
+  })
+
+  function SortArrow({ col }) {
+    if (sortCol !== col) return <span className="opacity-20 ml-1">↕</span>
+    return <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
+  }
 
   async function doAuth(pw) {
     try {
@@ -119,22 +153,34 @@ export default function AdminModal({ onClose }) {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-brand-mint border-b border-brand-ink/10">
-                      <th className="text-left px-4 py-2 text-xs font-bold text-brand-ink/50">
-                        Campaign
+                      <th
+                        className="text-left px-4 py-2 text-xs font-bold text-brand-ink/50 cursor-pointer hover:text-brand-ink transition-colors select-none"
+                        onClick={() => handleSort('name')}
+                      >
+                        Campaign<SortArrow col="name" />
                       </th>
-                      <th className="text-left px-4 py-2 text-xs font-bold text-brand-ink/50">
-                        Code
+                      <th
+                        className="text-left px-4 py-2 text-xs font-bold text-brand-ink/50 cursor-pointer hover:text-brand-ink transition-colors select-none"
+                        onClick={() => handleSort('code')}
+                      >
+                        Code<SortArrow col="code" />
                       </th>
-                      <th className="text-right px-4 py-2 text-xs font-bold text-brand-ink/50">
-                        Stale
+                      <th
+                        className="text-right px-4 py-2 text-xs font-bold text-brand-ink/50 cursor-pointer hover:text-brand-ink transition-colors select-none"
+                        onClick={() => handleSort('staleDays')}
+                      >
+                        Stale<SortArrow col="staleDays" />
                       </th>
-                      <th className="text-center px-4 py-2 text-xs font-bold text-brand-ink/50">
-                        Lock
+                      <th
+                        className="text-center px-4 py-2 text-xs font-bold text-brand-ink/50 cursor-pointer hover:text-brand-ink transition-colors select-none"
+                        onClick={() => handleSort('locked')}
+                      >
+                        Lock<SortArrow col="locked" />
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {campaigns.map((c) => (
+                    {sorted.map((c) => (
                       <tr key={c.code} className="border-b border-brand-ink/10">
                         <td className="px-4 py-2 text-brand-ink text-sm font-normal truncate max-w-[200px]">
                           {c.name}
