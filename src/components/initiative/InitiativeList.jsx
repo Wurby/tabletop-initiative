@@ -124,11 +124,11 @@ export default function InitiativeList({ campaign }) {
           <ActiveTurnWrapper key={unit.id} isActive={active} type={unit.type}>
             <div className="w-48 h-full min-h-28 bg-brand-mint-dark shadow-card flex flex-col transition-all">
               {/* Header: name | AC | initiative */}
-              <div className={`${headerColor(unit.type)} px-2 py-1.5 flex items-center gap-1.5`}>
+              <div className={`${headerColor(unit.type)} px-2 py-1.5 flex items-center`}>
                 <span className="text-white font-normal text-sm flex-1 min-w-0 truncate">
                   {unit.name}
                 </span>
-                <span className="text-white/70 text-xs font-normal shrink-0 flex items-center gap-0.5">
+                <span className="flex-1 text-white/70 text-xs font-normal flex items-center justify-center gap-0.5">
                   <span className="text-white/50">AC</span>
                   {isParty || isAlly || isFollower || unit.showAc ? (
                     <span>{unit.ac}</span>
@@ -136,11 +136,11 @@ export default function InitiativeList({ campaign }) {
                     <EyeClosed className="text-white/40" size={10} />
                   )}
                 </span>
-                <span className="shrink-0 ml-1 flex items-baseline gap-0.5">
+                <span className="flex-1 flex items-baseline justify-end gap-0.5">
                   <span className="text-white/50 text-xs">i</span>
                   <span className="text-white font-light text-lg">{unit.initiative}</span>
+                  {active && <span className="text-white text-xs font-bold ml-1">▶</span>}
                 </span>
-                {active && <span className="text-white text-xs font-bold shrink-0">▶</span>}
               </div>
 
               <div className="px-3 py-3 flex-1 flex flex-col gap-2">
@@ -149,6 +149,14 @@ export default function InitiativeList({ campaign }) {
                 )}
                 {isParty && unit.showDeathSaves && <DeathSavesDisplay unit={unit} />}
               </div>
+
+              {isParty && (Number(unit.inspired) || 0) > 0 && (
+                <div className="flex border-t border-brand-mint">
+                  <div className="flex-1 py-1.5 text-xs text-center text-amber-400 bg-brand-mint">
+                    {'★'.repeat(Number(unit.inspired) || 0)}
+                  </div>
+                </div>
+              )}
 
               {/* HP + health bar (mob/ally only) */}
               {!isParty && (

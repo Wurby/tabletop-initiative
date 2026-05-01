@@ -6,7 +6,7 @@
 import { test, expect } from '@playwright/test'
 import { createCampaign, joinAsTable, addUnit, killFirstUnit } from './helpers.js'
 
-const AUTH_FILE = 'playwright/.auth/state.json'
+const AUTH_FILE = 'playwright/.auth/state2.json'
 
 test.describe('Cross-tab sync', () => {
   test('unit added on DM appears on Table', async ({ page, browser }) => {
@@ -14,6 +14,7 @@ test.describe('Cross-tab sync', () => {
     const ctx2 = await browser.newContext({ storageState: AUTH_FILE })
     const tablePage = await ctx2.newPage()
     await joinAsTable(tablePage, code)
+    await expect(tablePage.getByText('Waiting for combat')).toBeVisible()
 
     await addUnit(page, { name: 'Goblin', initiative: 12, hp: 10 })
 

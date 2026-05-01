@@ -6,9 +6,12 @@ test.describe('DM Graveyard', () => {
     await createCampaign(page)
     await addUnit(page, { name: 'Goblin', initiative: 10, hp: 7 })
     await killFirstUnit(page)
-    await expect(page.getByRole('heading', { name: 'Graveyard' })).toBeVisible()
-    await expect(page.getByText('Goblin')).toBeVisible()
-    await expect(page.getByText('200 XP')).toBeVisible()
+    const graveyardSection = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: 'Graveyard' }) })
+    await expect(graveyardSection).toBeVisible()
+    await expect(graveyardSection.getByText('Goblin')).toBeVisible()
+    await expect(graveyardSection.getByText('200 XP').first()).toBeVisible()
   })
 
   test('total XP shown in graveyard header', async ({ page }) => {
@@ -18,16 +21,19 @@ test.describe('DM Graveyard', () => {
     const header = page
       .locator('section')
       .filter({ has: page.getByRole('heading', { name: 'Graveyard' }) })
-    await expect(header.getByText('200 XP')).toBeVisible()
+    await expect(header.getByText('200 XP').first()).toBeVisible()
   })
 
   test('quest XP: fill label and amount, click Add — entry appears', async ({ page }) => {
     await createCampaign(page)
-    await page.getByPlaceholder('Bonus XP label…').fill('Rescued prisoners')
-    await page.getByPlaceholder('XP').fill('300')
-    await page.getByRole('button', { name: 'Add' }).last().click()
-    await expect(page.getByText('Rescued prisoners')).toBeVisible()
-    await expect(page.getByText('300 XP')).toBeVisible()
+    const graveyardSection = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: 'Graveyard' }) })
+    await graveyardSection.getByPlaceholder('Bonus XP label…').fill('Rescued prisoners')
+    await graveyardSection.getByPlaceholder('XP', { exact: true }).fill('300')
+    await graveyardSection.getByRole('button', { name: 'Add' }).click()
+    await expect(graveyardSection.getByText('Rescued prisoners')).toBeVisible()
+    await expect(graveyardSection.getByText('300 XP')).toBeVisible()
   })
 
   test('quest XP total adds to running total', async ({ page }) => {
@@ -35,7 +41,7 @@ test.describe('DM Graveyard', () => {
     await addUnit(page, { name: 'Warg', initiative: 6, hp: 18 })
     await killFirstUnit(page) // CR 1 = 200 XP
     await page.getByPlaceholder('Bonus XP label…').fill('Quest bonus')
-    await page.getByPlaceholder('XP').fill('100')
+    await page.getByPlaceholder('XP', { exact: true }).fill('100')
     await page.getByRole('button', { name: 'Add' }).last().click()
     // Total should be 300 XP
     const graveSection = page
@@ -73,7 +79,7 @@ test.describe('DM Graveyard', () => {
   test('delete quest XP entry removes it', async ({ page }) => {
     await createCampaign(page)
     await page.getByPlaceholder('Bonus XP label…').fill('Side quest')
-    await page.getByPlaceholder('XP').fill('150')
+    await page.getByPlaceholder('XP', { exact: true }).fill('150')
     await page.getByRole('button', { name: 'Add' }).last().click()
     await expect(page.getByText('Side quest')).toBeVisible()
     const graveyardSection = page
@@ -109,9 +115,12 @@ test.describe('End Session modal', () => {
     await addUnit(page, { name: 'Dragon', initiative: 20, hp: 100 })
     await killFirstUnit(page) // CR 1 = 200 XP
     await page.getByRole('button', { name: 'Clear' }).click()
-    await page.locator('spinbutton').last().fill('4')
-    await page.locator('spinbutton').last().blur()
-    await expect(page.getByText('50 XP')).toBeVisible()
+    const modal = page
+      .locator('.fixed')
+      .filter({ has: page.getByRole('heading', { name: 'End Session' }) })
+    await modal.getByRole('spinbutton').fill('4')
+    await modal.getByRole('spinbutton').blur()
+    await expect(modal.getByText('50 XP')).toBeVisible()
   })
 
   test('Cancel closes modal, graveyard unchanged', async ({ page }) => {

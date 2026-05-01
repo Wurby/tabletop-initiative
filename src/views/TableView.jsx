@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
+import NoSleep from 'nosleep.js'
 import InitiativeList from '../components/initiative/InitiativeList'
 import GraveyardView from '../components/graveyard/GraveyardView'
 import SplitModal from '../components/session/SplitModal'
@@ -10,31 +11,38 @@ export default function TableView({ campaign, campaignCode, onLeave }) {
   const lastSplit = campaign.combat?.lastSplit
   const [shownAt, setShownAt] = useState(lastSplit?.clearedAt ?? null)
   const [showSplitModal, setShowSplitModal] = useState(false)
-  const wakeLockRef = useRef(null)
+  const noSleepRef = useRef(null)
 
   useEffect(() => {
-    if (!('wakeLock' in navigator)) return
-    let active = true
+    const html = document.documentElement
+    const prev = html.style.fontSize
+    html.style.fontSize = '24px' // 1.5× the 16px default — scales all rem-based Tailwind sizes
+    return () => { html.style.fontSize = prev }
+  }, [])
 
-    async function acquire() {
-      try {
-        wakeLockRef.current = await navigator.wakeLock.request('screen')
-      } catch {
-        // wake lock unsupported or denied — silently no-op
-      }
+  useEffect(() => {
+    const noSleep = new NoSleep()
+    noSleepRef.current = noSleep
+
+    function enable() {
+      noSleep.enable().catch(() => {})
     }
 
-    acquire()
+    // Try immediately (works in PWA mode and with Wake Lock API)
+    enable()
 
+    // Re-enable after the page becomes visible again (device wake/tab switch)
     function onVisibilityChange() {
-      if (document.visibilityState === 'visible' && active) acquire()
+      if (document.visibilityState === 'visible') enable()
     }
     document.addEventListener('visibilitychange', onVisibilityChange)
 
+    // Ensure it activates on first touch (fallback for iOS video autoplay restriction)
+    document.addEventListener('touchstart', enable, { once: true })
+
     return () => {
-      active = false
       document.removeEventListener('visibilitychange', onVisibilityChange)
-      wakeLockRef.current?.release()
+      noSleep.disable()
     }
   }, [])
 

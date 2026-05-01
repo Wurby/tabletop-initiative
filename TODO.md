@@ -89,13 +89,12 @@
 
 ---
 
-## E2E Test Fixes (Remaining)
+## E2E Test Fixes ✓
 
-- [ ] `graveyard.spec.js` — strict mode: `getByText('200 XP')` and `getByPlaceholder('XP')` match multiple elements; scope to graveyard section or use `.first()`
-- [ ] `graveyard.spec.js` — `locator('spinbutton').last()` times out in "changing party size updates per player split"; needs a better locator for the End Session party size input
-- [ ] `graveyard.spec.js` — `getByDisplayValue('Skeleton')` replaced with `getByRole('textbox')` but confirm no remaining `getByDisplayValue` usage
-- [ ] `initiative.spec.js` — HP `+` stepper test intermittently fails (value stays at 20); investigate whether popover state or Firebase write timing causes the miss
-- [ ] `sync.spec.js` — "unit added on DM appears on Table" occasionally slow; may need a short wait after `joinAsTable` before adding the unit to ensure Firestore listener is established
+- [x] `graveyard.spec.js` — strict mode: `getByText('200 XP')` and `getByPlaceholder('XP')` match multiple elements; scope to graveyard section
+- [x] `graveyard.spec.js` — `locator('spinbutton').last()` times out in "changing party size updates per player split"; fixed to `modal.getByRole('spinbutton')`
+- [x] `initiative.spec.js` — HP `+` stepper test: decrement to 19 first, then verify `+` brings to 20 (avoids max-cap)
+- [x] `sync.spec.js` — "unit added on DM appears on Table": gate on `'Waiting for combat'` text to confirm Firestore listener established
 
 ---
 
@@ -120,11 +119,14 @@
 
 ---
 
-## Phase 9 — Backend Maintenance
+## Phase 9 — Backend Maintenance ✓
 
-- [ ] Firebase scheduled function — delete campaigns with no activity in the past 30 days (`meta.lastActiveAt` timestamp, updated on any write)
-- [ ] Firebase scheduled function — delete orphaned Storage files for campaigns that no longer exist in Firestore
-- [ ] Add `meta.lastActiveAt` write to campaign on any DM action (can batch with existing `updateDoc` calls)
+- [x] Firebase scheduled function — delete campaigns with no activity in the past 30 days (`meta.lastActiveAt` timestamp, updated on any write)
+- [x] Firebase scheduled function — delete orphaned Storage files for campaigns that no longer exist in Firestore
+- [x] Add `meta.lastActiveAt` write to campaign on any DM action via `dmUpdate()` helper
+- [x] `meta.locked` flag — DM can lock a campaign from deletion; visible/toggleable in admin dashboard
+- [x] Admin dashboard — password-protected, sortable campaign table, manual cleanup trigger with configurable threshold
+- [x] Wake lock on TableView — prevents device screen from sleeping during combat
 
 ---
 

@@ -253,7 +253,7 @@ export default function UnitCard({
         {/* Header: type | name | AC | initiative */}
         <div
           ref={popoverRef}
-          className={`${TYPE_HEADER[local.type] ?? TYPE_HEADER.mob} px-2 py-1.5 flex items-center gap-1.5 relative`}
+          className={`${TYPE_HEADER[local.type] ?? TYPE_HEADER.mob} px-2 py-1.5 flex items-center relative`}
         >
           {isParty || isFollower ? (
             <span className="text-white/60 text-xs font-bold w-5 text-center shrink-0">
@@ -392,12 +392,21 @@ export default function UnitCard({
           {!isFollower && (
             <div className="flex border-t border-brand-mint">
               {isParty ? (
-                <button
-                  onClick={() => push({ ...local, showDeathSaves: !local.showDeathSaves })}
-                  className={`flex-1 py-1.5 text-xs font-bold transition-colors ${local.showDeathSaves ? 'text-brand-rivulet bg-brand-mint' : 'text-brand-danger hover:bg-brand-mint'}`}
-                >
-                  DS
-                </button>
+                <>
+                  <button
+                    onClick={() => push({ ...local, showDeathSaves: !local.showDeathSaves })}
+                    className={`flex-1 py-1.5 text-xs font-bold transition-colors border-r border-brand-mint ${local.showDeathSaves ? 'text-brand-rivulet bg-brand-mint' : 'text-brand-danger hover:bg-brand-mint'}`}
+                  >
+                    DS
+                  </button>
+                  <button
+                    onClick={() => push({ ...local, inspired: ((Number(local.inspired) || 0) + 3) % 4 })}
+                    className={`flex-1 py-1.5 text-xs transition-colors ${(Number(local.inspired) || 0) > 0 ? 'text-amber-400 bg-brand-mint' : 'text-brand-ink opacity-30 hover:opacity-60'}`}
+                    title={`Inspiration: ${Number(local.inspired) || 0}/3`}
+                  >
+                    {'★'.repeat(Number(local.inspired) || 0) || '★'}
+                  </button>
+                </>
               ) : (
                 <>
                   <button

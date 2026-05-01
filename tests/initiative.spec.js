@@ -92,9 +92,8 @@ test.describe('UnitCard — DM view', () => {
     await addUnit(page, { name: 'Orc', initiative: 10, hp: 20, ac: 14 })
     await page.getByRole('button', { name: /AC \d+ i \d+/ }).click()
     await expect(page.getByRole('button', { name: '++' }).first()).toBeVisible()
-    await page.evaluate(() =>
-      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
-    )
+    // Click outside the card — real mouse event needed to trigger native mousedown listener
+    await page.getByRole('banner').click()
     // Both ++ buttons (AC and init steppers) are inside the same popover
     await expect(page.getByRole('button', { name: '++' }).first()).not.toBeVisible()
   })
@@ -106,9 +105,11 @@ test.describe('UnitCard — DM view', () => {
       .locator('.w-48')
       .filter({ has: page.getByRole('textbox', { name: 'Wolf', exact: true }) })
     const hpSpin = unitCard.getByRole('spinbutton').first()
-    await expect(hpSpin).toHaveValue('20')
+    // Decrement first so current < max, then verify + brings it back up
+    await unitCard.getByRole('button', { name: '−', exact: true }).first().click()
+    await expect(hpSpin).toHaveValue('19')
     await unitCard.getByRole('button', { name: '+', exact: true }).first().click()
-    await expect(hpSpin).toHaveValue('21')
+    await expect(hpSpin).toHaveValue('20')
   })
 
   test('HP − stepper decrements and does not go below 0', async ({ page }) => {
