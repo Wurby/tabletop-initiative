@@ -105,6 +105,8 @@
 - [ ] Encounter presets — DM saves a unit group as a named encounter, drops them all into initiative at once
 - [ ] Inspiration tracker — per-party-member inspiration tokens, DM awards/removes
 - [ ] Image annotation — DM full-screen view with drawing/annotation tools; annotations broadcast live to table view overlay
+- [ ] Initiative tie-breaking — when two units share an initiative value, the number becomes a sub-value (e.g. `12.1`, `12.2`) with inline +/− controls to nudge order without retyping
+- [ ] Image folders/groups — group the image grid into named collections so campaigns with many images stay navigable
 
 ---
 
@@ -137,3 +139,17 @@
 - [ ] "Next Turn" button — increments `combat.activeIndex`, wraps at initiative list length, auto-increments round when wrapping
 - [ ] "Prev Turn" button — decrements `combat.activeIndex`
 - [ ] `combat.active` toggle — future-proofing field, unplanned behavior as of now
+
+---
+
+## Phase 11 — AI Image Generation
+
+> Uses `firebase/ai` (Firebase AI Logic + Imagen) — already bundled in Firebase v12, no extra packages needed.
+
+- [ ] Add sparkle (✨) button to the Images section header in DM view, alongside the existing Clear button
+- [ ] Build `ImageGenModal` component — prompt textarea, Generate button, preview pane (with loading/spinner state during generation)
+- [ ] Call Imagen via `firebase/ai` SDK on Generate; display result in preview pane
+- [ ] Post-generation controls: label input (AI-suggested via Gemini if left blank), Save, Reprompt (keeps prompt editable for iteration), Delete (clears prompt and discards image)
+- [ ] Save flow: fetch generated image blob → upload to Firebase Storage under `campaigns/{code}/images/` → append entry to `images[]` in Firestore — identical shape to manual uploads so the rest of the image system requires no changes
+- [ ] Reprompt: DM edits prompt freely and hits Generate again; previous preview is replaced
+- [ ] AI label suggestion: if DM saves with an empty label field, call Gemini text generation with the prompt to produce a short descriptive name
