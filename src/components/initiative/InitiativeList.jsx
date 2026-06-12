@@ -87,7 +87,9 @@ function Revealed({ show, children }) {
 }
 
 export default function InitiativeList({ campaign }) {
-  const units = [...(campaign.initiative ?? [])].sort((a, b) => b.initiative - a.initiative)
+  const units = [...(campaign.initiative ?? [])].sort(
+    (a, b) => (b.initiative - a.initiative) || ((a.tiebreak ?? 0) - (b.tiebreak ?? 0))
+  )
   const activeIndex = campaign.combat?.activeIndex ?? 0
   const activeRef = useRef(null)
 
@@ -152,6 +154,16 @@ export default function InitiativeList({ campaign }) {
               <div className="px-3 py-3 flex-1 flex flex-col gap-2">
                 {unit.status && (
                   <p className="text-brand-ink/60 text-xs font-normal">{unit.status}</p>
+                )}
+                {(unit.conditions ?? []).length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {unit.conditions.map((c) => (
+                      <span key={c}
+                        className="px-1 py-0.5 text-[10px] leading-none bg-brand-rivulet/10 text-brand-rivulet border border-brand-rivulet/25">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
                 )}
                 {isParty && unit.showDeathSaves && <DeathSavesDisplay unit={unit} />}
               </div>

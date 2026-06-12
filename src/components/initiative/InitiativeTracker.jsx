@@ -126,7 +126,13 @@ function EmptyCard() {
 
 export default function InitiativeTracker({ campaign, campaignCode }) {
   const showError = useToast()
-  const units = [...(campaign.initiative ?? [])].sort((a, b) => b.initiative - a.initiative)
+  const units = [...(campaign.initiative ?? [])].sort(
+    (a, b) => (b.initiative - a.initiative) || ((a.tiebreak ?? 0) - (b.tiebreak ?? 0))
+  )
+  const initiativeCounts = units.reduce((acc, u) => {
+    acc[u.initiative] = (acc[u.initiative] || 0) + 1
+    return acc
+  }, {})
   const emptyCount = Math.max(0, MIN_SLOTS - units.length - 1)
   const activeIndex = campaign.combat?.activeIndex ?? 0
   const round = campaign.combat?.round ?? 1
@@ -184,6 +190,8 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
       showAc: false,
       showDeathSaves: false,
       deathSaves: { s: [false, false, false], f: [false, false, false] },
+      conditions: [],
+      tiebreak: 0,
     }
     try {
       await dmUpdate(campaignCode, {
@@ -284,6 +292,7 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
             onDelete={handleDelete}
             onKill={handleKill}
             scrollRef={i === activeIndex ? activeRef : null}
+            hasTie={initiativeCounts[unit.initiative] > 1}
           />
         ))}
         <AddCard onAdd={handleAdd} />

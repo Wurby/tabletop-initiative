@@ -103,13 +103,10 @@
 
 - [x] Auto-scroll active turn into view — when `combat.activeIndex` changes, scroll the highlighted unit card into view on both DM and table views
 - [x] Max HP editable for party/follower units — extend the header popover (currently non-party only) so party members and followers can also have their max HP changed inline alongside init and AC
-- [ ] Conditions — 5e condition badges per unit (Poisoned, Stunned, etc.), DM toggles, table view shows them
-- [ ] Session notes — persistent DM scratchpad per campaign
-- [ ] Encounter presets — DM saves a unit group as a named encounter, drops them all into initiative at once
-- [ ] Inspiration tracker — per-party-member inspiration tokens, DM awards/removes
-- [ ] Image annotation — DM full-screen view with drawing/annotation tools; annotations broadcast live to table view overlay
-- [ ] Initiative tie-breaking — when two units share an initiative value, the number becomes a sub-value (e.g. `12.1`, `12.2`) with inline +/− controls to nudge order without retyping
-- [ ] Image folders/groups — group the image grid into named collections so campaigns with many images stay navigable
+- [x] Conditions — 5e condition badges per unit (Poisoned, Stunned, etc.), DM toggles with custom free-text notes, table view shows them
+- [x] Inspiration tracker — per-party-member inspiration tokens, DM awards/removes
+- [x] Initiative tie-breaking — tied units show ▲/▼ order controls in the AC/init popover; secondary sort on `tiebreak` field
+- [x] Image folders/groups — folder tabs filter the image grid; images assigned via ⊕ badge in the label row; new folders auto-selected on create
 
 ---
 
