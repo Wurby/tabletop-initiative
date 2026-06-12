@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useToast } from '../../lib/toast'
 import { dmUpdate } from '../../lib/campaign'
 import UnitCard from './UnitCard'
@@ -131,6 +131,11 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
   const activeIndex = campaign.combat?.activeIndex ?? 0
   const round = campaign.combat?.round ?? 1
   const [confirmEnd, setConfirmEnd] = useState(false)
+  const activeRef = useRef(null)
+
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }, [activeIndex])
 
   async function setActiveIndex(next) {
     const idx = units.length > 0 ? ((next % units.length) + units.length) % units.length : 0
@@ -278,6 +283,7 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
             onUpdate={handleUpdate}
             onDelete={handleDelete}
             onKill={handleKill}
+            scrollRef={i === activeIndex ? activeRef : null}
           />
         ))}
         <AddCard onAdd={handleAdd} />

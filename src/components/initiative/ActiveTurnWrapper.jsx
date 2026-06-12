@@ -1,3 +1,5 @@
+import { forwardRef } from 'react'
+
 const OUTLINE = {
   party: 'outline-brand-forest',
   follower: 'outline-brand-forest',
@@ -11,11 +13,15 @@ const BAR_BG = {
   mob: 'bg-brand-danger',
 }
 
-export default function ActiveTurnWrapper({ isActive, type = 'mob', children }) {
+const ActiveTurnWrapper = forwardRef(function ActiveTurnWrapper(
+  { isActive, type = 'mob', children },
+  ref
+) {
   const outline = OUTLINE[type] ?? OUTLINE.mob
   const bar = BAR_BG[type] ?? BAR_BG.mob
   return (
     <div
+      ref={ref}
       className={`relative flex-shrink-0 min-h-28 ${isActive ? `outline outline-4 ${outline} outline-offset-0` : ''}`}
     >
       {isActive && (
@@ -24,4 +30,6 @@ export default function ActiveTurnWrapper({ isActive, type = 'mob', children }) 
       {children}
     </div>
   )
-}
+})
+
+export default ActiveTurnWrapper

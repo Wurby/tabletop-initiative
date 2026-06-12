@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react'
 import { EyeClosed } from '../icons'
 import ActiveTurnWrapper from './ActiveTurnWrapper'
 
@@ -88,6 +89,11 @@ function Revealed({ show, children }) {
 export default function InitiativeList({ campaign }) {
   const units = [...(campaign.initiative ?? [])].sort((a, b) => b.initiative - a.initiative)
   const activeIndex = campaign.combat?.activeIndex ?? 0
+  const activeRef = useRef(null)
+
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }, [activeIndex])
 
   if (units.length === 0) {
     return (
@@ -107,7 +113,7 @@ export default function InitiativeList({ campaign }) {
 
         if (!unit.visible) {
           return (
-            <ActiveTurnWrapper key={unit.id} isActive={active} type={unit.type}>
+            <ActiveTurnWrapper key={unit.id} ref={active ? activeRef : null} isActive={active} type={unit.type}>
               <div className="w-48 h-full min-h-28 bg-brand-mint-dark shadow-card flex flex-col opacity-30">
                 <div className="bg-brand-ink px-3 py-2 flex items-center justify-center">
                   <EyeClosed className="text-white" size={16} />
@@ -121,7 +127,7 @@ export default function InitiativeList({ campaign }) {
         }
 
         return (
-          <ActiveTurnWrapper key={unit.id} isActive={active} type={unit.type}>
+          <ActiveTurnWrapper key={unit.id} ref={active ? activeRef : null} isActive={active} type={unit.type}>
             <div className="w-48 h-full min-h-28 bg-brand-mint-dark shadow-card flex flex-col transition-all">
               {/* Header: name | AC | initiative */}
               <div className={`${headerColor(unit.type)} px-2 py-1.5 flex items-center`}>

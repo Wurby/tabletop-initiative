@@ -39,6 +39,7 @@
 - [x] Build `UnitCard` component — all fields editable inline with steppers for HP/AC/initiative
 - [x] HP current/max/temp steppers — write to Firestore on blur or button click
 - [x] Initiative / AC in header popover — write to Firestore on commit
+- [x] Max HP in header popover — editable alongside AC and init for non-party units
 - [x] Visible toggle — eye icon button, writes `visible` flag; hidden units show placeholder on table
 - [x] Kill button — CR grid (9/page, paginated) auto-confirms with XP; moves unit to graveyard
 - [x] Delete unit button — removes from `initiative[]`
@@ -100,6 +101,8 @@
 
 ## Phase 7 — Post-MVP Features
 
+- [x] Auto-scroll active turn into view — when `combat.activeIndex` changes, scroll the highlighted unit card into view on both DM and table views
+- [x] Max HP editable for party/follower units — extend the header popover (currently non-party only) so party members and followers can also have their max HP changed inline alongside init and AC
 - [ ] Conditions — 5e condition badges per unit (Poisoned, Stunned, etc.), DM toggles, table view shows them
 - [ ] Session notes — persistent DM scratchpad per campaign
 - [ ] Encounter presets — DM saves a unit group as a named encounter, drops them all into initiative at once
@@ -146,10 +149,10 @@
 
 > Uses `firebase/ai` (Firebase AI Logic + Imagen) — already bundled in Firebase v12, no extra packages needed.
 
-- [ ] Add sparkle (✨) button to the Images section header in DM view, alongside the existing Clear button
-- [ ] Build `ImageGenModal` component — prompt textarea, Generate button, preview pane (with loading/spinner state during generation)
-- [ ] Call Imagen via `firebase/ai` SDK on Generate; display result in preview pane
-- [ ] Post-generation controls: label input (AI-suggested via Gemini if left blank), Save, Reprompt (keeps prompt editable for iteration), Delete (clears prompt and discards image)
-- [ ] Save flow: fetch generated image blob → upload to Firebase Storage under `campaigns/{code}/images/` → append entry to `images[]` in Firestore — identical shape to manual uploads so the rest of the image system requires no changes
-- [ ] Reprompt: DM edits prompt freely and hits Generate again; previous preview is replaced
-- [ ] AI label suggestion: if DM saves with an empty label field, call Gemini text generation with the prompt to produce a short descriptive name
+- [x] Add sparkle (✨) button to the Images section header in DM view, alongside the existing Clear button
+- [x] Build `ImageGenModal` component — prompt textarea, Generate button, preview pane (with loading/spinner state during generation)
+- [x] Call Imagen via `firebase/ai` SDK on Generate; display result in preview pane
+- [x] Post-generation controls: label input (AI-suggested via Gemini if left blank), Save, Reprompt (keeps prompt editable for iteration), Delete (clears prompt and discards image)
+- [x] Save flow: fetch generated image blob → upload to Firebase Storage under `campaigns/{code}/images/` → append entry to `images[]` in Firestore — identical shape to manual uploads so the rest of the image system requires no changes
+- [x] Reprompt: DM edits prompt freely and hits Generate again; previous preview is replaced
+- [x] AI label suggestion: if DM saves with an empty label field, call Gemini text generation with the prompt to produce a short descriptive name

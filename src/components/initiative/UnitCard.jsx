@@ -113,6 +113,7 @@ export default function UnitCard({
   onKill,
   isActive = false,
   onSetActive,
+  scrollRef,
 }) {
   const [local, setLocal] = useState(unit)
   const [killing, setKilling] = useState(false)
@@ -174,7 +175,8 @@ export default function UnitCard({
       setCrPage(0)
     }
     return (
-      <div className="flex-shrink-0 w-48 h-full bg-brand-mint-dark shadow-card flex flex-col">
+      <ActiveTurnWrapper ref={scrollRef} isActive={isActive} type={local.type}>
+        <div className="flex-shrink-0 w-48 h-full bg-brand-mint-dark shadow-card flex flex-col">
         <div className="bg-brand-danger px-3 py-2">
           <p className="text-white text-xs font-normal truncate">Kill {local.name}?</p>
         </div>
@@ -241,12 +243,13 @@ export default function UnitCard({
             Cancel
           </button>
         </div>
-      </div>
+        </div>
+      </ActiveTurnWrapper>
     )
   }
 
   return (
-    <ActiveTurnWrapper isActive={isActive} type={local.type}>
+    <ActiveTurnWrapper ref={scrollRef} isActive={isActive} type={local.type}>
       <div
         className={`w-48 h-full min-h-28 bg-brand-mint-dark shadow-card flex flex-col transition-all ${!local.visible ? 'opacity-50' : ''}`}
       >
@@ -309,6 +312,13 @@ export default function UnitCard({
                 value={local.initiative}
                 onChange={(v) => setLocal({ ...local, initiative: v })}
                 onCommit={(v) => commit('initiative', Number(v))}
+              />
+              <Stepper
+                label="max"
+                labelColor="text-brand-forest"
+                value={local.hp?.max ?? 0}
+                onChange={(v) => setLocal({ ...local, hp: { ...local.hp, max: v } })}
+                onCommit={(v) => commit('hp.max', Math.max(0, Number(v)))}
               />
             </div>
           )}

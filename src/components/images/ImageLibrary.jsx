@@ -3,6 +3,7 @@ import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebas
 import { storage } from '../../lib/firebase'
 import { dmUpdate } from '../../lib/campaign'
 import { Trash } from '../icons'
+import ImageGenModal from './ImageGenModal'
 
 export default function ImageLibrary({ campaign, campaignCode }) {
   const images = campaign.images ?? []
@@ -13,6 +14,7 @@ export default function ImageLibrary({ campaign, campaignCode }) {
   const [progress, setProgress] = useState(0)
   const [labelInput, setLabelInput] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [showGenModal, setShowGenModal] = useState(false)
   const fileRef = useRef(null)
 
   async function handleUpload(e) {
@@ -79,16 +81,32 @@ export default function ImageLibrary({ campaign, campaignCode }) {
 
   return (
     <section>
+      {showGenModal && (
+        <ImageGenModal
+          campaign={campaign}
+          campaignCode={campaignCode}
+          onClose={() => setShowGenModal(false)}
+        />
+      )}
       <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center justify-between">
         <h2 className="text-xl font-normal text-white">Images</h2>
-        {active && (
+        <div className="flex items-center gap-3">
           <button
-            onClick={handleClear}
-            className="text-xs font-normal text-white opacity-50 hover:opacity-100 transition-opacity"
+            onClick={() => setShowGenModal(true)}
+            className="text-lg text-white opacity-50 hover:opacity-100 transition-opacity leading-none"
+            title="Generate image with AI"
           >
-            Clear
+            ✦
           </button>
-        )}
+          {active && (
+            <button
+              onClick={handleClear}
+              className="text-xs font-normal text-white opacity-50 hover:opacity-100 transition-opacity"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="px-6 flex flex-col gap-4">
