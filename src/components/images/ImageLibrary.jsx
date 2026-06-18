@@ -199,7 +199,7 @@ export default function ImageLibrary({ campaign, campaignCode }) {
           />
           <button
             onClick={() => setShowGenModal(true)}
-            className="shrink-0 text-lg text-brand-ink/30 hover:text-brand-ink/60 transition-colors leading-none"
+            className="shrink-0 text-xs font-normal px-2 py-1 border text-brand-rivulet border-brand-rivulet/40 hover:border-brand-rivulet transition-colors"
             title="Generate image with AI"
           >
             ✦

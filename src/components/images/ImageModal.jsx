@@ -1,5 +1,15 @@
 import { useState, useRef } from 'react'
 
+function getRenderedRect(container, img) {
+  const { width: W, height: H } = container.getBoundingClientRect()
+  const { naturalWidth: nW, naturalHeight: nH } = img
+  if (!nW || !nH || !W || !H) return null
+  const aspect = nW / nH
+  const renderedW = W / H > aspect ? H * aspect : W
+  const renderedH = W / H > aspect ? H : W / aspect
+  return { offsetX: (W - renderedW) / 2, offsetY: (H - renderedH) / 2, renderedW, renderedH }
+}
+
 function positionMarker(m, r) {
   if (m.type === 'dot' || m.type === 'text') {
     return { ...m, px: r.offsetX + m.x * r.renderedW, py: r.offsetY + m.y * r.renderedH }
@@ -7,14 +17,7 @@ function positionMarker(m, r) {
   if (m.type === 'circle') {
     return { ...m, px: r.offsetX + m.x * r.renderedW, py: r.offsetY + m.y * r.renderedH, pr: m.r * r.renderedW }
   }
-  if (m.type === 'square') {
-    return {
-      ...m,
-      px1: r.offsetX + m.x1 * r.renderedW, py1: r.offsetY + m.y1 * r.renderedH,
-      px2: r.offsetX + m.x2 * r.renderedW, py2: r.offsetY + m.y2 * r.renderedH,
-    }
-  }
-  if (m.type === 'arrow') {
+  if (m.type === 'square' || m.type === 'arrow') {
     return {
       ...m,
       px1: r.offsetX + m.x1 * r.renderedW, py1: r.offsetY + m.y1 * r.renderedH,
@@ -76,14 +79,13 @@ export default function ImageModal({ campaign, onClose }) {
 
   function positioned() {
     if (!containerRef.current || !imgRef.current || !imgLoaded) return []
-    const containerRect = containerRef.current.getBoundingClientRect()
-    const { left, top, width, height } = imgRef.current.getBoundingClientRect()
-    const r = { offsetX: left - containerRect.left, offsetY: top - containerRect.top, renderedW: width, renderedH: height }
+    const r = getRenderedRect(containerRef.current, imgRef.current)
+    if (!r) return []
     return markers.map((m) => positionMarker(m, r))
   }
 
   return (
-    <div ref={containerRef} className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+    <div ref={containerRef} className="fixed inset-0 z-50 bg-black">
       {onClose && (
         <button
           onClick={onClose}
@@ -96,7 +98,7 @@ export default function ImageModal({ campaign, onClose }) {
         ref={imgRef}
         src={display.url}
         alt={display.label || ''}
-        className="max-w-full max-h-full object-contain"
+        className="absolute inset-0 w-full h-full object-contain"
         onLoad={() => setImgLoaded(true)}
       />
       {imgLoaded && markers.length > 0 && (
