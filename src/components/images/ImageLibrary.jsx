@@ -4,6 +4,7 @@ import { storage } from '../../lib/firebase'
 import { dmUpdate } from '../../lib/campaign'
 import { Trash } from '../icons'
 import ImageGenModal from './ImageGenModal'
+import LaserPointerModal from './LaserPointerModal'
 
 export default function ImageLibrary({ campaign, campaignCode }) {
   const images = campaign.images ?? []
@@ -16,6 +17,7 @@ export default function ImageLibrary({ campaign, campaignCode }) {
   const [labelInput, setLabelInput] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [showGenModal, setShowGenModal] = useState(false)
+  const [showPointerModal, setShowPointerModal] = useState(false)
   const [activeFolderId, setActiveFolderId] = useState(null)
   const [showNewFolder, setShowNewFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
@@ -111,6 +113,13 @@ export default function ImageLibrary({ campaign, campaignCode }) {
           onClose={() => setShowGenModal(false)}
         />
       )}
+      {showPointerModal && (
+        <LaserPointerModal
+          campaign={campaign}
+          campaignCode={campaignCode}
+          onClose={() => setShowPointerModal(false)}
+        />
+      )}
 
       <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center justify-between">
         <h2 className="text-xl font-normal text-white">Images</h2>
@@ -123,12 +132,20 @@ export default function ImageLibrary({ campaign, campaignCode }) {
             ✦
           </button>
           {active && (
-            <button
-              onClick={handleClear}
-              className="text-xs font-normal text-white opacity-50 hover:opacity-100 transition-opacity"
-            >
-              Clear
-            </button>
+            <>
+              <button
+                onClick={() => setShowPointerModal(true)}
+                className="text-xs font-normal text-white opacity-50 hover:opacity-100 transition-opacity"
+              >
+                Pointer
+              </button>
+              <button
+                onClick={handleClear}
+                className="text-xs font-normal text-white opacity-50 hover:opacity-100 transition-opacity"
+              >
+                Clear
+              </button>
+            </>
           )}
         </div>
       </div>
