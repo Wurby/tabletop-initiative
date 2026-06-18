@@ -89,10 +89,11 @@ export default function ImageGenModal({ campaign, campaignCode, onClose }) {
   }
 
   const busy = phase === 'generating' || phase === 'saving'
+  const expanded = selected !== null || phase === 'generating'
 
   return (
-    <div className="fixed inset-0 z-40 bg-brand-ink/60 flex items-center justify-center p-6">
-      <div className="bg-brand-mint-dark w-full max-w-md flex flex-col shadow-modal">
+    <div className={`fixed inset-0 z-40 bg-brand-ink/60 flex items-center justify-center ${expanded ? 'p-[5%]' : 'p-6'}`}>
+      <div className={`bg-brand-mint-dark flex flex-col shadow-modal ${expanded ? 'w-full h-full max-w-none' : 'w-full max-w-md'}`}>
         <div className="bg-brand-forest px-4 py-2 flex items-center justify-between">
           <h2 className="text-white font-normal text-base">Generate Image</h2>
           <button
@@ -104,7 +105,7 @@ export default function ImageGenModal({ campaign, campaignCode, onClose }) {
           </button>
         </div>
 
-        <div className="px-4 py-4 flex flex-col gap-4">
+        <div className={`px-4 py-4 flex flex-col gap-4 ${expanded ? 'flex-1 min-h-0 overflow-auto' : ''}`}>
           <textarea
             className="w-full bg-white border border-brand-ink/20 px-3 py-2 text-brand-ink text-sm font-normal focus:outline-none focus:ring-2 focus:ring-brand-rivulet resize-none"
             rows={3}
@@ -119,14 +120,14 @@ export default function ImageGenModal({ campaign, campaignCode, onClose }) {
 
           {/* Preview area */}
           {phase === 'generating' && !selected && (
-            <div className="w-full h-48 bg-brand-mint flex items-center justify-center">
+            <div className={`w-full bg-brand-mint flex items-center justify-center ${expanded ? 'flex-1 min-h-0' : 'h-48'}`}>
               <span className="text-brand-ink/40 text-sm animate-pulse">Generating…</span>
             </div>
           )}
 
           {selected && (
-            <div className="flex flex-col gap-2">
-              <div className="relative">
+            <div className={`flex flex-col gap-2 ${expanded ? 'flex-1 min-h-0' : ''}`}>
+              <div className={`relative ${expanded ? 'flex-1 min-h-0' : ''}`}>
                 {phase === 'generating' && (
                   <div className="absolute inset-0 bg-brand-mint/70 flex items-center justify-center z-10">
                     <span className="text-brand-ink/60 text-sm animate-pulse">Generating…</span>
@@ -140,7 +141,7 @@ export default function ImageGenModal({ campaign, campaignCode, onClose }) {
                 <img
                   src={`data:${selected.mimeType};base64,${selected.data}`}
                   alt="Generated preview"
-                  className="w-full object-contain max-h-64"
+                  className={`w-full object-contain ${expanded ? 'h-full absolute inset-0' : 'max-h-64'}`}
                 />
               </div>
 
