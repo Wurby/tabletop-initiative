@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
 import { storage } from '../../lib/firebase'
 import { dmUpdate } from '../../lib/campaign'
-import { Trash } from '../icons'
+import { Trash, Pen } from '../icons'
 import ImageGenModal from './ImageGenModal'
 import LaserPointerModal from './LaserPointerModal'
 
@@ -124,28 +124,13 @@ export default function ImageLibrary({ campaign, campaignCode }) {
       <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center justify-between">
         <h2 className="text-xl font-normal text-white">Images</h2>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowGenModal(true)}
-            className="text-lg text-white opacity-50 hover:opacity-100 transition-opacity leading-none"
-            title="Generate image with AI"
-          >
-            ✦
-          </button>
           {active && (
-            <>
-              <button
-                onClick={() => setShowPointerModal(true)}
-                className="text-xs font-normal text-white opacity-50 hover:opacity-100 transition-opacity"
-              >
-                Pointer
-              </button>
-              <button
-                onClick={handleClear}
-                className="text-xs font-normal text-white opacity-50 hover:opacity-100 transition-opacity"
-              >
-                Clear
-              </button>
-            </>
+            <button
+              onClick={handleClear}
+              className="text-xs font-normal text-white opacity-50 hover:opacity-100 transition-opacity"
+            >
+              Clear
+            </button>
           )}
         </div>
       </div>
@@ -212,6 +197,13 @@ export default function ImageLibrary({ campaign, campaignCode }) {
             value={labelInput}
             onChange={(e) => setLabelInput(e.target.value)}
           />
+          <button
+            onClick={() => setShowGenModal(true)}
+            className="shrink-0 text-lg text-brand-ink/30 hover:text-brand-ink/60 transition-colors leading-none"
+            title="Generate image with AI"
+          >
+            ✦
+          </button>
           <label className={`shrink-0 text-xs font-normal px-2 py-1 border cursor-pointer transition-colors ${uploading ? 'text-brand-ink/30 border-brand-ink/20 pointer-events-none' : 'text-brand-rivulet border-brand-rivulet/40 hover:border-brand-rivulet'}`}>
             {uploading ? `${progress}%` : 'Upload'}
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
@@ -283,11 +275,22 @@ export default function ImageLibrary({ campaign, campaignCode }) {
                     <div className="absolute bottom-[-5px] left-[-4px] right-[-4px] h-[2px] bg-brand-forest" />
                   )}
 
-                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className={`absolute top-1 right-1 flex gap-1 transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     {isActive ? (
-                      <button onClick={handleClear}
-                        className="w-6 h-6 bg-brand-ink/50 text-white flex items-center justify-center text-xs"
-                        title="Clear from display">✕</button>
+                      <>
+                        <button
+                          onClick={() => setShowPointerModal(true)}
+                          className="w-6 h-6 bg-brand-ink/50 text-white flex items-center justify-center"
+                          title="Laser pointer"
+                        >
+                          <Pen size={12} />
+                        </button>
+                        <button
+                          onClick={handleClear}
+                          className="w-6 h-6 bg-brand-ink/50 text-white flex items-center justify-center text-xs"
+                          title="Clear from display"
+                        >✕</button>
+                      </>
                     ) : (
                       <button onClick={() => setConfirmDeleteId(image.id)}
                         className="w-6 h-6 bg-brand-ink/50 text-white flex items-center justify-center"

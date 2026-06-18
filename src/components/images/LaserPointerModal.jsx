@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { dmUpdate } from '../../lib/campaign'
 
-const TOOLS = ['dot', 'circle', 'square', 'text']
+const DRAG_THRESHOLD = 5 // px — below this, drag tools do nothing
 
 function getRenderedRect(container, img) {
   const { width: W, height: H } = container.getBoundingClientRect()
@@ -10,34 +10,67 @@ function getRenderedRect(container, img) {
   const aspect = nW / nH
   const renderedW = W / H > aspect ? H * aspect : W
   const renderedH = W / H > aspect ? H : W / aspect
-  return {
-    offsetX: (W - renderedW) / 2,
-    offsetY: (H - renderedH) / 2,
-    renderedW,
-    renderedH,
-  }
+  return { offsetX: (W - renderedW) / 2, offsetY: (H - renderedH) / 2, renderedW, renderedH }
 }
 
-function MarkerShape({ type, text, x, y, onRemove }) {
+function positionMarker(m, r) {
+  if (m.type === 'dot' || m.type === 'text') {
+    return { ...m, px: r.offsetX + m.x * r.renderedW, py: r.offsetY + m.y * r.renderedH }
+  }
+  if (m.type === 'circle') {
+    return { ...m, px: r.offsetX + m.x * r.renderedW, py: r.offsetY + m.y * r.renderedH, pr: m.r * r.renderedW }
+  }
+  if (m.type === 'square' || m.type === 'arrow') {
+    return {
+      ...m,
+      px1: r.offsetX + m.x1 * r.renderedW, py1: r.offsetY + m.y1 * r.renderedH,
+      px2: r.offsetX + m.x2 * r.renderedW, py2: r.offsetY + m.y2 * r.renderedH,
+    }
+  }
+  return m
+}
+
+function MarkerShape({ m, onRemove }) {
+  const stopDown = (e) => e.stopPropagation()
   const handle = (e) => { e.stopPropagation(); onRemove() }
-  const outline = { fill: 'none', stroke: '#ef4444', strokeWidth: 3, style: { cursor: 'pointer' }, onClick: handle }
+  const clickProps = { onMouseDown: stopDown, onClick: handle, style: { cursor: 'pointer' } }
+  const { type, text, px, py, pr, px1, py1, px2, py2 } = m
+
   if (type === 'dot') {
-    return <circle cx={x} cy={y} r={10} fill="#ef4444" fillOpacity={0.9} style={{ cursor: 'pointer' }} onClick={handle} />
+    return <circle cx={px} cy={py} r={8} fill="#ef4444" fillOpacity={0.9} {...clickProps} />
   }
   if (type === 'circle') {
-    return <circle cx={x} cy={y} r={35} {...outline} />
+    return <circle cx={px} cy={py} r={pr} fill="none" stroke="#ef4444" strokeWidth={3} {...clickProps} />
   }
   if (type === 'square') {
-    return <rect x={x - 27} y={y - 27} width={54} height={54} {...outline} />
+    return (
+      <rect
+        x={Math.min(px1, px2)} y={Math.min(py1, py2)}
+        width={Math.abs(px2 - px1)} height={Math.abs(py2 - py1)}
+        fill="none" stroke="#ef4444" strokeWidth={3} {...clickProps}
+      />
+    )
+  }
+  if (type === 'arrow') {
+    const angle = Math.atan2(py2 - py1, px2 - px1)
+    const headLen = 14
+    const spread = Math.PI / 6
+    const hx1 = px2 - headLen * Math.cos(angle - spread)
+    const hy1 = py2 - headLen * Math.sin(angle - spread)
+    const hx2 = px2 - headLen * Math.cos(angle + spread)
+    const hy2 = py2 - headLen * Math.sin(angle + spread)
+    return (
+      <g stroke="#ef4444" strokeWidth={3} strokeLinecap="round" fill="none" {...clickProps}>
+        <line x1={px1} y1={py1} x2={px2} y2={py2} />
+        <polyline points={`${hx1},${hy1} ${px2},${py2} ${hx2},${hy2}`} />
+      </g>
+    )
   }
   if (type === 'text') {
     return (
       <text
-        x={x} y={y}
-        fill="white" stroke="#000" strokeWidth={4} paintOrder="stroke"
-        fontSize={20} fontWeight="600" fontFamily="sans-serif"
-        style={{ cursor: 'pointer' }}
-        onClick={handle}
+        x={px} y={py} fill="white" stroke="#000" strokeWidth={3} paintOrder="stroke"
+        fontSize={16} fontWeight="600" fontFamily="sans-serif" {...clickProps}
       >
         {text}
       </text>
@@ -51,69 +84,126 @@ export default function LaserPointerModal({ campaign, campaignCode, onClose }) {
   const markers = display?.markers ?? []
   const [tool, setTool] = useState('dot')
   const [imgLoaded, setImgLoaded] = useState(false)
-  const [pendingText, setPendingText] = useState(null) // { x, y, px, py, value }
+  const [pendingText, setPendingText] = useState(null)
+  const [drag, setDrag] = useState(null) // { type, startPX, startPY, currentPX, currentPY }
   const containerRef = useRef(null)
   const imgRef = useRef(null)
+  // Tracks mutable drag state without causing stale closures
+  const dragRef = useRef(null) // { startX, startY, startNX, startNY, currentX, currentY, moved }
 
   if (!display?.url) return null
 
-  function positioned() {
-    if (!containerRef.current || !imgRef.current || !imgLoaded) return []
-    const r = getRenderedRect(containerRef.current, imgRef.current)
-    if (!r) return []
-    return markers.map((m) => ({
-      ...m,
-      px: r.offsetX + m.x * r.renderedW,
-      py: r.offsetY + m.y * r.renderedH,
-    }))
-  }
-
-  async function handleClick(e) {
-    if (!containerRef.current || !imgRef.current || !imgLoaded) return
+  function getCoords(e) {
+    if (!containerRef.current || !imgRef.current || !imgLoaded) return null
     const containerRect = containerRef.current.getBoundingClientRect()
     const r = getRenderedRect(containerRef.current, imgRef.current)
-    if (!r) return
-    const x = (e.clientX - containerRect.left - r.offsetX) / r.renderedW
-    const y = (e.clientY - containerRect.top - r.offsetY) / r.renderedH
-    if (x < 0 || x > 1 || y < 0 || y > 1) return
-    if (tool === 'text') {
-      setPendingText({ x, y, px: e.clientX - containerRect.left, py: e.clientY - containerRect.top, value: '' })
+    if (!r) return null
+    const x = e.clientX - containerRect.left
+    const y = e.clientY - containerRect.top
+    return { x, y, nx: (x - r.offsetX) / r.renderedW, ny: (y - r.offsetY) / r.renderedH, r }
+  }
+
+  function handleMouseDown(e) {
+    if (e.button !== 0 || pendingText) return
+    const c = getCoords(e)
+    if (!c || c.nx < 0 || c.nx > 1 || c.ny < 0 || c.ny > 1) return
+    dragRef.current = { startX: c.x, startY: c.y, startNX: c.nx, startNY: c.ny, currentX: c.x, currentY: c.y, moved: false }
+    if (tool === 'circle' || tool === 'square' || tool === 'arrow') {
+      setDrag({ type: tool, startPX: c.x, startPY: c.y, currentPX: c.x, currentPY: c.y })
+    }
+  }
+
+  function handleMouseMove(e) {
+    if (!dragRef.current) return
+    const c = getCoords(e)
+    if (!c) return
+    const dx = c.x - dragRef.current.startX
+    const dy = c.y - dragRef.current.startY
+    if (Math.hypot(dx, dy) > DRAG_THRESHOLD) dragRef.current.moved = true
+    dragRef.current.currentX = c.x
+    dragRef.current.currentY = c.y
+    setDrag((d) => (d ? { ...d, currentPX: c.x, currentPY: c.y } : null))
+  }
+
+  async function saveMarker(marker) {
+    const kept = marker.type === 'dot' ? markers.filter((m) => m.type !== 'dot') : markers
+    await dmUpdate(campaignCode, { 'combat.display.markers': [...kept, marker] })
+  }
+
+  async function handleMouseUp(e) {
+    const start = dragRef.current
+    const currentDrag = drag
+    dragRef.current = null
+    setDrag(null)
+    if (!start || pendingText) return
+
+    if (tool === 'circle' && currentDrag) {
+      const r = getRenderedRect(containerRef.current, imgRef.current)
+      if (!r) return
+      const dist = Math.hypot(start.currentX - start.startX, start.currentY - start.startY)
+      if (dist < DRAG_THRESHOLD) return
+      await saveMarker({ id: crypto.randomUUID(), type: 'circle', x: start.startNX, y: start.startNY, r: dist / r.renderedW })
       return
     }
-    await dmUpdate(campaignCode, {
-      'combat.display.markers': [...markers, { id: crypto.randomUUID(), type: tool, x, y }],
-    })
+
+    if ((tool === 'square' || tool === 'arrow') && currentDrag) {
+      const r = getRenderedRect(containerRef.current, imgRef.current)
+      if (!r) return
+      const dist = Math.hypot(start.currentX - start.startX, start.currentY - start.startY)
+      if (dist < DRAG_THRESHOLD) return
+      await saveMarker({
+        id: crypto.randomUUID(),
+        type: tool,
+        x1: start.startNX,
+        y1: start.startNY,
+        x2: Math.max(0, Math.min(1, (start.currentX - r.offsetX) / r.renderedW)),
+        y2: Math.max(0, Math.min(1, (start.currentY - r.offsetY) / r.renderedH)),
+      })
+      return
+    }
+
+    if (start.moved) return // dragged with a click-only tool — ignore
+
+    const c = getCoords(e)
+    if (!c || c.nx < 0 || c.nx > 1 || c.ny < 0 || c.ny > 1) return
+
+    if (tool === 'dot') {
+      await saveMarker({ id: crypto.randomUUID(), type: 'dot', x: c.nx, y: c.ny })
+    } else if (tool === 'text') {
+      setPendingText({ x: c.nx, y: c.ny, px: c.x, py: c.y, value: '' })
+    }
   }
 
   async function confirmText() {
     const label = pendingText?.value.trim()
+    const pos = { x: pendingText.x, y: pendingText.y }
     setPendingText(null)
     if (!label) return
-    await dmUpdate(campaignCode, {
-      'combat.display.markers': [
-        ...markers,
-        { id: crypto.randomUUID(), type: 'text', text: label, x: pendingText.x, y: pendingText.y },
-      ],
-    })
+    await saveMarker({ id: crypto.randomUUID(), type: 'text', text: label, ...pos })
   }
 
   async function removeMarker(id) {
-    await dmUpdate(campaignCode, {
-      'combat.display.markers': markers.filter((m) => m.id !== id),
-    })
+    await dmUpdate(campaignCode, { 'combat.display.markers': markers.filter((m) => m.id !== id) })
   }
 
   async function clearMarkers() {
     await dmUpdate(campaignCode, { 'combat.display.markers': [] })
   }
 
+  function positioned() {
+    if (!containerRef.current || !imgRef.current || !imgLoaded) return []
+    const r = getRenderedRect(containerRef.current, imgRef.current)
+    if (!r) return []
+    return markers.map((m) => positionMarker(m, r))
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
       <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 z-10 bg-black/70 px-3 py-2">
-        {TOOLS.map((t) => (
+        {['dot', 'circle', 'square', 'arrow', 'text'].map((t) => (
           <button
             key={t}
-            onClick={() => { setTool(t); setPendingText(null) }}
+            onClick={() => { setTool(t); setPendingText(null); setDrag(null); dragRef.current = null }}
             className={`px-3 py-1 text-xs font-normal capitalize transition-colors ${tool === t ? 'bg-red-600 text-white' : 'text-white/60 hover:text-white'}`}
           >
             {t}
@@ -149,12 +239,42 @@ export default function LaserPointerModal({ campaign, campaignCode, onClose }) {
         />
         <svg
           className="absolute inset-0 w-full h-full"
-          style={{ cursor: pendingText ? 'default' : 'crosshair', pointerEvents: pendingText ? 'none' : 'all' }}
-          onClick={handleClick}
+          style={{
+            cursor: pendingText ? 'default' : 'crosshair',
+            pointerEvents: pendingText ? 'none' : 'all',
+            userSelect: 'none',
+          }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={() => { dragRef.current = null; setDrag(null) }}
         >
           {positioned().map((m) => (
-            <MarkerShape key={m.id} type={m.type} text={m.text} x={m.px} y={m.py} onRemove={() => removeMarker(m.id)} />
+            <MarkerShape key={m.id} m={m} onRemove={() => removeMarker(m.id)} />
           ))}
+          {drag?.type === 'circle' && (
+            <circle
+              cx={drag.startPX} cy={drag.startPY}
+              r={Math.hypot(drag.currentPX - drag.startPX, drag.currentPY - drag.startPY)}
+              fill="none" stroke="#ef4444" strokeWidth={2} strokeDasharray="6 3"
+              style={{ pointerEvents: 'none' }}
+            />
+          )}
+          {drag?.type === 'square' && (
+            <rect
+              x={Math.min(drag.startPX, drag.currentPX)} y={Math.min(drag.startPY, drag.currentPY)}
+              width={Math.abs(drag.currentPX - drag.startPX)} height={Math.abs(drag.currentPY - drag.startPY)}
+              fill="none" stroke="#ef4444" strokeWidth={2} strokeDasharray="6 3"
+              style={{ pointerEvents: 'none' }}
+            />
+          )}
+          {drag?.type === 'arrow' && (
+            <line
+              x1={drag.startPX} y1={drag.startPY} x2={drag.currentPX} y2={drag.currentPY}
+              stroke="#ef4444" strokeWidth={2} strokeDasharray="6 3" strokeLinecap="round"
+              style={{ pointerEvents: 'none' }}
+            />
+          )}
         </svg>
 
         {pendingText && (
