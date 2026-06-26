@@ -220,34 +220,42 @@ export default function UnitCard({
 
         {/* Header */}
         <div ref={popoverRef}
-          className={`${TYPE_HEADER[local.type] ?? TYPE_HEADER.mob} px-2 py-1.5 flex items-center relative`}>
-          {isParty || isFollower ? (
-            <span className="text-white/60 text-xs font-bold w-5 text-center shrink-0">{TYPE_LABEL[local.type]}</span>
-          ) : (
-            <button onClick={() => push({ ...local, type: TYPE_CYCLE[local.type] ?? 'mob' })}
-              className="text-white/60 hover:text-white text-xs font-bold transition-colors w-5 text-center shrink-0" title="Cycle type">
-              {TYPE_LABEL[local.type] ?? 'M'}
+          className={`${TYPE_HEADER[local.type] ?? TYPE_HEADER.mob} relative`}>
+          {/* Row 1: type badge | name | initiative */}
+          <div className="px-2 pt-1.5 pb-0.5 flex items-center gap-1">
+            {isParty || isFollower ? (
+              <span className="text-white/60 text-xs font-bold w-5 text-center shrink-0">{TYPE_LABEL[local.type]}</span>
+            ) : (
+              <button onClick={() => push({ ...local, type: TYPE_CYCLE[local.type] ?? 'mob' })}
+                className="text-white/60 hover:text-white text-xs font-bold transition-colors w-5 text-center shrink-0" title="Cycle type">
+                {TYPE_LABEL[local.type] ?? 'M'}
+              </button>
+            )}
+            <input
+              className="bg-transparent text-white font-normal text-sm focus:outline-none min-w-0 flex-1 truncate placeholder-white/40"
+              aria-label={local.name} value={local.name}
+              onChange={(e) => setLocal({ ...local, name: e.target.value })}
+              onBlur={(e) => commit('name', e.target.value)} />
+            <button
+              onClick={() => { setShowControls((v) => !v); setShowConditionPicker(false) }}
+              className={`shrink-0 flex items-baseline gap-0.5 transition-colors ${showControls ? 'text-white' : 'text-white/80 hover:text-white'}`}
+              title="Edit stats">
+              <span className="text-white/40 text-[10px]">i</span>
+              <span className="font-light text-lg leading-none">{local.initiative}</span>
             </button>
-          )}
-          <input
-            className="bg-transparent text-white font-normal text-sm focus:outline-none min-w-0 flex-1 truncate placeholder-white/40"
-            aria-label={local.name} value={local.name}
-            onChange={(e) => setLocal({ ...local, name: e.target.value })}
-            onBlur={(e) => commit('name', e.target.value)} />
-          <button
-            onClick={() => { setShowControls((v) => !v); setShowConditionPicker(false) }}
-            className={`shrink-0 flex items-center gap-2 transition-colors ${showControls ? 'text-white' : 'text-white/70 hover:text-white'}`}>
-            <span className="text-xs font-normal flex items-center gap-0.5">
-              <span className="text-white/50">AC</span> {local.ac}
-            </span>
-            <span className="flex items-baseline gap-0.5">
-              <span className="text-white/50 text-xs">i</span>
-              <span className="font-light text-lg">{local.initiative}</span>
-            </span>
-          </button>
-          <button onClick={onSetActive}
-            className={`text-sm shrink-0 transition-opacity ml-0.5 ${isActive ? 'text-white opacity-100' : 'text-white opacity-20 hover:opacity-70'}`}
-            title="Set active turn">▶</button>
+          </div>
+          {/* Row 2: AC | ▶ active */}
+          <div className="px-2 pb-1 flex items-center justify-between border-t border-white/15">
+            <button
+              onClick={() => { setShowControls((v) => !v); setShowConditionPicker(false) }}
+              className={`text-xs font-normal transition-colors ${showControls ? 'text-white' : 'text-white/60 hover:text-white'}`}
+              title="Edit stats">
+              <span className="text-white/40">AC</span> {local.ac}
+            </button>
+            <button onClick={onSetActive}
+              className={`text-sm shrink-0 transition-opacity ${isActive ? 'text-white opacity-100' : 'text-white opacity-20 hover:opacity-70'}`}
+              title="Set active turn">▶</button>
+          </div>
 
           {/* Controls popover */}
           {showControls && (

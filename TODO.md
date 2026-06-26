@@ -30,6 +30,28 @@
 
 ---
 
+## Phase 4 — Template Polish + Initiative Card Redesign
+
+### Template Sidebar
+
+- [ ] Add `templateFolders: []` to `EMPTY_CAMPAIGN` in JoinScreen
+- [ ] Add `folderId: null` to newly created templates
+- [ ] Folder tabs across top of sidebar (same pattern as Images): All | named folders | + Folder button; × to delete folder on hover
+- [ ] Replace inline add form with a single "+ Template" button that opens `TemplateModal`
+- [ ] **TemplateModal** (shared for add and edit): two-pane layout — left pane (name, HP max, AC, type toggle, folder picker that defaults to active folder tab) + right pane (`NotesEditor` as a drawer); Save / Cancel footer
+- [ ] **TemplateCard** (replaces list rows): colored header (mob = danger, ally = rivulet) with type badge + name; body showing HP max + AC; footer with Edit (Pen icon), Delete (Trash icon with confirm), and "Add to Initiative" button
+- [ ] Edit button opens `TemplateModal` pre-filled with template data
+- [ ] Notes in modal carry over to initiative via existing `cloneWithFreshIds` (already works)
+- [ ] Smoke test: create a template in a folder with notes, add to initiative, verify notes appear on unit card
+
+### Initiative Card Redesign
+
+- [ ] Split UnitCard header into two rows: row 1 = type badge + name input + initiative number; row 2 = AC + ▶ active button
+- [ ] Both AC and initiative number clickable to open the existing controls popover
+- [ ] Smoke test: verify popover still works, active turn indicator still visible
+
+---
+
 ## Phase 3 — AI Template Generation
 
 - [ ] Add a sparkle/AI button to the `TemplatesSidebar` header — opens `TemplateGenModal`

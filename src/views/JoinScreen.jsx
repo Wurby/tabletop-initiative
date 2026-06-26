@@ -16,7 +16,9 @@ const EMPTY_CAMPAIGN = {
   graveyard: [],
   questXp: [],
   images: [],
+  folders: [],
   templates: [],
+  templateFolders: [],
   dmNoteFolders: [],
   dmNotes: [],
 }

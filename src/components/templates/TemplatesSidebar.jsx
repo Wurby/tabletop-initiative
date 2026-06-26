@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { useToast } from '../../lib/toast'
 import { dmUpdate } from '../../lib/campaign'
 import { NotesEditor } from '../initiative/UnitNotesModal'
+import { Pen, Trash } from '../icons'
 
+const TYPE_HEADER = { mob: 'bg-brand-danger', ally: 'bg-brand-rivulet' }
 const TYPE_CYCLE = { mob: 'ally', ally: 'mob' }
 const TYPE_LABEL = { mob: 'M', ally: 'A' }
 
@@ -21,49 +23,155 @@ function cloneWithFreshIds(noteFolders, notes) {
   return { noteFolders: newFolders, notes: newNotes }
 }
 
-function TemplateEntry({ template, campaign, campaignCode }) {
-  const showError = useToast()
-  const [editing, setEditing] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [editName, setEditName] = useState('')
-  const [editHpMax, setEditHpMax] = useState(0)
-  const [editAc, setEditAc] = useState(0)
-  const [editType, setEditType] = useState('mob')
-  const [editFolders, setEditFolders] = useState([])
-  const [editNotes, setEditNotes] = useState([])
+function TemplateModal({ template, defaultFolderId, folders, onSave, onClose }) {
+  const [editName, setEditName] = useState(template?.name ?? '')
+  const [editHpMax, setEditHpMax] = useState(template?.hp?.max ?? 0)
+  const [editAc, setEditAc] = useState(template?.ac ?? 0)
+  const [editType, setEditType] = useState(template?.type ?? 'mob')
+  const [editFolderId, setEditFolderId] = useState(defaultFolderId ?? null)
+  const [editFolders, setEditFolders] = useState(template?.noteFolders ?? [])
+  const [editNotes, setEditNotes] = useState(template?.notes ?? [])
 
+  function handleSave() {
+    if (!editName.trim()) return
+    onSave({
+      name: editName.trim(),
+      hp: { max: Number(editHpMax) || 0 },
+      ac: Number(editAc) || 0,
+      type: editType,
+      folderId: editFolderId,
+      noteFolders: editFolders,
+      notes: editNotes,
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
+      <div className="bg-brand-mint-dark shadow-modal flex max-h-[85vh] w-[720px] max-w-[95vw]">
+        {/* Left pane — stats */}
+        <div className="flex flex-col w-72 shrink-0 border-r border-brand-mint">
+          <div className={`${TYPE_HEADER[editType] ?? TYPE_HEADER.mob} px-4 py-3 shrink-0`}>
+            <h2 className="text-white font-normal text-base">
+              {template ? 'Edit Template' : 'New Template'}
+            </h2>
+          </div>
+          <div className="flex flex-col gap-3 p-4 flex-1 overflow-y-auto">
+            <input
+              autoFocus
+              className="bg-white border border-brand-mint-dark px-2 py-1 text-brand-ink text-sm font-normal focus:outline-none focus:ring-2 focus:ring-brand-rivulet w-full"
+              placeholder="Name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+            />
+            <button
+              type="button"
+              onClick={() => setEditType((t) => TYPE_CYCLE[t] ?? 'mob')}
+              className={`self-start px-3 py-1 text-xs font-normal border transition-colors ${
+                editType === 'mob'
+                  ? 'bg-brand-danger text-white border-brand-danger'
+                  : 'bg-brand-rivulet text-white border-brand-rivulet'
+              }`}
+            >
+              {editType === 'mob' ? 'Mob' : 'Ally'}
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-brand-forest text-xs w-14 shrink-0">HP max</span>
+              <input
+                type="number"
+                className="w-16 bg-white border border-brand-mint-dark px-1 py-0.5 text-brand-ink text-sm font-normal text-center focus:outline-none focus:ring-1 focus:ring-brand-rivulet"
+                placeholder="0"
+                value={editHpMax}
+                onChange={(e) => setEditHpMax(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-brand-forest text-xs w-14 shrink-0">AC</span>
+              <input
+                type="number"
+                className="w-16 bg-white border border-brand-mint-dark px-1 py-0.5 text-brand-ink text-sm font-normal text-center focus:outline-none focus:ring-1 focus:ring-brand-rivulet"
+                placeholder="0"
+                value={editAc}
+                onChange={(e) => setEditAc(e.target.value)}
+              />
+            </div>
+            {folders.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-brand-forest text-xs">Folder</span>
+                <div className="flex flex-wrap gap-1">
+                  <button
+                    onClick={() => setEditFolderId(null)}
+                    className={`px-2 py-0.5 text-xs font-normal border transition-colors ${
+                      editFolderId === null
+                        ? 'bg-brand-forest text-white border-brand-forest'
+                        : 'border-brand-ink/20 text-brand-ink hover:border-brand-ink/40'
+                    }`}
+                  >
+                    None
+                  </button>
+                  {folders.map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setEditFolderId(f.id)}
+                      className={`px-2 py-0.5 text-xs font-normal border transition-colors ${
+                        editFolderId === f.id
+                          ? 'bg-brand-forest text-white border-brand-forest'
+                          : 'border-brand-ink/20 text-brand-ink hover:border-brand-ink/40'
+                      }`}
+                    >
+                      {f.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex border-t border-brand-mint shrink-0">
+            <button
+              onClick={handleSave}
+              className="flex-1 py-2 text-xs font-normal text-white bg-brand-forest hover:bg-brand-forest-dark transition-colors"
+            >
+              Save
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 py-2 text-xs font-normal text-brand-ink hover:bg-brand-mint transition-colors border-l border-brand-mint"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+        {/* Right pane — notes */}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="bg-brand-forest px-4 py-3 shrink-0">
+            <h3 className="text-white font-normal text-sm">Notes</h3>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <NotesEditor
+              folders={editFolders}
+              notes={editNotes}
+              onFoldersChange={setEditFolders}
+              onNotesChange={setEditNotes}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TemplateCard({ template, folders, campaign, campaignCode }) {
+  const showError = useToast()
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
   const templates = campaign.templates ?? []
   const noteCount = (template.notes ?? []).length
 
-  function openEdit() {
-    setEditName(template.name)
-    setEditHpMax(template.hp?.max ?? 0)
-    setEditAc(template.ac ?? 0)
-    setEditType(template.type ?? 'mob')
-    setEditFolders(template.noteFolders ?? [])
-    setEditNotes(template.notes ?? [])
-    setEditing(true)
-    setConfirmDelete(false)
-  }
-
-  async function handleSave() {
-    if (!editName.trim()) return
-    const next = templates.map((t) =>
-      t.id === template.id
-        ? {
-            ...t,
-            name: editName.trim(),
-            hp: { max: Number(editHpMax) || 0 },
-            ac: Number(editAc) || 0,
-            type: editType,
-            noteFolders: editFolders,
-            notes: editNotes,
-          }
-        : t
-    )
+  async function handleSave(fields) {
+    const next = templates.map((t) => (t.id === template.id ? { ...t, ...fields } : t))
     try {
       await dmUpdate(campaignCode, { templates: next })
-      setEditing(false)
+      setShowEdit(false)
     } catch {
       showError('Failed to save — check your connection.')
     }
@@ -110,149 +218,131 @@ function TemplateEntry({ template, campaign, campaignCode }) {
     }
   }
 
-  if (editing) {
-    return (
-      <div className="border-b border-brand-mint px-4 py-3 flex flex-col gap-3">
-        <input
-          autoFocus
-          className="bg-white border border-brand-mint-dark px-2 py-1 text-brand-ink text-sm font-normal focus:outline-none focus:ring-2 focus:ring-brand-rivulet w-full"
-          placeholder="Name"
-          value={editName}
-          onChange={(e) => setEditName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-        />
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setEditType((t) => TYPE_CYCLE[t] ?? 'mob')}
-            className="text-xs font-bold w-5 text-center text-brand-ink/50 hover:text-brand-ink transition-colors"
-            title="Cycle type"
-          >
-            {TYPE_LABEL[editType] ?? 'M'}
-          </button>
-          <span className="text-brand-forest text-xs font-normal">HP</span>
-          <input
-            type="number"
-            className="w-12 bg-white border border-brand-mint-dark px-1 py-0.5 text-brand-ink text-sm font-normal text-center focus:outline-none focus:ring-1 focus:ring-brand-rivulet"
-            placeholder="—"
-            value={editHpMax}
-            onChange={(e) => setEditHpMax(e.target.value)}
-          />
-          <span className="text-brand-forest text-xs font-normal">AC</span>
-          <input
-            type="number"
-            className="w-12 bg-white border border-brand-mint-dark px-1 py-0.5 text-brand-ink text-sm font-normal text-center focus:outline-none focus:ring-1 focus:ring-brand-rivulet"
-            placeholder="—"
-            value={editAc}
-            onChange={(e) => setEditAc(e.target.value)}
-          />
-        </div>
-
-        <div className="border-t border-brand-mint/80 pt-2">
-          <NotesEditor
-            folders={editFolders}
-            notes={editNotes}
-            onFoldersChange={setEditFolders}
-            onNotesChange={setEditNotes}
-          />
-        </div>
-
-        <div className="flex gap-2 border-t border-brand-mint pt-2">
-          <button
-            onClick={handleSave}
-            className="flex-1 py-1 text-xs font-normal text-white bg-brand-rivulet hover:bg-brand-rivulet-dark transition-colors"
-          >
-            Save
-          </button>
-          <button
-            onClick={() => setEditing(false)}
-            className="flex-1 py-1 text-xs font-normal text-brand-ink hover:bg-brand-mint transition-colors border border-brand-mint"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="border-b border-brand-mint px-4 py-3">
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <p className="text-sm font-normal text-brand-ink leading-snug">{template.name}</p>
-        <div className="flex items-center gap-1 shrink-0">
+    <>
+      <div className="shadow-card flex flex-col">
+        <div className={`${TYPE_HEADER[template.type] ?? TYPE_HEADER.mob} px-3 py-2 flex items-center gap-2`}>
+          <span className="text-white/60 text-xs font-bold w-4 text-center shrink-0">
+            {TYPE_LABEL[template.type] ?? 'M'}
+          </span>
+          <span className="text-white text-sm font-normal flex-1 truncate">{template.name}</span>
+        </div>
+        <div className="bg-brand-mint-dark px-3 py-2 flex items-center gap-3">
+          <span className="text-brand-forest text-xs font-normal">
+            HP <span className="text-brand-ink">{template.hp?.max ?? 0}</span>
+          </span>
+          <span className="text-brand-forest text-xs font-normal">
+            AC <span className="text-brand-ink">{template.ac ?? 0}</span>
+          </span>
+          {noteCount > 0 && (
+            <span className="text-brand-ink/40 text-xs ml-auto">
+              {noteCount} note{noteCount !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        <div className="border-t border-brand-mint flex">
           <button
-            onClick={openEdit}
-            className="text-[10px] text-brand-ink/30 hover:text-brand-ink/60 transition-colors px-1"
-            title="Edit template"
+            onClick={() => { setShowEdit(true); setConfirmDelete(false) }}
+            className="py-1.5 px-3 flex items-center justify-center hover:bg-brand-mint transition-colors"
+            title="Edit"
           >
-            ✏
+            <Pen size={11} className="text-brand-ink/40" />
           </button>
           {confirmDelete ? (
             <>
               <button
                 onClick={handleDelete}
-                className="text-[10px] text-brand-danger hover:text-brand-danger-dark transition-colors px-1"
+                className="flex-1 py-1.5 text-xs font-normal text-brand-danger hover:bg-brand-mint transition-colors border-l border-brand-mint"
               >
                 Yes
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="text-[10px] text-brand-ink/40 hover:text-brand-ink/60 transition-colors"
+                className="flex-1 py-1.5 text-xs font-normal text-brand-ink/40 hover:bg-brand-mint transition-colors border-l border-brand-mint"
               >
                 No
               </button>
             </>
           ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="text-[10px] text-brand-ink/30 hover:text-brand-ink/60 transition-colors px-1"
-              title="Delete template"
-            >
-              ×
-            </button>
+            <>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="py-1.5 px-3 flex items-center justify-center hover:bg-brand-mint transition-colors border-l border-brand-mint"
+                title="Delete"
+              >
+                <Trash size={11} className="text-brand-ink/40" />
+              </button>
+              <button
+                onClick={handleAddToInitiative}
+                className="flex-1 py-1.5 text-xs font-normal text-brand-rivulet hover:bg-brand-mint transition-colors border-l border-brand-mint"
+              >
+                + Init
+              </button>
+            </>
           )}
         </div>
       </div>
-      <p className="text-[10px] text-brand-ink/40 font-normal mb-2">
-        HP {template.hp?.max ?? 0} · AC {template.ac ?? 0} · {template.type === 'ally' ? 'Ally' : 'Mob'}
-        {noteCount > 0 && ` · ${noteCount} note${noteCount > 1 ? 's' : ''}`}
-      </p>
-      <button
-        onClick={handleAddToInitiative}
-        className="text-xs font-normal text-brand-rivulet border border-brand-rivulet/30 hover:border-brand-rivulet px-3 py-1 transition-colors"
-      >
-        Add to initiative
-      </button>
-    </div>
+      {showEdit && (
+        <TemplateModal
+          template={template}
+          defaultFolderId={template.folderId ?? null}
+          folders={folders}
+          onSave={handleSave}
+          onClose={() => setShowEdit(false)}
+        />
+      )}
+    </>
   )
 }
 
 export default function TemplatesSidebar({ campaign, campaignCode, onClose }) {
   const showError = useToast()
   const templates = campaign.templates ?? []
-  const [newName, setNewName] = useState('')
-  const [newHpMax, setNewHpMax] = useState('')
-  const [newAc, setNewAc] = useState('')
-  const [newType, setNewType] = useState('mob')
+  const folders = campaign.templateFolders ?? []
+  const [activeFolderId, setActiveFolderId] = useState(null)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showNewFolder, setShowNewFolder] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
 
-  async function handleAdd() {
-    if (!newName.trim()) return
+  const displayedTemplates =
+    activeFolderId === null ? templates : templates.filter((t) => t.folderId === activeFolderId)
+
+  async function handleAdd(fields) {
     const template = {
       id: crypto.randomUUID(),
-      name: newName.trim(),
-      hp: { max: Number(newHpMax) || 0 },
-      ac: Number(newAc) || 0,
-      type: newType,
-      noteFolders: [],
-      notes: [],
       createdAt: Date.now(),
+      ...fields,
     }
     try {
       await dmUpdate(campaignCode, { templates: [...templates, template] })
-      setNewName('')
-      setNewHpMax('')
-      setNewAc('')
-      setNewType('mob')
+      setShowAddModal(false)
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
+  }
+
+  async function createFolder() {
+    const name = newFolderName.trim()
+    if (!name) return
+    const folder = { id: crypto.randomUUID(), name }
+    try {
+      await dmUpdate(campaignCode, { templateFolders: [...folders, folder] })
+      setNewFolderName('')
+      setShowNewFolder(false)
+      setActiveFolderId(folder.id)
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
+  }
+
+  async function deleteFolder(folderId) {
+    const nextFolders = folders.filter((f) => f.id !== folderId)
+    const nextTemplates = templates.map((t) =>
+      t.folderId === folderId ? { ...t, folderId: null } : t
+    )
+    try {
+      await dmUpdate(campaignCode, { templateFolders: nextFolders, templates: nextTemplates })
+      if (activeFolderId === folderId) setActiveFolderId(null)
     } catch {
       showError('Failed to save — check your connection.')
     }
@@ -262,74 +352,114 @@ export default function TemplatesSidebar({ campaign, campaignCode, onClose }) {
     <>
       <div className="fixed inset-0 z-30" onClick={onClose} />
       <div className="fixed right-0 top-0 bottom-0 z-40 w-80 bg-brand-mint-dark shadow-modal flex flex-col">
+        {/* Header */}
         <div className="bg-brand-forest px-4 py-3 flex items-center justify-between shrink-0">
           <h2 className="text-white font-normal text-base">Templates</h2>
-          <button
-            onClick={onClose}
-            className="text-white opacity-60 hover:opacity-100 transition-opacity text-sm"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="text-xs font-normal text-white opacity-70 hover:opacity-100 border border-white/30 hover:border-white/60 px-2 py-1 transition-all"
+            >
+              + Template
+            </button>
+            <button
+              onClick={onClose}
+              className="text-white opacity-60 hover:opacity-100 transition-opacity text-sm"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          {templates.length === 0 && (
-            <p className="text-brand-ink opacity-40 text-sm font-light py-6 text-center px-4">
-              No templates yet
+        {/* Folder tabs */}
+        <div className="px-4 pt-3 pb-2 flex gap-1.5 flex-wrap items-center shrink-0 border-b border-brand-mint">
+          {folders.length > 0 && (
+            <button
+              onClick={() => setActiveFolderId(null)}
+              className={`shrink-0 px-3 py-1 text-xs font-normal border transition-colors ${
+                activeFolderId === null
+                  ? 'bg-brand-forest text-white border-brand-forest'
+                  : 'border-brand-ink/20 text-brand-ink hover:border-brand-ink/40'
+              }`}
+            >
+              All
+            </button>
+          )}
+          {folders.map((f) => (
+            <div key={f.id} className="relative shrink-0 group/tab">
+              <button
+                onClick={() => setActiveFolderId(f.id)}
+                className={`pl-3 pr-6 py-1 text-xs font-normal border transition-colors ${
+                  activeFolderId === f.id
+                    ? 'bg-brand-forest text-white border-brand-forest'
+                    : 'border-brand-ink/20 text-brand-ink hover:border-brand-ink/40'
+                }`}
+              >
+                {f.name}
+              </button>
+              <button
+                onClick={() => deleteFolder(f.id)}
+                className="absolute top-0.5 right-0.5 w-4 h-4 text-white/80 text-[9px] opacity-0 group-hover/tab:opacity-100 transition-opacity flex items-center justify-center leading-none bg-brand-danger/70 hover:bg-brand-danger"
+                title="Delete folder"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          {showNewFolder ? (
+            <div className="flex items-center gap-1 shrink-0">
+              <input
+                autoFocus
+                className="w-24 bg-white border border-brand-ink/20 px-2 py-0.5 text-xs text-brand-ink focus:outline-none"
+                placeholder="Name…"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') createFolder()
+                  if (e.key === 'Escape') { setShowNewFolder(false); setNewFolderName('') }
+                }}
+              />
+              <button onClick={createFolder} className="text-xs text-brand-rivulet hover:text-brand-rivulet/70 transition-colors">Add</button>
+              <button onClick={() => { setShowNewFolder(false); setNewFolderName('') }} className="text-xs text-brand-ink/40 hover:text-brand-ink/60 transition-colors">✕</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowNewFolder(true)}
+              className="shrink-0 px-2 py-1 text-xs font-normal text-brand-ink/30 hover:text-brand-ink/60 border border-dashed border-brand-ink/15 hover:border-brand-ink/30 transition-colors"
+            >
+              + Folder
+            </button>
+          )}
+        </div>
+
+        {/* Template list */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2">
+          {displayedTemplates.length === 0 && (
+            <p className="text-brand-ink opacity-40 text-sm font-light py-6 text-center">
+              {templates.length === 0 ? 'No templates yet' : 'No templates in this folder'}
             </p>
           )}
-          {templates.map((t) => (
-            <TemplateEntry
+          {displayedTemplates.map((t) => (
+            <TemplateCard
               key={t.id}
               template={t}
+              folders={folders}
               campaign={campaign}
               campaignCode={campaignCode}
             />
           ))}
         </div>
-
-        <div className="border-t border-brand-mint px-4 py-3 flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setNewType((t) => TYPE_CYCLE[t] ?? 'mob')}
-            className="shrink-0 text-xs font-bold w-5 text-center text-brand-ink/50 hover:text-brand-ink transition-colors"
-            title="Cycle type"
-          >
-            {TYPE_LABEL[newType] ?? 'M'}
-          </button>
-          <input
-            className="flex-1 bg-white border border-brand-mint-dark px-2 py-1 text-brand-ink text-sm font-normal focus:outline-none focus:ring-2 focus:ring-brand-rivulet min-w-0"
-            placeholder="Name"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-          />
-          <span className="text-brand-ink/50 text-xs shrink-0">HP</span>
-          <input
-            type="number"
-            className="w-10 bg-white border border-brand-mint-dark px-1 py-1 text-brand-ink text-sm font-normal text-center focus:outline-none focus:ring-2 focus:ring-brand-rivulet shrink-0"
-            placeholder="—"
-            value={newHpMax}
-            onChange={(e) => setNewHpMax(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-          />
-          <span className="text-brand-ink/50 text-xs shrink-0">AC</span>
-          <input
-            type="number"
-            className="w-10 bg-white border border-brand-mint-dark px-1 py-1 text-brand-ink text-sm font-normal text-center focus:outline-none focus:ring-2 focus:ring-brand-rivulet shrink-0"
-            placeholder="—"
-            value={newAc}
-            onChange={(e) => setNewAc(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-          />
-          <button
-            onClick={handleAdd}
-            className="shrink-0 px-2 py-1 text-xs font-normal text-white bg-brand-rivulet hover:bg-brand-rivulet-dark transition-colors"
-          >
-            Add
-          </button>
-        </div>
       </div>
+
+      {showAddModal && (
+        <TemplateModal
+          template={null}
+          defaultFolderId={activeFolderId}
+          folders={folders}
+          onSave={handleAdd}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
     </>
   )
 }
