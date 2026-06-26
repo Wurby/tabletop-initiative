@@ -167,24 +167,28 @@ export default function InitiativeList({ campaign }) {
             return (
               <ActiveTurnWrapper key={unit.id} ref={active ? activeRef : null} isActive={active} type={unit.type}>
                 <div className="w-48 h-full min-h-28 bg-brand-mint-dark shadow-card flex flex-col transition-all">
-                  {/* Header: name | AC | initiative */}
-                  <div className={`${headerColor(unit.type)} px-2 py-1.5 flex items-center`}>
-                    <span className="text-white font-normal text-sm flex-1 min-w-0 truncate">
-                      {unit.name}
-                    </span>
-                    <span className="flex-1 text-white/70 text-xs font-normal flex items-center justify-center gap-0.5">
-                      <span className="text-white/50">AC</span>
-                      {isParty || isAlly || isFollower || unit.showAc ? (
-                        <span>{unit.ac}</span>
-                      ) : (
-                        <EyeClosed className="text-white/40" size={10} />
-                      )}
-                    </span>
-                    <span className="flex-1 flex items-baseline justify-end gap-0.5">
-                      <span className="text-white/50 text-xs">i</span>
-                      <span className="text-white font-light text-lg">{unit.initiative}</span>
-                      {active && <span className="text-white text-xs font-bold ml-1">▶</span>}
-                    </span>
+                  {/* Header: two rows — name / AC + initiative */}
+                  <div className={`${headerColor(unit.type)}`}>
+                    <div className="px-2 pt-1.5 pb-0.5">
+                      <span className="text-white font-normal text-sm block truncate">
+                        {unit.name}
+                      </span>
+                    </div>
+                    <div className="px-2 pb-1 flex items-center justify-between border-t border-white/15">
+                      <span className="text-xs font-normal">
+                        <span className="text-white/40">AC</span>{' '}
+                        {isParty || isAlly || isFollower || unit.showAc ? (
+                          <span className="text-white">{unit.ac}</span>
+                        ) : (
+                          <EyeClosed className="text-white/40 inline" size={10} />
+                        )}
+                      </span>
+                      <span className="flex items-baseline gap-0.5">
+                        <span className="text-white/40 text-[10px]">i</span>
+                        <span className="text-white font-light text-lg leading-none">{unit.initiative}</span>
+                        {active && <span className="text-white text-xs font-bold ml-1">▶</span>}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="px-3 py-3 flex-1 flex flex-col gap-2">
