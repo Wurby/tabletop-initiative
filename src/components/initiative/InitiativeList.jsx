@@ -128,14 +128,12 @@ export default function InitiativeList({ campaign }) {
 
   return (
     <section>
-      <div className="sticky top-0 z-10 bg-brand-forest px-6 py-2 flex items-center justify-between">
-        <h2 className="text-xl font-normal text-white">Initiative</h2>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <span className="text-white/60 text-xs font-normal">Rnd</span>
-            <span className="text-white font-light text-lg w-6 text-center">{round}</span>
-          </div>
-          <span className="text-white font-light text-lg tabular-nums">{formatTime(elapsed)}</span>
+      <div className="sticky top-0 z-10 bg-brand-forest px-6 py-2 flex items-center">
+        <h2 className="flex-1 text-xl font-normal text-white">Initiative</h2>
+        <span className="text-white font-light text-lg tabular-nums">{formatTime(elapsed)}</span>
+        <div className="flex-1 flex justify-end items-center gap-1.5">
+          <span className="text-white/60 text-xs font-normal">Rnd</span>
+          <span className="text-white font-light text-lg w-6 text-center">{round}</span>
         </div>
       </div>
 

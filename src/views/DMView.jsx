@@ -64,7 +64,7 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
 
   return (
     <div className="min-h-screen bg-brand-mint text-brand-ink">
-      <header className="bg-brand-forest text-white px-6 py-3 flex items-center justify-between">
+      <header className="bg-brand-forest-dark text-white px-6 py-3 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-light">{campaign.meta?.name}</h1>
           <p className="text-xs font-normal tracking-widest opacity-70 mt-0.5">{campaignCode}</p>
@@ -112,7 +112,7 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
         </div>
       </header>
 
-      <div className="py-6 flex flex-col gap-8">
+      <div className="pb-6 flex flex-col gap-8">
         <InitiativeTracker campaign={campaign} campaignCode={campaignCode} />
         <div className="grid grid-cols-2 gap-8 items-start">
           <Graveyard campaign={campaign} campaignCode={campaignCode} />

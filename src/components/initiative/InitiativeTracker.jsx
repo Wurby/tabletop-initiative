@@ -349,27 +349,44 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
       <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center gap-4">
         <h2 className="text-xl font-normal text-white shrink-0">Initiative</h2>
 
-        {/* Prev / Next — centered */}
-        <div className="flex-1 flex justify-center items-center gap-4">
+        {/* Prev | timer controls + clock | Next — centered */}
+        <div className="flex-1 flex justify-center items-center gap-3">
           <button
             onClick={handlePrevTurn}
             disabled={units.length === 0}
-            className="text-white/50 hover:text-white transition-colors disabled:opacity-20 text-sm"
+            className="text-xs font-normal text-white opacity-70 hover:opacity-100 border border-white/30 hover:border-white/60 px-2 py-1 transition-all disabled:opacity-20"
             title="Previous turn"
           >
-            ◀
+            Prev Turn
+          </button>
+          <button
+            onClick={handleTimerReset}
+            className="text-white/40 hover:text-white text-xs transition-colors"
+            title="Reset timer"
+          >
+            ↺
+          </button>
+          <span className="text-white font-light text-lg tabular-nums w-10 text-center">
+            {formatTime(elapsed)}
+          </span>
+          <button
+            onClick={handleTimerPauseResume}
+            className="text-white/50 hover:text-white text-xs transition-colors w-4 text-center"
+            title={timerPaused ? 'Resume timer' : 'Pause timer'}
+          >
+            {timerPaused ? '▷' : '⏸'}
           </button>
           <button
             onClick={handleNextTurn}
             disabled={units.length === 0}
-            className="text-white/50 hover:text-white transition-colors disabled:opacity-20 text-sm"
+            className="text-xs font-normal text-white opacity-70 hover:opacity-100 border border-white/30 hover:border-white/60 px-2 py-1 transition-all disabled:opacity-20"
             title="Next turn"
           >
-            ▶
+            Next Turn
           </button>
         </div>
 
-        {/* Round + Timer + End */}
+        {/* Round + End */}
         <div className="flex items-center gap-4 shrink-0">
           {/* Round counter */}
           <div className="flex items-center gap-1.5">
@@ -385,27 +402,6 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
               onClick={() => setRound(1)}
               className="text-white/60 hover:text-white text-xs transition-colors"
               title="Reset round"
-            >
-              ↺
-            </button>
-          </div>
-
-          {/* Timer */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-white font-light text-lg tabular-nums w-10 text-right">
-              {formatTime(elapsed)}
-            </span>
-            <button
-              onClick={handleTimerPauseResume}
-              className="text-white/50 hover:text-white text-xs transition-colors w-4 text-center"
-              title={timerPaused ? 'Resume timer' : 'Pause timer'}
-            >
-              {timerPaused ? '▷' : '⏸'}
-            </button>
-            <button
-              onClick={handleTimerReset}
-              className="text-white/50 hover:text-white text-xs transition-colors"
-              title="Reset timer"
             >
               ↺
             </button>

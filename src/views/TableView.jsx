@@ -70,7 +70,7 @@ export default function TableView({ campaign, campaignCode, onLeave }) {
 
   return (
     <div className="min-h-screen bg-brand-mint text-brand-ink">
-      <header className="bg-brand-forest text-white px-6 py-3 flex items-center justify-between">
+      <header className="bg-brand-forest-dark text-white px-6 py-3 flex items-center justify-between">
         <h1 className="text-2xl font-light">{campaign.meta?.name}</h1>
         <div className="flex items-center gap-4">
           <span className="text-xs font-bold bg-brand-rivulet text-white px-2 py-1">TABLE</span>
@@ -83,7 +83,7 @@ export default function TableView({ campaign, campaignCode, onLeave }) {
         </div>
       </header>
 
-      <div className="py-6 flex flex-col gap-8">
+      <div className="pb-6 flex flex-col gap-8">
         <InitiativeList campaign={campaign} />
         <GraveyardView campaign={campaign} />
       </div>
