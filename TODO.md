@@ -153,3 +153,79 @@
 - [x] Save flow: fetch generated image blob → upload to Firebase Storage under `campaigns/{code}/images/` → append entry to `images[]` in Firestore — identical shape to manual uploads so the rest of the image system requires no changes
 - [x] Reprompt: DM edits prompt freely and hits Generate again; previous preview is replaced
 - [x] AI label suggestion: if DM saves with an empty label field, call Gemini text generation with the prompt to produce a short descriptive name
+
+---
+
+## Phase 12 — Unit Notes & Templates
+
+### Notes Modal
+
+**Trigger & button**
+- [ ] Add a pencil (✏) icon button to the status row in `UnitCard` body — right side of the same row as the `Status…` input, outside the header
+- [ ] No badge or count indicator needed — button is always visible
+
+**Modal (centered overlay, same pattern as `PartyModal`)**
+- [ ] Build `UnitNotesModal` component — receives `unit`, `onUpdate`, `onClose`
+- [ ] Header: unit name + close button (top-right ×)
+- [ ] Folder tabs row below header — "All" tab + named folder tabs + `+ Folder` button; same tab/delete pattern as `ImageLibrary`
+  - Creating a folder: inline input inline in the tab row (same UX as image folders)
+  - Deleting a folder: × badge on hover; notes in that folder move to `folderId: null`
+  - Folders are scoped per unit: stored in `unit.noteFolders: []`
+- [ ] Note list: scrollable area filtered by active folder; empty state copy ("No notes yet…" / "No notes in this folder…")
+- [ ] Each note card displays: optional title (bold, omitted if empty) + body text; pencil icon (edit) + × with inline confirm (delete)
+- [ ] Edit mode: title and body become editable inline in the note card; save on blur or Enter (body allows multiline)
+- [ ] `+` button (bottom of list or top-right of note area): adds inline empty note form (title input + body textarea) that saves as a new note on confirm
+
+**Data model additions to unit object**
+```
+unit.noteFolders: [{ id, name }]
+unit.notes: [{ id, title, body, folderId, createdAt }]
+```
+- [ ] Initialize `noteFolders: []` and `notes: []` on new units in `handleAdd` in `InitiativeTracker`
+- [ ] Notes and folders travel with the unit to the graveyard on kill (no extra work — full unit object is stored)
+- [ ] Notes are only permanently gone when the unit is deleted from the graveyard
+
+---
+
+### Unit Templates Sidebar
+
+**Trigger**
+- [ ] Add "Templates" button to DM header in `DMView`, next to the existing "Party" button
+- [ ] Button opens a right-side overlay sidebar (`templateOpen` state)
+
+**Sidebar layout**
+- [ ] Fixed right-side panel, slides over content (not push), `z-40` or similar
+- [ ] Click-outside closes it (same pattern as existing popovers); also a `×` close button in the top-left of the panel
+- [ ] Header: "Templates" title + close button
+- [ ] Scrollable list of template entries + "New Template" form/button at the bottom
+
+**Each template entry (display mode)**
+- [ ] Shows: name (prominent), HP / AC / type badge inline
+- [ ] Shows note count as a subtle label (e.g. "2 notes") if notes exist
+- [ ] "Add to initiative" button — adds a new unit to `campaign.initiative` with all template fields, `initiative: 0`, copying `notes` and `noteFolders` as fresh copies (new UUIDs)
+- [ ] Pencil icon to enter edit mode inline; × with confirm to delete the template
+
+**Each template entry (edit mode)**
+- [ ] Editable fields: name, HP max, AC, type (mob/ally/ally toggleable)
+- [ ] Notes section: same folder-tab + note-list UI as `UnitNotesModal` — full create/edit/delete of notes on the template
+- [ ] Save / Cancel buttons
+
+**New template form**
+- [ ] Inline form at bottom of sidebar: name, HP max, AC, type fields (same shape as `AddCard`)
+- [ ] On save: appends to `campaign.templates[]`; notes start empty
+
+**Data model**
+```
+campaign.templates: [{
+  id,
+  name,
+  hp: { max },
+  ac,
+  type,          // 'mob' | 'ally'
+  noteFolders: [{ id, name }],
+  notes: [{ id, title, body, folderId, createdAt }],
+  createdAt,
+}]
+```
+- [ ] Initialize `campaign.templates: []` on campaign creation in `JoinScreen`
+- [ ] All template writes go through `dmUpdate(campaignCode, { templates: [...] })`
