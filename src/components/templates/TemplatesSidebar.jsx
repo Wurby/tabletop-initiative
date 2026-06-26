@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useToast } from '../../lib/toast'
 import { dmUpdate } from '../../lib/campaign'
 import { NotesEditor } from '../initiative/UnitNotesModal'
-import { Pen, Trash } from '../icons'
+import { Pen, Trash, Sparkles } from '../icons'
+import TemplateGenModal from './TemplateGenModal'
 
 const TYPE_HEADER = { mob: 'bg-brand-danger', ally: 'bg-brand-rivulet' }
 const TYPE_CYCLE = { mob: 'ally', ally: 'mob' }
@@ -23,14 +24,15 @@ function cloneWithFreshIds(noteFolders, notes) {
   return { noteFolders: newFolders, notes: newNotes }
 }
 
-function TemplateModal({ template, defaultFolderId, folders, onSave, onClose }) {
-  const [editName, setEditName] = useState(template?.name ?? '')
-  const [editHpMax, setEditHpMax] = useState(template?.hp?.max ?? 0)
-  const [editAc, setEditAc] = useState(template?.ac ?? 0)
-  const [editType, setEditType] = useState(template?.type ?? 'mob')
+function TemplateModal({ template, defaultFolderId, folders, onSave, onClose, initialData }) {
+  const src = initialData ?? template ?? null
+  const [editName, setEditName] = useState(src?.name ?? '')
+  const [editHpMax, setEditHpMax] = useState(src?.hp?.max ?? 0)
+  const [editAc, setEditAc] = useState(src?.ac ?? 0)
+  const [editType, setEditType] = useState(src?.type ?? 'mob')
   const [editFolderId, setEditFolderId] = useState(defaultFolderId ?? null)
-  const [editFolders, setEditFolders] = useState(template?.noteFolders ?? [])
-  const [editNotes, setEditNotes] = useState(template?.notes ?? [])
+  const [editFolders, setEditFolders] = useState(src?.noteFolders ?? [])
+  const [editNotes, setEditNotes] = useState(src?.notes ?? [])
 
   function handleSave() {
     if (!editName.trim()) return
@@ -52,7 +54,7 @@ function TemplateModal({ template, defaultFolderId, folders, onSave, onClose }) 
         <div className="flex flex-col w-72 shrink-0 border-r border-brand-mint">
           <div className={`${TYPE_HEADER[editType] ?? TYPE_HEADER.mob} px-4 py-3 shrink-0`}>
             <h2 className="text-white font-normal text-base">
-              {template ? 'Edit Template' : 'New Template'}
+              {template ? 'Edit Template' : initialData ? 'Review Generated' : 'New Template'}
             </h2>
           </div>
           <div className="flex flex-col gap-3 p-4 flex-1 overflow-y-auto">
@@ -301,6 +303,8 @@ export default function TemplatesSidebar({ campaign, campaignCode, onClose }) {
   const folders = campaign.templateFolders ?? []
   const [activeFolderId, setActiveFolderId] = useState(null)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showGenModal, setShowGenModal] = useState(false)
+  const [genSeed, setGenSeed] = useState(null)
   const [showNewFolder, setShowNewFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
 
@@ -356,6 +360,13 @@ export default function TemplatesSidebar({ campaign, campaignCode, onClose }) {
         <div className="bg-brand-forest px-4 py-3 flex items-center justify-between shrink-0">
           <h2 className="text-white font-normal text-base">Templates</h2>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowGenModal(true)}
+              className="text-white opacity-50 hover:opacity-100 transition-opacity"
+              title="AI generate template"
+            >
+              <Sparkles size={15} />
+            </button>
             <button
               onClick={() => setShowAddModal(true)}
               className="text-xs font-normal text-white opacity-70 hover:opacity-100 border border-white/30 hover:border-white/60 px-2 py-1 transition-all"
@@ -458,6 +469,23 @@ export default function TemplatesSidebar({ campaign, campaignCode, onClose }) {
           folders={folders}
           onSave={handleAdd}
           onClose={() => setShowAddModal(false)}
+        />
+      )}
+      {genSeed && (
+        <TemplateModal
+          template={null}
+          initialData={genSeed}
+          defaultFolderId={activeFolderId}
+          folders={folders}
+          onSave={(fields) => { handleAdd(fields); setGenSeed(null) }}
+          onClose={() => setGenSeed(null)}
+        />
+      )}
+      {showGenModal && (
+        <TemplateGenModal
+          campaign={campaign}
+          onClose={() => setShowGenModal(false)}
+          onSave={(data) => { setShowGenModal(false); setGenSeed(data) }}
         />
       )}
     </>
