@@ -21,7 +21,7 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
   const [adminOpen, setAdminOpen] = useState(false)
   const [lockDialogOpen, setLockDialogOpen] = useState(false)
   const [templateOpen, setTemplateOpen] = useState(false)
-  const [activePanel, setActivePanel] = useState('graveyard')
+  const [activePanel, setActivePanel] = useState('notes')
   const locked = campaign.meta?.locked ?? false
 
   async function handleToggleLock() {
@@ -120,9 +120,9 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
         <div className="xl:hidden">
           <div className="flex border-b-2 border-brand-forest/10 px-6">
             {[
+              { key: 'notes', label: 'Notes' },
               { key: 'graveyard', label: 'Graveyard' },
               { key: 'images', label: 'Images' },
-              { key: 'notes', label: 'Notes' },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -146,9 +146,9 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
 
         {/* Large desktop: three-column grid */}
         <div className="hidden xl:grid xl:grid-cols-3 gap-8 items-start">
+          <DMNotesPanel campaign={campaign} campaignCode={campaignCode} />
           <Graveyard campaign={campaign} campaignCode={campaignCode} />
           <ImageLibrary campaign={campaign} campaignCode={campaignCode} />
-          <DMNotesPanel campaign={campaign} campaignCode={campaignCode} />
         </div>
       </div>
 

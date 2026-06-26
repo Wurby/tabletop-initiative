@@ -202,25 +202,25 @@ export function NotesEditor({ folders, notes, onFoldersChange, onNotesChange }) 
                 >
                   {note.body}
                 </p>
-                <div className="absolute top-1.5 right-1.5 flex gap-0.5 opacity-0 group-hover/note:opacity-100 transition-opacity">
+                <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover/note:opacity-100 transition-opacity">
                   <button
                     onClick={() => startEdit(note)}
-                    className="w-5 h-5 flex items-center justify-center text-[9px] text-brand-ink/40 hover:text-brand-ink transition-colors"
+                    className="px-1.5 py-0.5 text-xs font-normal text-brand-ink/50 hover:text-brand-ink border border-brand-ink/15 hover:border-brand-ink/35 transition-colors"
                     title="Edit note"
                   >
-                    ✏
+                    Edit
                   </button>
                   {confirmDeleteId === note.id ? (
                     <>
                       <button
                         onClick={() => deleteNote(note.id)}
-                        className="text-[9px] text-brand-danger hover:text-brand-danger-dark transition-colors px-1"
+                        className="text-xs font-normal text-brand-danger hover:text-brand-danger-dark transition-colors px-1"
                       >
                         Yes
                       </button>
                       <button
                         onClick={() => setConfirmDeleteId(null)}
-                        className="text-[9px] text-brand-ink/40 hover:text-brand-ink/60 transition-colors"
+                        className="text-xs font-normal text-brand-ink/40 hover:text-brand-ink/60 transition-colors"
                       >
                         No
                       </button>
@@ -228,10 +228,10 @@ export function NotesEditor({ folders, notes, onFoldersChange, onNotesChange }) 
                   ) : (
                     <button
                       onClick={() => setConfirmDeleteId(note.id)}
-                      className="w-5 h-5 flex items-center justify-center text-[9px] text-brand-ink/40 hover:text-brand-ink transition-colors"
+                      className="px-1.5 py-0.5 text-xs font-normal text-brand-ink/50 hover:text-brand-danger border border-brand-ink/15 hover:border-brand-danger/40 transition-colors"
                       title="Delete note"
                     >
-                      ×
+                      ✕
                     </button>
                   )}
                 </div>
