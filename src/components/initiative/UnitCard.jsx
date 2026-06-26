@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { EyeOpen, EyeClosed } from '../icons'
+import { EyeOpen, EyeClosed, Pen } from '../icons'
 import ActiveTurnWrapper from './ActiveTurnWrapper'
 import { CR_XP, CR_PAGE_SIZE } from '../../lib/xp'
+import UnitNotesModal from './UnitNotesModal'
 
 const TYPE_HEADER = {
   party: 'bg-brand-forest',
@@ -107,6 +108,7 @@ export default function UnitCard({
   const [crPage, setCrPage] = useState(0)
   const [showControls, setShowControls] = useState(false)
   const [showConditionPicker, setShowConditionPicker] = useState(false)
+  const [showNotesModal, setShowNotesModal] = useState(false)
   const [customInput, setCustomInput] = useState('')
   const popoverRef = useRef(null)
   const conditionRef = useRef(null)
@@ -212,6 +214,7 @@ export default function UnitCard({
   }
 
   return (
+    <>
     <ActiveTurnWrapper ref={scrollRef} isActive={isActive} type={local.type}>
       <div className={`w-48 h-full min-h-28 bg-brand-mint-dark shadow-card flex flex-col transition-all ${!local.visible ? 'opacity-50' : ''}`}>
 
@@ -278,11 +281,19 @@ export default function UnitCard({
 
         {/* Body */}
         <div className="px-3 py-2 flex flex-col gap-2 flex-1">
-          <input
-            className="bg-transparent text-brand-ink text-xs font-normal focus:outline-none border-b border-transparent focus:border-brand-ink/20 w-full placeholder-brand-ink/30"
-            placeholder="Status…" value={local.status ?? ''}
-            onChange={(e) => setLocal({ ...local, status: e.target.value })}
-            onBlur={(e) => commit('status', e.target.value)} />
+          <div className="flex items-center gap-1">
+            <input
+              className="bg-transparent text-brand-ink text-xs font-normal focus:outline-none border-b border-transparent focus:border-brand-ink/20 flex-1 min-w-0 placeholder-brand-ink/30"
+              placeholder="Status…" value={local.status ?? ''}
+              onChange={(e) => setLocal({ ...local, status: e.target.value })}
+              onBlur={(e) => commit('status', e.target.value)} />
+            <button
+              onClick={() => setShowNotesModal(true)}
+              className="shrink-0 w-4 h-4 flex items-center justify-center text-brand-ink/25 hover:text-brand-ink/60 transition-colors"
+              title="Notes">
+              <Pen size={9} />
+            </button>
+          </div>
 
           {/* Conditions */}
           <div className="relative" ref={conditionRef}>
@@ -399,5 +410,13 @@ export default function UnitCard({
         </div>
       </div>
     </ActiveTurnWrapper>
+    {showNotesModal && (
+      <UnitNotesModal
+        unit={local}
+        onUpdate={(updated) => { setLocal(updated); onUpdate(updated) }}
+        onClose={() => setShowNotesModal(false)}
+      />
+    )}
+  </>
   )
 }

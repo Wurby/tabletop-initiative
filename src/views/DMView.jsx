@@ -10,6 +10,7 @@ import SessionLogModal from '../components/session/SessionLogModal'
 import SplitModal from '../components/session/SplitModal'
 import ImageLibrary from '../components/images/ImageLibrary'
 import AdminModal from '../components/admin/AdminModal'
+import TemplatesSidebar from '../components/templates/TemplatesSidebar'
 import { Lock, LockOpen } from '../components/icons'
 
 export default function DMView({ campaign, campaignCode, onLeave }) {
@@ -18,6 +19,7 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
   const [sessionLogOpen, setSessionLogOpen] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
   const [lockDialogOpen, setLockDialogOpen] = useState(false)
+  const [templateOpen, setTemplateOpen] = useState(false)
   const locked = campaign.meta?.locked ?? false
 
   async function handleToggleLock() {
@@ -81,6 +83,12 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
             Party
           </button>
           <button
+            onClick={() => setTemplateOpen(true)}
+            className="text-xs font-normal text-white opacity-70 hover:opacity-100 border border-white/30 hover:border-white/60 px-2 py-1 transition-all"
+          >
+            Templates
+          </button>
+          <button
             onClick={() => setLockDialogOpen(true)}
             className={`transition-colors ${locked ? 'text-white opacity-80 hover:opacity-100' : 'text-white opacity-30 hover:opacity-60'}`}
             title={locked ? 'Campaign locked from cleanup' : 'Lock campaign from cleanup'}
@@ -130,6 +138,13 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
         <SplitModal split={lastSplit} onClose={handleDismissSplit} canDismiss />
       )}
       {adminOpen && <AdminModal onClose={() => setAdminOpen(false)} />}
+      {templateOpen && (
+        <TemplatesSidebar
+          campaign={campaign}
+          campaignCode={campaignCode}
+          onClose={() => setTemplateOpen(false)}
+        />
+      )}
 
       {lockDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">

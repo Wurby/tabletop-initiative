@@ -74,11 +74,6 @@ export default function ImageGenModal({ campaign, campaignCode, onClose }) {
     }
   }
 
-  function handleReprompt() {
-    setError(null)
-    setPhase('idle')
-  }
-
   function handleDiscard() {
     setGenerations([])
     setSelectedIdx(0)

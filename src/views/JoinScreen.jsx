@@ -16,6 +16,7 @@ const EMPTY_CAMPAIGN = {
   graveyard: [],
   questXp: [],
   images: [],
+  templates: [],
 }
 
 export default function JoinScreen({ uid, onJoin }) {

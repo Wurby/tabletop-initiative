@@ -192,6 +192,8 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
       deathSaves: { s: [false, false, false], f: [false, false, false] },
       conditions: [],
       tiebreak: 0,
+      noteFolders: [],
+      notes: [],
     }
     try {
       await dmUpdate(campaignCode, {
