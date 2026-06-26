@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
 import { storage } from '../../lib/firebase'
 import { dmUpdate } from '../../lib/campaign'
-import { Trash, Pen } from '../icons'
+import { Trash, Pen, Sparkles } from '../icons'
 import ImageGenModal from './ImageGenModal'
 import LaserPointerModal from './LaserPointerModal'
 
@@ -202,10 +202,7 @@ export default function ImageLibrary({ campaign, campaignCode }) {
             className="shrink-0 text-xs font-normal px-2 py-1 border text-brand-rivulet border-brand-rivulet/40 hover:border-brand-rivulet transition-colors"
             title="Generate image with AI"
           >
-            <span className="inline-flex items-end gap-0.5 leading-none">
-              <span className="text-[7px] self-start mt-0.5">✦</span>
-              <span className="text-xs">✦</span>
-            </span>
+            <Sparkles size={16} />
           </button>
           <label className={`shrink-0 text-xs font-normal px-2 py-1 border cursor-pointer transition-colors ${uploading ? 'text-brand-ink/30 border-brand-ink/20 pointer-events-none' : 'text-brand-rivulet border-brand-rivulet/40 hover:border-brand-rivulet'}`}>
             {uploading ? `${progress}%` : 'Upload'}

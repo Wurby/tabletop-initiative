@@ -96,6 +96,22 @@ export function Pen({ className = '', size = 14 }) {
   )
 }
 
+export function Sparkles({ className = '', size = 14 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      fill="currentColor"
+      className={className}
+    >
+      <path d="M30,40 Q32,63 55,65 Q32,67 30,90 Q28,67 5,65 Q28,63 30,40Z" />
+      <path d="M70,14 Q71,26 83,27 Q71,28 70,40 Q69,28 57,27 Q69,26 70,14Z" opacity="0.85" />
+      <path d="M82,65 Q82.5,71.5 89,72 Q82.5,72.5 82,79 Q81.5,72.5 75,72 Q81.5,71.5 82,65Z" opacity="0.7" />
+    </svg>
+  )
+}
+
 export function EyeClosed({ className = '', size = 14 }) {
   return (
     <svg
