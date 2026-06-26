@@ -17,6 +17,8 @@ const EMPTY_CAMPAIGN = {
   questXp: [],
   images: [],
   templates: [],
+  dmNoteFolders: [],
+  dmNotes: [],
 }
 
 export default function JoinScreen({ uid, onJoin }) {

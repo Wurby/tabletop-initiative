@@ -20,12 +20,12 @@
 
 ---
 
-## Phase 2 — DM Notes
+## Phase 2 — DM Notes ✓
 
-- [ ] Add `dmNoteFolders: []` and `dmNotes: []` to campaign initialization in `JoinScreen`
-- [ ] Build `DMNotesPanel` component — reuses `NotesEditor` (same folder/note structure as unit notes); all writes go through `dmUpdate(campaignCode, { dmNoteFolders: [...], dmNotes: [...] })`
-- [ ] Integrate `DMNotesPanel` into `DMView` as a third panel alongside Graveyard and Images — all three horizontal on large screens
-- [ ] Add a desktop breakpoint to `DMView`: below the breakpoint, Graveyard / Images / Notes collapse into a tabbed switcher (our visual style, Material UI tabs pattern); above it, three panels side by side
+- [x] Add `dmNoteFolders: []` and `dmNotes: []` to campaign initialization in `JoinScreen`
+- [x] Build `DMNotesPanel` component — reuses `NotesEditor` (same folder/note structure as unit notes); all writes go through `dmUpdate(campaignCode, { dmNoteFolders: [...], dmNotes: [...] })`
+- [x] Integrate `DMNotesPanel` into `DMView` as a third panel alongside Graveyard and Images — all three horizontal on large screens
+- [x] Add a desktop breakpoint to `DMView`: below `xl` (1280px), Graveyard / Images / Notes collapse into a tabbed switcher; above it, three panels side by side
 - [ ] Smoke test: create a DM note, switch tabs on a narrower window, verify Firestore sync
 
 ---

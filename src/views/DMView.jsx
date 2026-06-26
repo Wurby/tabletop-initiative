@@ -11,6 +11,7 @@ import SplitModal from '../components/session/SplitModal'
 import ImageLibrary from '../components/images/ImageLibrary'
 import AdminModal from '../components/admin/AdminModal'
 import TemplatesSidebar from '../components/templates/TemplatesSidebar'
+import DMNotesPanel from '../components/notes/DMNotesPanel'
 import { Lock, LockOpen } from '../components/icons'
 
 export default function DMView({ campaign, campaignCode, onLeave }) {
@@ -20,6 +21,7 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
   const [adminOpen, setAdminOpen] = useState(false)
   const [lockDialogOpen, setLockDialogOpen] = useState(false)
   const [templateOpen, setTemplateOpen] = useState(false)
+  const [activePanel, setActivePanel] = useState('graveyard')
   const locked = campaign.meta?.locked ?? false
 
   async function handleToggleLock() {
@@ -114,9 +116,39 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
 
       <div className="pb-6 flex flex-col gap-8">
         <InitiativeTracker campaign={campaign} campaignCode={campaignCode} />
-        <div className="grid grid-cols-2 gap-8 items-start">
+        {/* Small desktop: tab switcher */}
+        <div className="xl:hidden">
+          <div className="flex border-b-2 border-brand-forest/10 px-6">
+            {[
+              { key: 'graveyard', label: 'Graveyard' },
+              { key: 'images', label: 'Images' },
+              { key: 'notes', label: 'Notes' },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setActivePanel(key)}
+                className={`py-2 px-4 text-sm font-normal transition-colors border-b-2 -mb-[2px] ${
+                  activePanel === key
+                    ? 'border-brand-forest text-brand-ink'
+                    : 'border-transparent text-brand-ink/40 hover:text-brand-ink/60'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="pt-4">
+            {activePanel === 'graveyard' && <Graveyard campaign={campaign} campaignCode={campaignCode} />}
+            {activePanel === 'images' && <ImageLibrary campaign={campaign} campaignCode={campaignCode} />}
+            {activePanel === 'notes' && <DMNotesPanel campaign={campaign} campaignCode={campaignCode} />}
+          </div>
+        </div>
+
+        {/* Large desktop: three-column grid */}
+        <div className="hidden xl:grid xl:grid-cols-3 gap-8 items-start">
           <Graveyard campaign={campaign} campaignCode={campaignCode} />
           <ImageLibrary campaign={campaign} campaignCode={campaignCode} />
+          <DMNotesPanel campaign={campaign} campaignCode={campaignCode} />
         </div>
       </div>
 
