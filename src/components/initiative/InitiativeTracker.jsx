@@ -14,6 +14,33 @@ const TYPE_HEADER = {
 const TYPE_CYCLE = { ally: 'mob', mob: 'ally' }
 const TYPE_LABEL = { party: 'P', follower: 'F', ally: 'A', mob: 'M' }
 
+function formatTime(ms) {
+  const s = Math.floor(ms / 1000)
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+}
+
+function useElapsed(combat) {
+  const [elapsed, setElapsed] = useState(0)
+
+  useEffect(() => {
+    const acc = combat?.timerAccumulated ?? 0
+    const startedAt = combat?.timerStartedAt
+    const paused = combat?.timerPaused ?? true
+
+    if (paused || !startedAt) {
+      setElapsed(acc)
+      return
+    }
+
+    const update = () => setElapsed(acc + (Date.now() - startedAt))
+    update()
+    const id = setInterval(update, 500)
+    return () => clearInterval(id)
+  }, [combat?.timerAccumulated, combat?.timerStartedAt, combat?.timerPaused])
+
+  return elapsed
+}
+
 function AddCard({ onAdd }) {
   const [form, setForm] = useState({ name: '', initiative: '', hpMax: '', ac: '', type: 'mob' })
   const [errors, setErrors] = useState({})
@@ -136,12 +163,92 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
   const emptyCount = Math.max(0, MIN_SLOTS - units.length - 1)
   const activeIndex = campaign.combat?.activeIndex ?? 0
   const round = campaign.combat?.round ?? 1
+  const timerPaused = campaign.combat?.timerPaused ?? true
   const [confirmEnd, setConfirmEnd] = useState(false)
   const activeRef = useRef(null)
+  const elapsed = useElapsed(campaign.combat)
 
   useEffect(() => {
     activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
   }, [activeIndex])
+
+  const lsKey = (i) => `dnd_turn_${campaignCode}_${i}`
+
+  function snapshotElapsed() {
+    const acc = campaign.combat?.timerAccumulated ?? 0
+    const startedAt = campaign.combat?.timerStartedAt
+    const paused = campaign.combat?.timerPaused ?? true
+    if (paused || !startedAt) return acc
+    return acc + (Date.now() - startedAt)
+  }
+
+  async function handleNextTurn() {
+    if (units.length === 0) return
+    const nextIdx = (activeIndex + 1) % units.length
+    const wraps = activeIndex === units.length - 1
+
+    localStorage.setItem(lsKey(activeIndex), String(snapshotElapsed()))
+
+    try {
+      await dmUpdate(campaignCode, {
+        'combat.activeIndex': nextIdx,
+        ...(wraps ? { 'combat.round': round + 1 } : {}),
+        'combat.timerStartedAt': Date.now(),
+        'combat.timerPaused': false,
+        'combat.timerAccumulated': 0,
+      })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
+  }
+
+  async function handlePrevTurn() {
+    if (units.length === 0) return
+    const prevIdx = (activeIndex - 1 + units.length) % units.length
+    const saved = Number(localStorage.getItem(lsKey(prevIdx))) || 0
+
+    try {
+      await dmUpdate(campaignCode, {
+        'combat.activeIndex': prevIdx,
+        'combat.timerStartedAt': Date.now(),
+        'combat.timerPaused': false,
+        'combat.timerAccumulated': saved,
+      })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
+  }
+
+  async function handleTimerPauseResume() {
+    try {
+      if (timerPaused) {
+        await dmUpdate(campaignCode, {
+          'combat.timerStartedAt': Date.now(),
+          'combat.timerPaused': false,
+        })
+      } else {
+        await dmUpdate(campaignCode, {
+          'combat.timerAccumulated': snapshotElapsed(),
+          'combat.timerPaused': true,
+          'combat.timerStartedAt': null,
+        })
+      }
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
+  }
+
+  async function handleTimerReset() {
+    try {
+      await dmUpdate(campaignCode, {
+        'combat.timerStartedAt': Date.now(),
+        'combat.timerPaused': false,
+        'combat.timerAccumulated': 0,
+      })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
+  }
 
   async function setActiveIndex(next) {
     const idx = units.length > 0 ? ((next % units.length) + units.length) % units.length : 0
@@ -169,6 +276,9 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
         initiative: survivors,
         'combat.activeIndex': 0,
         'combat.round': 1,
+        'combat.timerStartedAt': null,
+        'combat.timerPaused': true,
+        'combat.timerAccumulated': 0,
       })
       setConfirmEnd(false)
     } catch {
@@ -236,12 +346,34 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
 
   return (
     <section>
-      <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-normal text-white">Initiative</h2>
-        <div className="flex items-center gap-4">
+      <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center gap-4">
+        <h2 className="text-xl font-normal text-white shrink-0">Initiative</h2>
+
+        {/* Prev / Next — centered */}
+        <div className="flex-1 flex justify-center items-center gap-4">
+          <button
+            onClick={handlePrevTurn}
+            disabled={units.length === 0}
+            className="text-white/50 hover:text-white transition-colors disabled:opacity-20 text-sm"
+            title="Previous turn"
+          >
+            ◀
+          </button>
+          <button
+            onClick={handleNextTurn}
+            disabled={units.length === 0}
+            className="text-white/50 hover:text-white transition-colors disabled:opacity-20 text-sm"
+            title="Next turn"
+          >
+            ▶
+          </button>
+        </div>
+
+        {/* Round + Timer + End */}
+        <div className="flex items-center gap-4 shrink-0">
           {/* Round counter */}
           <div className="flex items-center gap-1.5">
-            <span className="text-white/60 text-xs font-normal">Round</span>
+            <span className="text-white/60 text-xs font-normal">Rnd</span>
             <button
               onClick={() => setRound(round - 1)}
               className="text-white/60 hover:text-white text-sm transition-colors w-4 text-center"
@@ -250,12 +382,35 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
             </button>
             <span className="text-white font-light text-lg w-6 text-center">{round}</span>
             <button
-              onClick={() => setRound(round + 1)}
-              className="text-white/60 hover:text-white text-sm transition-colors w-4 text-center"
+              onClick={() => setRound(1)}
+              className="text-white/60 hover:text-white text-xs transition-colors"
+              title="Reset round"
             >
-              +
+              ↺
             </button>
           </div>
+
+          {/* Timer */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-white font-light text-lg tabular-nums w-10 text-right">
+              {formatTime(elapsed)}
+            </span>
+            <button
+              onClick={handleTimerPauseResume}
+              className="text-white/50 hover:text-white text-xs transition-colors w-4 text-center"
+              title={timerPaused ? 'Resume timer' : 'Pause timer'}
+            >
+              {timerPaused ? '▷' : '⏸'}
+            </button>
+            <button
+              onClick={handleTimerReset}
+              className="text-white/50 hover:text-white text-xs transition-colors"
+              title="Reset timer"
+            >
+              ↺
+            </button>
+          </div>
+
           {/* End combat */}
           {confirmEnd ? (
             <div className="flex items-center gap-2">
@@ -283,6 +438,7 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
           )}
         </div>
       </div>
+
       <div className="flex flex-row flex-wrap justify-center gap-x-3 gap-y-4 pb-4 px-6">
         {units.map((unit, i) => (
           <UnitCard
