@@ -1,182 +1,170 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 
 const SECTIONS = [
   { key: 'description', label: 'Description' },
   { key: 'encounters', label: 'Encounters' },
   { key: 'whatIsHere', label: "What's Here" },
-  { key: 'whoIsHere', label: 'Who\'s Here' },
+  { key: 'whoIsHere', label: "Who's Here" },
   { key: 'quests', label: 'Quests' },
 ]
 
-function EditableSection({ sectionKey, value, editMode, onSave }) {
-  const [inlineEditing, setInlineEditing] = useState(false)
-  const [draft, setDraft] = useState(value)
-
-  // In full edit mode, parent controls the textarea
-  if (editMode) {
-    return (
-      <textarea
-        rows={8}
-        className="w-full bg-white border border-brand-ink/15 px-3 py-2 text-sm font-normal text-brand-ink focus:outline-none focus:border-brand-rivulet/50 resize-none font-mono leading-relaxed"
-        placeholder={`${SECTIONS.find(s => s.key === sectionKey)?.label ?? sectionKey}… (Markdown supported)`}
-        value={value}
-        onChange={(e) => onSave(e.target.value)}
-      />
-    )
-  }
-
-  if (inlineEditing) {
-    return (
-      <textarea
-        autoFocus
-        rows={6}
-        className="w-full bg-white border border-brand-rivulet/40 px-3 py-2 text-sm font-normal text-brand-ink focus:outline-none resize-none font-mono leading-relaxed"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => { onSave(draft); setInlineEditing(false) }}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') { setDraft(value); setInlineEditing(false) }
-        }}
-      />
-    )
-  }
-
-  return (
-    <div
-      className="cursor-text group/section relative min-h-8"
-      onClick={() => { setDraft(value); setInlineEditing(true) }}
-      title="Click to edit"
-    >
-      {value ? (
-        <div className="note-prose text-brand-ink text-sm font-normal">
-          <ReactMarkdown>{value}</ReactMarkdown>
-        </div>
-      ) : (
-        <p className="text-brand-ink/25 text-sm font-light italic">Click to add…</p>
-      )}
-      <span className="absolute top-0 right-0 text-[9px] text-brand-ink/20 group-hover/section:text-brand-ink/40 transition-colors select-none">
-        edit
-      </span>
-    </div>
-  )
-}
-
 export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete }) {
-  const [editMode, setEditMode] = useState(false)
-  const [draft, setDraft] = useState({ ...poi })
+  const [activeSection, setActiveSection] = useState(null) // null = All
+  const [editingSection, setEditingSection] = useState(null)
+  const [draft, setDraft] = useState('')
+  const [editingName, setEditingName] = useState(false)
   const [editName, setEditName] = useState(poi.name)
   const [editLetter, setEditLetter] = useState(poi.letter)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const sectionRefs = useRef({})
 
-  function jumpTo(key) {
-    sectionRefs.current[key]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  function startEdit(key) {
+    setEditingSection(key)
+    setDraft(poi[key] ?? '')
   }
 
-  function updateField(key, value) {
-    if (editMode) {
-      setDraft((d) => ({ ...d, [key]: value }))
-    } else {
-      onUpdate({ ...poi, [key]: value })
-    }
+  function saveEdit() {
+    onUpdate({ ...poi, [editingSection]: draft })
+    setEditingSection(null)
   }
 
-  function saveEditMode() {
-    onUpdate({ ...draft, name: editName.trim() || poi.name, letter: editLetter.trim() || poi.letter })
-    setEditMode(false)
+  function cancelEdit() {
+    setEditingSection(null)
   }
 
-  function cancelEditMode() {
-    setDraft({ ...poi })
-    setEditName(poi.name)
-    setEditLetter(poi.letter)
-    setEditMode(false)
+  function saveName() {
+    onUpdate({ ...poi, name: editName.trim() || poi.name, letter: editLetter.trim() || poi.letter })
+    setEditingName(false)
   }
 
-  const data = editMode ? draft : poi
+  const visibleSections = activeSection ? SECTIONS.filter(s => s.key === activeSection) : SECTIONS
 
   return (
     <div className="flex flex-col h-full">
-      {/* Jump nav + controls */}
-      <div className="flex items-center border-b border-brand-ink/10 shrink-0 overflow-x-auto">
-        {/* POI identity */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 border-r border-brand-ink/10 shrink-0">
-          {editMode ? (
-            <>
-              <input
-                className="w-6 bg-transparent text-brand-ink text-xs text-center border-b border-brand-rivulet/40 focus:outline-none"
-                value={editLetter}
-                onChange={(e) => setEditLetter(e.target.value)}
-              />
-              <input
-                className="bg-transparent text-brand-ink text-xs border-b border-brand-rivulet/40 focus:outline-none w-28"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-              />
-            </>
-          ) : (
-            <span className="text-xs font-normal text-brand-ink/60">
-              <span className="font-bold mr-0.5">{poi.letter}</span>{poi.name}
-            </span>
-          )}
-        </div>
-        {/* Section jumps */}
+      {/* Identity row */}
+      <div className="flex items-center gap-2 px-5 py-2 border-b border-brand-ink/10 shrink-0">
+        {editingName ? (
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <input
+              className="w-7 bg-transparent text-brand-ink text-sm text-center border-b border-brand-rivulet/40 focus:outline-none"
+              value={editLetter}
+              onChange={(e) => setEditLetter(e.target.value)}
+            />
+            <input
+              autoFocus
+              className="flex-1 bg-transparent text-brand-ink text-sm border-b border-brand-rivulet/40 focus:outline-none"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={saveName}
+              onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false) }}
+            />
+          </div>
+        ) : (
+          <h3
+            className="flex-1 text-base font-normal text-brand-ink cursor-text hover:opacity-70 transition-opacity truncate"
+            onClick={() => { setEditName(poi.name); setEditLetter(poi.letter); setEditingName(true) }}
+          >
+            <span className="text-brand-ink/50 mr-1">{poi.letter}</span>{poi.name}
+          </h3>
+        )}
+
+        {confirmDelete ? (
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs text-brand-ink/50">Delete "{poi.letter} — {poi.name}"?</span>
+            <button onClick={() => onDelete(poi.id)} className="text-xs text-brand-danger hover:text-brand-danger-dark transition-colors">Yes</button>
+            <button onClick={() => setConfirmDelete(false)} className="text-xs text-brand-ink/40 hover:text-brand-ink transition-colors">No</button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="text-[10px] text-brand-ink/20 hover:text-brand-danger transition-colors shrink-0"
+            title="Delete POI"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      {/* Section tabs */}
+      <div className="flex gap-1.5 px-5 pt-3 pb-2 shrink-0 flex-wrap border-b border-brand-ink/8">
+        <button
+          onClick={() => setActiveSection(null)}
+          className={`px-3 py-1 text-xs font-normal border transition-colors ${
+            activeSection === null
+              ? 'bg-brand-forest text-white border-brand-forest'
+              : 'border-brand-ink/20 text-brand-ink hover:border-brand-ink/40'
+          }`}
+        >
+          All
+        </button>
         {SECTIONS.map((s) => (
           <button
             key={s.key}
-            onClick={() => jumpTo(s.key)}
-            className="shrink-0 px-3 py-1.5 text-[10px] font-normal text-brand-ink/50 hover:text-brand-ink hover:bg-brand-ink/5 transition-colors border-r border-brand-ink/10"
+            onClick={() => { setActiveSection(s.key); setEditingSection(null) }}
+            className={`px-3 py-1 text-xs font-normal border transition-colors ${
+              activeSection === s.key
+                ? 'bg-brand-forest text-white border-brand-forest'
+                : 'border-brand-ink/20 text-brand-ink hover:border-brand-ink/40'
+            }`}
           >
             {s.label}
           </button>
         ))}
-        {/* Edit controls — pushed right */}
-        <div className="ml-auto border-l border-brand-ink/10 shrink-0 flex">
-          {confirmDelete ? (
-            <>
-              <span className="px-3 py-1.5 text-[10px] text-brand-ink/50 border-r border-brand-ink/10">Delete "{poi.letter} — {poi.name}"?</span>
-              <button onClick={() => onDelete(poi.id)} className="px-3 py-1.5 text-[10px] font-normal text-brand-danger hover:bg-brand-ink/5 transition-colors border-r border-brand-ink/10">Yes</button>
-              <button onClick={() => setConfirmDelete(false)} className="px-3 py-1.5 text-[10px] font-normal text-brand-ink/40 hover:text-brand-ink hover:bg-brand-ink/5 transition-colors">No</button>
-            </>
-          ) : editMode ? (
-            <>
-              <button onClick={saveEditMode} className="px-3 py-1.5 text-[10px] font-normal text-brand-rivulet hover:bg-brand-ink/5 transition-colors border-r border-brand-ink/10">Save</button>
-              <button onClick={cancelEditMode} className="px-3 py-1.5 text-[10px] font-normal text-brand-ink/40 hover:text-brand-ink hover:bg-brand-ink/5 transition-colors">Cancel</button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => { setDraft({ ...poi }); setEditName(poi.name); setEditLetter(poi.letter); setEditMode(true) }}
-                className="px-3 py-1.5 text-[10px] font-normal text-brand-ink/40 hover:text-brand-ink hover:bg-brand-ink/5 transition-colors border-r border-brand-ink/10"
-              >
-                Edit All
-              </button>
-              <button
-                onClick={() => setConfirmDelete(true)}
-                className="px-3 py-1.5 text-[10px] text-brand-ink/20 hover:text-brand-danger transition-colors"
-                title="Delete POI"
-              >
-                ✕
-              </button>
-            </>
-          )}
-        </div>
       </div>
 
-      {/* Scrollable content */}
-      <div className="overflow-y-auto flex-1 px-5 py-4 flex flex-col gap-6">
-        {SECTIONS.map((s) => (
-          <div key={s.key} ref={(el) => (sectionRefs.current[s.key] = el)}>
-            <h4 className="text-xs font-bold text-brand-ink/50 uppercase tracking-wider mb-2 pb-1 border-b border-brand-ink/8">
-              {s.label}
-            </h4>
-            <EditableSection
-              sectionKey={s.key}
-              value={data[s.key] ?? ''}
-              editMode={editMode}
-              onSave={(v) => updateField(s.key, v)}
-            />
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-6">
+        {visibleSections.map((s) => (
+          <div key={s.key}>
+            {activeSection === null && (
+              <h4 className="text-xs font-bold text-brand-ink/50 uppercase tracking-wider mb-2 pb-1 border-b border-brand-ink/8">
+                {s.label}
+              </h4>
+            )}
+
+            {editingSection === s.key ? (
+              <div className="flex flex-col gap-2">
+                <textarea
+                  autoFocus
+                  rows={activeSection ? 12 : 6}
+                  className="w-full bg-white border border-brand-rivulet/40 px-3 py-2 text-sm font-normal text-brand-ink focus:outline-none resize-none font-mono leading-relaxed"
+                  placeholder={`${s.label}… (Markdown supported)`}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Escape') cancelEdit() }}
+                />
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={saveEdit}
+                    className="text-xs font-normal text-brand-rivulet border border-brand-rivulet/30 hover:border-brand-rivulet px-2 py-0.5 transition-colors"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={cancelEdit}
+                    className="text-xs text-brand-ink/40 hover:text-brand-ink transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="cursor-text group/section relative min-h-8"
+                onClick={() => startEdit(s.key)}
+              >
+                {poi[s.key] ? (
+                  <div className="note-prose text-brand-ink text-sm font-normal">
+                    <ReactMarkdown>{poi[s.key]}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="text-brand-ink/25 text-sm font-light italic">Click to add…</p>
+                )}
+                <span className="absolute top-0 right-0 text-[9px] text-brand-ink/20 group-hover/section:text-brand-ink/40 transition-colors select-none">
+                  edit
+                </span>
+              </div>
+            )}
           </div>
         ))}
       </div>
