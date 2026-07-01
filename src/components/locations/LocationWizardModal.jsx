@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { geminiFlashModel } from '../../lib/ai'
 import { Sparkles } from '../icons'
-import NotesContextModal from '../notes/NotesContextModal'
 import {
   buildIndexStepPrompt,
   buildPoiStepPrompt,
@@ -24,7 +23,6 @@ const POI_STEPS = [
   { phase: 'poi', key: 'quests', label: 'Quests', description: 'What quests or objectives relate to this POI?' },
 ]
 
-// mode: 'full' = index + first POI | 'poi' = POI steps only (for existing cluster)
 export default function LocationWizardModal({ mode = 'full', existingCluster, campaign, onComplete, onSkip, onClose }) {
   const steps = mode === 'full' ? [...INDEX_STEPS, ...POI_STEPS] : POI_STEPS
 
@@ -36,18 +34,26 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
     plotHooks: existingCluster?.plotHooks ?? '',
   })
   const [poiDraft, setPoiDraft] = useState({ name: '', description: '', encounters: '', whatIsHere: '', whoIsHere: '', quests: '' })
-
-  // Per-step: textarea value + chat history
   const [fieldValues, setFieldValues] = useState({})
   const [chatHistories, setChatHistories] = useState({})
   const [chatInput, setChatInput] = useState('')
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState(null)
+
+  // Notes drawer
+  const [showNotesDrawer, setShowNotesDrawer] = useState(false)
   const [selectedNoteIds, setSelectedNoteIds] = useState(new Set())
-  const [showNotesModal, setShowNotesModal] = useState(false)
+  const [drawerFolderId, setDrawerFolderId] = useState(null)
+  const [drawerExpandedIds, setDrawerExpandedIds] = useState(new Set())
 
   const allNotes = campaign?.dmNotes ?? []
+  const folders = campaign?.dmNoteFolders ?? []
   const selectedNotes = allNotes.filter(n => selectedNoteIds.has(n.id))
+  const drawerNotes = drawerFolderId === null ? allNotes : allNotes.filter(n => n.folderId === drawerFolderId)
+
+  function folderSelectedCount(folderId) {
+    return allNotes.filter(n => n.folderId === folderId && selectedNoteIds.has(n.id)).length
+  }
 
   function toggleNote(id) {
     setSelectedNoteIds(prev => {
@@ -57,8 +63,15 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
     })
   }
 
+  function toggleExpand(id) {
+    setDrawerExpandedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
   const chatEndRef = useRef(null)
-  const textareaRef = useRef(null)
 
   const currentStep = steps[stepIdx]
   const isNameStep = currentStep.isName
@@ -66,24 +79,20 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
   const history = chatHistories[stepIdx] ?? []
   const isLastStep = stepIdx === steps.length - 1
 
-  // Auto-scroll chat
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [history])
+  const indexSteps = steps.filter(s => s.phase === 'index')
+  const poiSteps = steps.filter(s => s.phase === 'poi')
+  const globalIdx = (s) => steps.findIndex(st => st.key === s.key && st.phase === s.phase)
 
-  // Auto-generate content on non-name step entry (only if not already populated)
-  useEffect(() => {
-    if (!isNameStep && !fieldValues[stepIdx] && !generating) {
-      generate('')
-    }
-  }, [stepIdx])
+  function stepState(s) {
+    const i = globalIdx(s)
+    if (i < stepIdx) return 'done'
+    if (i === stepIdx) return 'active'
+    return 'future'
+  }
 
   function updateDraft(step, text) {
-    if (step.phase === 'index') {
-      setClusterDraft(d => ({ ...d, [step.key]: text }))
-    } else {
-      setPoiDraft(d => ({ ...d, [step.key]: text }))
-    }
+    if (step.phase === 'index') setClusterDraft(d => ({ ...d, [step.key]: text }))
+    else setPoiDraft(d => ({ ...d, [step.key]: text }))
   }
 
   function handleFieldChange(text) {
@@ -99,7 +108,6 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
     const newHistory = userMessage
       ? [...currentHistory, { role: 'user', content: userMessage }]
       : currentHistory
-
     try {
       let prompt
       if (currentStep.key === 'name' && currentStep.phase === 'poi') {
@@ -109,10 +117,8 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
       } else {
         prompt = buildPoiStepPrompt(currentStep, clusterDraft, poiDraft, newHistory, currentValue, userMessage, selectedNotes)
       }
-
       const result = await geminiFlashModel.generateContent(prompt)
       const text = result.response.text().trim()
-
       const updatedHistory = [...newHistory, { role: 'ai', content: text }]
       setChatHistories(h => ({ ...h, [stepIdx]: updatedHistory }))
       setFieldValues(v => ({ ...v, [stepIdx]: text }))
@@ -132,24 +138,15 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
   }
 
   function handleNext() {
-    const currentValue = (fieldValues[stepIdx] ?? '').trim()
-    if (isNameStep && !currentValue) return
-    if (isLastStep) {
-      handleComplete()
-    } else {
-      setStepIdx(s => s + 1)
-    }
-  }
-
-  function handleBack() {
-    if (stepIdx > 0) setStepIdx(s => s - 1)
+    if (isNameStep && !(fieldValues[stepIdx] ?? '').trim()) return
+    if (isLastStep) handleComplete()
+    else setStepIdx(s => s + 1)
   }
 
   function handleComplete() {
     const letter = existingCluster
       ? String.fromCharCode(65 + (existingCluster.pois?.length ?? 0))
       : 'A'
-
     if (mode === 'full') {
       const cluster = {
         id: crypto.randomUUID(),
@@ -192,54 +189,41 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
     }
   }
 
-  const indexSteps = steps.filter(s => s.phase === 'index')
-  const poiSteps = steps.filter(s => s.phase === 'poi')
-  const globalIdx = (s) => steps.findIndex(st => st.key === s.key && st.phase === s.phase)
-
-  function stepState(s) {
-    const i = globalIdx(s)
-    if (i < stepIdx) return 'done'
-    if (i === stepIdx) return 'active'
-    return 'future'
-  }
-
-  function canJump(s) {
-    return globalIdx(s) < stepIdx
-  }
-
   return (
-    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
-      <div className="bg-brand-mint-dark shadow-modal flex max-h-[88vh] w-[860px] max-w-[97vw]">
+      <div className={`bg-brand-mint-dark shadow-modal flex max-h-[88vh] max-w-[97vw] transition-all duration-200 ${showNotesDrawer ? 'w-[1080px]' : 'w-[860px]'}`}>
 
         {/* Left sidebar — step list */}
         <div className="w-44 shrink-0 border-r border-brand-mint flex flex-col">
           <div className="bg-brand-forest px-4 py-3">
             <div className="flex items-center gap-1.5">
-              <Sparkles size={11} className="text-white/70" />
+              <Sparkles size={12} className="text-white/70" />
               <h2 className="text-white font-normal text-sm">
                 {mode === 'full' ? 'Build Location' : 'Add POI'}
               </h2>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto py-3 flex flex-col gap-0">
+          <div className="flex-1 overflow-y-auto py-3 flex flex-col">
             {indexSteps.length > 0 && (
               <>
                 <p className="px-4 pb-1.5 text-[10px] font-bold text-brand-ink/30 uppercase tracking-wider">Index</p>
                 {indexSteps.map((s) => {
                   const state = stepState(s)
+                  const idx = globalIdx(s)
                   return (
                     <button
                       key={s.key}
-                      onClick={() => canJump(s) && setStepIdx(globalIdx(s))}
+                      onClick={() => setStepIdx(idx)}
                       className={`w-full text-left px-4 py-1.5 text-xs font-normal transition-colors flex items-center gap-1.5 ${
-                        state === 'active' ? 'text-brand-ink bg-brand-mint' :
-                        state === 'done' ? 'text-brand-forest hover:bg-brand-mint/60 cursor-pointer' :
-                        'text-brand-ink/25 cursor-default'
+                        state === 'active'
+                          ? 'text-brand-ink bg-brand-mint'
+                          : state === 'done'
+                          ? 'text-brand-forest hover:bg-brand-mint/60'
+                          : 'text-brand-ink/30 hover:text-brand-ink/60 hover:bg-brand-mint/20'
                       }`}
                     >
-                      <span className="w-3 shrink-0 text-center">
+                      <span className="w-3 shrink-0 text-center text-brand-forest">
                         {state === 'done' ? '✓' : state === 'active' ? '›' : ''}
                       </span>
                       {s.label}
@@ -256,17 +240,20 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
                 </p>
                 {poiSteps.map((s) => {
                   const state = stepState(s)
+                  const idx = globalIdx(s)
                   return (
                     <button
                       key={s.key}
-                      onClick={() => canJump(s) && setStepIdx(globalIdx(s))}
+                      onClick={() => setStepIdx(idx)}
                       className={`w-full text-left px-4 py-1.5 text-xs font-normal transition-colors flex items-center gap-1.5 ${
-                        state === 'active' ? 'text-brand-ink bg-brand-mint' :
-                        state === 'done' ? 'text-brand-forest hover:bg-brand-mint/60 cursor-pointer' :
-                        'text-brand-ink/25 cursor-default'
+                        state === 'active'
+                          ? 'text-brand-ink bg-brand-mint'
+                          : state === 'done'
+                          ? 'text-brand-forest hover:bg-brand-mint/60'
+                          : 'text-brand-ink/30 hover:text-brand-ink/60 hover:bg-brand-mint/20'
                       }`}
                     >
-                      <span className="w-3 shrink-0 text-center">
+                      <span className="w-3 shrink-0 text-center text-brand-forest">
                         {state === 'done' ? '✓' : state === 'active' ? '›' : ''}
                       </span>
                       {s.label}
@@ -278,14 +265,6 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
           </div>
 
           <div className="border-t border-brand-mint p-3 flex flex-col gap-1.5">
-            <button
-              onClick={() => setShowNotesModal(true)}
-              className="text-left text-[10px] font-normal border px-2 py-1 transition-colors border-brand-ink/20 text-brand-ink/50 hover:border-brand-ink/40 hover:text-brand-ink/80"
-            >
-              {selectedNoteIds.size > 0
-                ? `${selectedNoteIds.size} note${selectedNoteIds.size !== 1 ? 's' : ''} as context ›`
-                : 'Add notes as context…'}
-            </button>
             {onSkip && (
               <button
                 onClick={onSkip}
@@ -304,15 +283,27 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
         </div>
 
         {/* Right — current step */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Step header */}
-          <div className="bg-brand-forest-dark px-5 py-3 shrink-0">
-            <p className="text-white font-normal text-base">{currentStep.label}</p>
-            <p className="text-white/50 text-xs font-normal mt-0.5">{currentStep.description}</p>
+          <div className="bg-brand-forest-dark px-5 py-3 shrink-0 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-white font-normal text-base">{currentStep.label}</p>
+              <p className="text-white/50 text-xs font-normal mt-0.5">{currentStep.description}</p>
+            </div>
+            <button
+              onClick={() => setShowNotesDrawer(d => !d)}
+              className={`shrink-0 flex items-center gap-1.5 text-xs px-2.5 py-1.5 border transition-colors ${
+                showNotesDrawer || selectedNoteIds.size > 0
+                  ? 'text-white border-white/40 bg-white/10'
+                  : 'text-white/50 border-white/20 hover:border-white/40 hover:text-white/80'
+              }`}
+            >
+              Notes{selectedNoteIds.size > 0 ? ` (${selectedNoteIds.size})` : ''}
+              <span className="text-[10px]">{showNotesDrawer ? '›' : '‹'}</span>
+            </button>
           </div>
 
           {isNameStep ? (
-            /* Name step — simple text input */
             <div className="flex-1 flex flex-col px-5 py-5 gap-4">
               <div className="flex gap-3">
                 <input
@@ -327,7 +318,6 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
                   onClick={() => generate('')}
                   disabled={generating}
                   className="flex items-center gap-1.5 px-3 py-2 text-xs font-normal text-brand-rivulet border border-brand-rivulet/30 hover:border-brand-rivulet transition-colors disabled:opacity-40 shrink-0"
-                  title="AI suggest"
                 >
                   <Sparkles size={10} />
                   {generating ? '…' : 'Suggest'}
@@ -336,15 +326,14 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
               {error && <p className="text-brand-danger text-xs">{error}</p>}
             </div>
           ) : (
-            /* Content step — chat + textarea */
             <div className="flex-1 overflow-hidden flex flex-col">
               {/* Chat history */}
               {history.length > 0 && (
-                <div className="shrink-0 max-h-40 overflow-y-auto border-b border-brand-ink/8 px-5 py-3 flex flex-col gap-2">
+                <div className="shrink-0 max-h-36 overflow-y-auto border-b border-brand-ink/8 px-5 py-3 flex flex-col gap-2">
                   {history.map((m, i) => (
-                    <div key={i} className={`text-xs font-normal ${m.role === 'user' ? 'text-brand-rivulet' : 'text-brand-ink/40'}`}>
+                    <div key={i} className="text-xs font-normal">
                       {m.role === 'user' ? (
-                        <span><span className="font-bold">You:</span> {m.content}</span>
+                        <span className="text-brand-rivulet"><span className="font-bold">You:</span> {m.content}</span>
                       ) : (
                         <span className="text-brand-ink/30 italic">AI updated content ↓</span>
                       )}
@@ -356,14 +345,13 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
 
               {/* Textarea */}
               <div className="flex-1 overflow-hidden px-5 py-4 flex flex-col gap-2">
-                {generating && !value ? (
+                {generating ? (
                   <div className="flex-1 flex items-center justify-center gap-2">
                     <Sparkles size={14} className="text-brand-ink/20 animate-pulse" />
                     <span className="text-brand-ink/30 text-sm font-light animate-pulse">Generating…</span>
                   </div>
                 ) : (
                   <textarea
-                    ref={textareaRef}
                     className="flex-1 w-full bg-white border border-brand-ink/15 px-3 py-2 text-sm font-normal text-brand-ink focus:outline-none focus:border-brand-rivulet/50 resize-none font-mono leading-relaxed"
                     placeholder={`${currentStep.label}… (Markdown supported)`}
                     value={value}
@@ -373,23 +361,30 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
                 {error && <p className="text-brand-danger text-xs shrink-0">{error}</p>}
               </div>
 
-              {/* Chat input */}
+              {/* AI action bar */}
               <div className="border-t border-brand-mint px-5 py-3 flex gap-2 shrink-0">
                 <input
-                  className="flex-1 bg-white border border-brand-ink/15 px-3 py-1.5 text-xs font-normal text-brand-ink focus:outline-none focus:border-brand-rivulet/50"
-                  placeholder='Refine: "make it more ominous", "add a tavern", "shorter"…'
+                  className="flex-1 bg-white border border-brand-ink/15 px-3 py-1.5 text-xs font-normal text-brand-ink focus:outline-none focus:border-brand-rivulet/50 min-w-0"
+                  placeholder='Refine with AI: "more ominous", "add a tavern", "shorter"…'
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !generating && handleSend()}
                   disabled={generating}
                 />
                 <button
-                  onClick={handleSend}
-                  disabled={!chatInput.trim() || generating}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-normal text-white bg-brand-forest hover:bg-brand-forest-dark transition-colors disabled:opacity-40 shrink-0"
+                  onClick={() => generate('')}
+                  disabled={generating}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-normal text-brand-ink/60 border border-brand-ink/20 hover:border-brand-ink/40 hover:text-brand-ink transition-colors disabled:opacity-40 shrink-0"
                 >
                   <Sparkles size={9} />
-                  {generating ? '…' : 'Send'}
+                  {value ? 'Regen' : 'Generate'}
+                </button>
+                <button
+                  onClick={handleSend}
+                  disabled={!chatInput.trim() || generating}
+                  className="px-3 py-1.5 text-xs font-normal text-white bg-brand-forest hover:bg-brand-forest-dark transition-colors disabled:opacity-40 shrink-0"
+                >
+                  Send
                 </button>
               </div>
             </div>
@@ -398,7 +393,7 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
           {/* Navigation */}
           <div className="border-t border-brand-mint px-5 py-3 flex items-center justify-between shrink-0">
             <button
-              onClick={handleBack}
+              onClick={() => stepIdx > 0 && setStepIdx(s => s - 1)}
               disabled={stepIdx === 0}
               className="text-xs font-normal text-brand-ink/40 hover:text-brand-ink transition-colors disabled:opacity-0"
             >
@@ -414,17 +409,98 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
             </button>
           </div>
         </div>
+
+        {/* Notes Drawer */}
+        {showNotesDrawer && (
+          <div className="w-60 shrink-0 border-l border-brand-mint flex flex-col">
+            <div className="bg-brand-forest-dark px-3 py-2 flex items-center justify-between shrink-0">
+              <span className="text-white text-xs font-normal">
+                DM Notes
+                {selectedNoteIds.size > 0 && (
+                  <span className="ml-1.5 text-white/50">({selectedNoteIds.size} in context)</span>
+                )}
+              </span>
+              <button
+                onClick={() => setShowNotesDrawer(false)}
+                className="text-white/50 hover:text-white text-sm transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {folders.length > 0 && (
+              <div className="px-2 pt-2 pb-1.5 flex gap-1 flex-wrap border-b border-brand-mint shrink-0">
+                <button
+                  onClick={() => setDrawerFolderId(null)}
+                  className={`px-2 py-0.5 text-[10px] font-normal border transition-colors ${
+                    drawerFolderId === null
+                      ? 'bg-brand-forest text-white border-brand-forest'
+                      : 'border-brand-ink/20 text-brand-ink hover:border-brand-ink/40'
+                  }`}
+                >
+                  All
+                </button>
+                {folders.map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => setDrawerFolderId(f.id)}
+                    className={`px-2 py-0.5 text-[10px] font-normal border transition-colors ${
+                      drawerFolderId === f.id
+                        ? 'bg-brand-forest text-white border-brand-forest'
+                        : 'border-brand-ink/20 text-brand-ink hover:border-brand-ink/40'
+                    }`}
+                  >
+                    {f.name}
+                    {folderSelectedCount(f.id) > 0 && (
+                      <span className="ml-1 bg-brand-rivulet text-white text-[9px] px-0.5">{folderSelectedCount(f.id)}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto px-2 py-2 flex flex-col gap-1.5">
+              {drawerNotes.length === 0 && (
+                <p className="text-brand-ink/30 text-xs font-light py-4 text-center">No notes</p>
+              )}
+              {drawerNotes.map(note => {
+                const selected = selectedNoteIds.has(note.id)
+                const expanded = drawerExpandedIds.has(note.id)
+                const hasMore = (note.body?.length ?? 0) > 100
+                const excerpt = hasMore && !expanded ? note.body.slice(0, 100) + '…' : note.body
+                return (
+                  <div
+                    key={note.id}
+                    onClick={() => toggleNote(note.id)}
+                    className={`bg-brand-mint p-2 cursor-pointer border-2 transition-colors ${
+                      selected ? 'border-brand-rivulet' : 'border-transparent hover:border-brand-ink/15'
+                    }`}
+                  >
+                    {note.title && (
+                      <p className="text-[10px] font-bold text-brand-ink mb-0.5">{note.title}</p>
+                    )}
+                    <p className="text-[10px] font-normal text-brand-ink/70 leading-relaxed">{excerpt}</p>
+                    {hasMore && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleExpand(note.id) }}
+                        className="text-[9px] text-brand-ink/40 hover:text-brand-ink/60 transition-colors mt-0.5"
+                      >
+                        {expanded ? 'less' : 'more'}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="border-t border-brand-mint px-3 py-2 shrink-0">
+              <p className="text-[9px] text-brand-ink/30 leading-relaxed">
+                Selected notes are included as context when generating AI content.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
-
-    {showNotesModal && campaign && (
-      <NotesContextModal
-        campaign={campaign}
-        selectedIds={selectedNoteIds}
-        onToggle={toggleNote}
-        onDone={() => setShowNotesModal(false)}
-      />
-    )}
-  </>
   )
 }

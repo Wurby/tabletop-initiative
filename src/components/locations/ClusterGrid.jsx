@@ -89,7 +89,7 @@ export default function ClusterGrid({ clusters, gridRows, gridCols, onGridChange
             onClick={onAddCluster}
             className="text-xs font-normal text-white bg-brand-forest hover:bg-brand-forest-dark px-2 py-0.5 transition-colors flex items-center gap-1"
           >
-            <Sparkles size={10} /> New
+            <Sparkles size={12} /> New
           </button>
           {onAddBlankCluster && (
             <button

@@ -242,7 +242,7 @@ export default function LocationsPanel({ campaign, campaignCode }) {
                   onClick={handleAddCluster}
                   className="text-xs font-normal text-white bg-brand-forest hover:bg-brand-forest-dark px-4 py-2 transition-colors flex items-center gap-1.5"
                 >
-                  <Sparkles size={11} /> Build First Location
+                  <Sparkles size={13} /> Build First Location
                 </button>
                 <button
                   onClick={handleAddBlankCluster}
