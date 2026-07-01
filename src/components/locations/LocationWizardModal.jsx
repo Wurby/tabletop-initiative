@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { geminiFlashModel } from '../../lib/ai'
 import { Sparkles } from '../icons'
 import {
@@ -63,7 +64,7 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
     })
   }
 
-  function toggleExpand(id) {
+  function toggleDrawerExpand(id) {
     setDrawerExpandedIds(prev => {
       const next = new Set(prev)
       next.has(id) ? next.delete(id) : next.add(id)
@@ -191,7 +192,7 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
-      <div className={`bg-brand-mint-dark shadow-modal flex max-h-[88vh] max-w-[97vw] transition-all duration-200 ${showNotesDrawer ? 'w-[1080px]' : 'w-[860px]'}`}>
+      <div className="bg-brand-mint-dark shadow-modal flex max-h-[88vh] w-[860px] max-w-[97vw]">
 
         {/* Left sidebar — step list */}
         <div className="w-44 shrink-0 border-r border-brand-mint flex flex-col">
@@ -283,7 +284,7 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
         </div>
 
         {/* Right — current step */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
           {/* Step header */}
           <div className="bg-brand-forest-dark px-5 py-3 shrink-0 flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -410,9 +411,8 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
           </div>
         </div>
 
-        {/* Notes Drawer */}
-        {showNotesDrawer && (
-          <div className="w-60 shrink-0 border-l border-brand-mint flex flex-col">
+          {/* Notes Drawer — slides in over right panel */}
+          <div className={`absolute inset-y-0 right-0 w-60 bg-brand-mint-dark border-l border-brand-mint flex flex-col transition-transform duration-200 z-10 ${showNotesDrawer ? 'translate-x-0' : 'translate-x-full'}`}>
             <div className="bg-brand-forest-dark px-3 py-2 flex items-center justify-between shrink-0">
               <span className="text-white text-xs font-normal">
                 DM Notes
@@ -459,34 +459,52 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto px-2 py-2 flex flex-col gap-1.5">
+            <div className="flex-1 overflow-y-auto flex flex-col">
               {drawerNotes.length === 0 && (
                 <p className="text-brand-ink/30 text-xs font-light py-4 text-center">No notes</p>
               )}
               {drawerNotes.map(note => {
                 const selected = selectedNoteIds.has(note.id)
                 const expanded = drawerExpandedIds.has(note.id)
-                const hasMore = (note.body?.length ?? 0) > 100
-                const excerpt = hasMore && !expanded ? note.body.slice(0, 100) + '…' : note.body
                 return (
-                  <div
-                    key={note.id}
-                    onClick={() => toggleNote(note.id)}
-                    className={`bg-brand-mint p-2 cursor-pointer border-2 transition-colors ${
-                      selected ? 'border-brand-rivulet' : 'border-transparent hover:border-brand-ink/15'
-                    }`}
-                  >
-                    {note.title && (
-                      <p className="text-[10px] font-bold text-brand-ink mb-0.5">{note.title}</p>
-                    )}
-                    <p className="text-[10px] font-normal text-brand-ink/70 leading-relaxed">{excerpt}</p>
-                    {hasMore && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleExpand(note.id) }}
-                        className="text-[9px] text-brand-ink/40 hover:text-brand-ink/60 transition-colors mt-0.5"
+                  <div key={note.id} className="border-b border-brand-ink/10 last:border-0">
+                    <div
+                      className="flex items-start gap-2 px-2 py-2 cursor-pointer select-none hover:bg-brand-ink/5 transition-colors"
+                      onClick={() => toggleDrawerExpand(note.id)}
+                    >
+                      <span
+                        className="text-brand-ink/30 text-[10px] shrink-0 mt-0.5 transition-transform duration-150"
+                        style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
                       >
-                        {expanded ? 'less' : 'more'}
+                        ▶
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-normal text-brand-ink truncate">
+                          {note.title || note.body?.split('\n')[0] || 'Untitled'}
+                        </p>
+                        {!expanded && note.body && (
+                          <p className="text-[9px] text-brand-ink/45 line-clamp-2 leading-snug mt-0.5 whitespace-pre-wrap">
+                            {note.body}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleNote(note.id) }}
+                        className={`shrink-0 text-[9px] px-1.5 py-0.5 border transition-colors ${
+                          selected
+                            ? 'bg-brand-rivulet text-white border-brand-rivulet'
+                            : 'border-brand-ink/20 text-brand-ink/50 hover:border-brand-ink/50 hover:text-brand-ink'
+                        }`}
+                      >
+                        {selected ? '✓' : '+'}
                       </button>
+                    </div>
+                    {expanded && (
+                      <div className="px-4 pb-3 pt-1">
+                        <div className="note-prose text-brand-ink text-xs font-normal">
+                          <ReactMarkdown>{note.body || ''}</ReactMarkdown>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )
@@ -499,7 +517,7 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
               </p>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
