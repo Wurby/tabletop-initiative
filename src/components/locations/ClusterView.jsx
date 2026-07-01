@@ -131,9 +131,10 @@ function PoiGrid({ pois, poiGridRows, poiGridCols, onGridChange, onPoiClick, onA
   )
 }
 
-export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate }) {
+export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onDelete }) {
   const [editMode, setEditMode] = useState(false)
   const [editName, setEditName] = useState(cluster.name)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   function updateField(key, value) {
     onUpdate({ ...cluster, [key]: value })
@@ -170,34 +171,47 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate }) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="bg-brand-forest px-4 py-2 flex items-center gap-3 shrink-0">
-        <button onClick={onBack} className="text-white/50 hover:text-white text-xs transition-colors shrink-0">
-          ← Locations
-        </button>
-        {editMode ? (
-          <input
-            autoFocus
-            className="flex-1 bg-white/15 border border-white/30 text-white text-base font-normal px-2 py-0.5 focus:outline-none"
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            onBlur={saveName}
-            onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') { setEditName(cluster.name); setEditMode(false) } }}
-          />
-        ) : (
-          <h3
-            className="flex-1 text-white font-normal text-base truncate cursor-text hover:opacity-80 transition-opacity"
-            onClick={() => setEditMode(true)}
-          >
-            {cluster.name}
-          </h3>
-        )}
-      </div>
-
       {/* Body: split layout */}
       <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
         {/* INDEX content — left/top */}
         <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5 border-r border-brand-ink/8">
+          {/* Cluster name — editable inline */}
+          <div className="pb-1 border-b border-brand-ink/10 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              {editMode ? (
+                <input
+                  autoFocus
+                  className="w-full bg-transparent text-brand-ink text-lg font-normal border-b border-brand-rivulet/40 focus:outline-none pb-0.5"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onBlur={saveName}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') { setEditName(cluster.name); setEditMode(false) } }}
+                />
+              ) : (
+                <h3
+                  className="text-lg font-normal text-brand-ink cursor-text hover:opacity-70 transition-opacity truncate"
+                  onClick={() => setEditMode(true)}
+                >
+                  {cluster.name}
+                </h3>
+              )}
+            </div>
+            {confirmDelete ? (
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs text-brand-ink/50">Delete?</span>
+                <button onClick={() => onDelete(cluster.id)} className="text-xs text-brand-danger hover:text-brand-danger-dark transition-colors">Yes</button>
+                <button onClick={() => setConfirmDelete(false)} className="text-xs text-brand-ink/40 hover:text-brand-ink transition-colors">No</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="text-[10px] text-brand-ink/20 hover:text-brand-danger transition-colors shrink-0"
+                title="Delete location"
+              >
+                ✕
+              </button>
+            )}
+          </div>
           {INDEX_SECTIONS.map((s) => (
             <div key={s.key}>
               <h4 className="text-xs font-bold text-brand-ink/50 uppercase tracking-wider mb-2 pb-1 border-b border-brand-ink/8">

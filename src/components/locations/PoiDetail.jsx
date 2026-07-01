@@ -62,11 +62,12 @@ function EditableSection({ sectionKey, value, editMode, onSave }) {
   )
 }
 
-export default function PoiDetail({ poi, cluster, onUpdate, onBack }) {
+export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete }) {
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState({ ...poi })
   const [editName, setEditName] = useState(poi.name)
   const [editLetter, setEditLetter] = useState(poi.letter)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const sectionRefs = useRef({})
 
   function jumpTo(key) {
@@ -97,59 +98,70 @@ export default function PoiDetail({ poi, cluster, onUpdate, onBack }) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* POI header */}
-      <div className="bg-brand-forest-dark px-4 py-2 flex items-center gap-3 shrink-0">
-        <button onClick={onBack} className="text-white/50 hover:text-white text-xs transition-colors shrink-0">
-          ← Back
-        </button>
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+      {/* Jump nav + controls */}
+      <div className="flex items-center border-b border-brand-ink/10 shrink-0 overflow-x-auto">
+        {/* POI identity */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 border-r border-brand-ink/10 shrink-0">
           {editMode ? (
             <>
               <input
-                className="w-8 bg-white/15 border border-white/30 text-white text-xs text-center px-1 py-0.5 focus:outline-none"
+                className="w-6 bg-transparent text-brand-ink text-xs text-center border-b border-brand-rivulet/40 focus:outline-none"
                 value={editLetter}
                 onChange={(e) => setEditLetter(e.target.value)}
               />
               <input
-                className="flex-1 bg-white/15 border border-white/30 text-white text-sm font-normal px-2 py-0.5 focus:outline-none"
+                className="bg-transparent text-brand-ink text-xs border-b border-brand-rivulet/40 focus:outline-none w-28"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
               />
             </>
           ) : (
-            <h3 className="text-white font-normal text-sm truncate">
-              <span className="opacity-60 mr-1">{poi.letter}</span>{poi.name}
-            </h3>
+            <span className="text-xs font-normal text-brand-ink/60">
+              <span className="font-bold mr-0.5">{poi.letter}</span>{poi.name}
+            </span>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {editMode ? (
-            <>
-              <button onClick={saveEditMode} className="text-xs font-normal text-white border border-white/40 hover:border-white px-2 py-0.5 transition-colors">Save</button>
-              <button onClick={cancelEditMode} className="text-xs text-white/50 hover:text-white transition-colors">Cancel</button>
-            </>
-          ) : (
-            <button
-              onClick={() => { setDraft({ ...poi }); setEditName(poi.name); setEditLetter(poi.letter); setEditMode(true) }}
-              className="text-xs font-normal text-white/60 hover:text-white border border-white/20 hover:border-white/50 px-2 py-0.5 transition-colors"
-            >
-              Edit All
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Jump nav */}
-      <div className="flex gap-0 border-b border-brand-ink/10 shrink-0 overflow-x-auto">
+        {/* Section jumps */}
         {SECTIONS.map((s) => (
           <button
             key={s.key}
             onClick={() => jumpTo(s.key)}
-            className="shrink-0 px-3 py-1.5 text-[10px] font-normal text-brand-ink/50 hover:text-brand-ink hover:bg-brand-ink/5 transition-colors border-r border-brand-ink/10 last:border-0"
+            className="shrink-0 px-3 py-1.5 text-[10px] font-normal text-brand-ink/50 hover:text-brand-ink hover:bg-brand-ink/5 transition-colors border-r border-brand-ink/10"
           >
             {s.label}
           </button>
         ))}
+        {/* Edit controls — pushed right */}
+        <div className="ml-auto border-l border-brand-ink/10 shrink-0 flex">
+          {confirmDelete ? (
+            <>
+              <span className="px-3 py-1.5 text-[10px] text-brand-ink/50 border-r border-brand-ink/10">Delete?</span>
+              <button onClick={() => onDelete(poi.id)} className="px-3 py-1.5 text-[10px] font-normal text-brand-danger hover:bg-brand-ink/5 transition-colors border-r border-brand-ink/10">Yes</button>
+              <button onClick={() => setConfirmDelete(false)} className="px-3 py-1.5 text-[10px] font-normal text-brand-ink/40 hover:text-brand-ink hover:bg-brand-ink/5 transition-colors">No</button>
+            </>
+          ) : editMode ? (
+            <>
+              <button onClick={saveEditMode} className="px-3 py-1.5 text-[10px] font-normal text-brand-rivulet hover:bg-brand-ink/5 transition-colors border-r border-brand-ink/10">Save</button>
+              <button onClick={cancelEditMode} className="px-3 py-1.5 text-[10px] font-normal text-brand-ink/40 hover:text-brand-ink hover:bg-brand-ink/5 transition-colors">Cancel</button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => { setDraft({ ...poi }); setEditName(poi.name); setEditLetter(poi.letter); setEditMode(true) }}
+                className="px-3 py-1.5 text-[10px] font-normal text-brand-ink/40 hover:text-brand-ink hover:bg-brand-ink/5 transition-colors border-r border-brand-ink/10"
+              >
+                Edit All
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="px-3 py-1.5 text-[10px] text-brand-ink/20 hover:text-brand-danger transition-colors"
+                title="Delete POI"
+              >
+                ✕
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Scrollable content */}

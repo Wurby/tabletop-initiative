@@ -79,6 +79,24 @@ export default function LocationsPanel({ campaign, campaignCode }) {
     await saveClusters(nextClusters)
   }
 
+  async function handleDeleteCluster(clusterId) {
+    const next = clusters.filter((c) => c.id !== clusterId)
+    await saveClusters(next)
+    setView('clusters')
+    setActiveClusterId(null)
+    setActivePoiId(null)
+  }
+
+  async function handleDeletePoi(poiId) {
+    const nextClusters = clusters.map((c) => {
+      if (c.id !== activeClusterId) return c
+      return { ...c, pois: c.pois.filter((p) => p.id !== poiId) }
+    })
+    await saveClusters(nextClusters)
+    setView('cluster')
+    setActivePoiId(null)
+  }
+
   function openCluster(cluster) {
     setActiveClusterId(cluster.id)
     setActivePoiId(null)
@@ -105,20 +123,20 @@ export default function LocationsPanel({ campaign, campaignCode }) {
   return (
     <section className="flex flex-col h-full">
       {/* Section header */}
-      <div className="bg-brand-forest px-6 py-2 mb-0 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center shrink-0">
+        <div className="flex items-center gap-2 flex-wrap">
           {crumbs.map((c, i) => (
-            <span key={i} className="flex items-center gap-1.5">
-              {i > 0 && <span className="text-white/30 text-xs">›</span>}
+            <span key={i} className="flex items-center gap-2">
+              {i > 0 && <span className="text-white/30 text-base">›</span>}
               {c.onClick ? (
                 <button
                   onClick={c.onClick}
-                  className="text-sm font-normal text-white/70 hover:text-white transition-colors"
+                  className="text-base font-normal text-white/60 hover:text-white transition-colors"
                 >
                   {c.label}
                 </button>
               ) : (
-                <span className="text-sm font-normal text-white">{c.label}</span>
+                <span className="text-xl font-normal text-white">{c.label}</span>
               )}
             </span>
           ))}
@@ -158,6 +176,7 @@ export default function LocationsPanel({ campaign, campaignCode }) {
             onPoiClick={openPoi}
             onBack={goBack}
             onUpdate={handleClusterUpdate}
+            onDelete={handleDeleteCluster}
           />
         )}
 
@@ -167,6 +186,7 @@ export default function LocationsPanel({ campaign, campaignCode }) {
             cluster={activeCluster}
             onUpdate={handlePoiUpdate}
             onBack={goBack}
+            onDelete={handleDeletePoi}
           />
         )}
       </div>
