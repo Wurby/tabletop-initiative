@@ -273,6 +273,8 @@ export default function LocationsPanel({ campaign, campaignCode }) {
             onUpdate={handleClusterUpdate}
             onDelete={handleDeleteCluster}
             onAddPoiWithWizard={() => handleAddPoiWithWizard(activeCluster.id)}
+            campaign={campaign}
+            campaignCode={campaignCode}
           />
         )}
 
@@ -283,6 +285,8 @@ export default function LocationsPanel({ campaign, campaignCode }) {
             onUpdate={handlePoiUpdate}
             onBack={goBack}
             onDelete={handleDeletePoi}
+            campaign={campaign}
+            campaignCode={campaignCode}
           />
         )}
       </div>

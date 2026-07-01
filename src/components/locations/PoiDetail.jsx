@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { Trash } from '../icons'
+import { Sparkles, Trash } from '../icons'
+import { generateLocationImage } from './locationImageGen'
 
 const SECTIONS = [
   { key: 'description', label: 'Description' },
@@ -10,7 +11,7 @@ const SECTIONS = [
   { key: 'quests', label: 'Quests' },
 ]
 
-export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete }) {
+export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete, campaign, campaignCode }) {
   const [activeSection, setActiveSection] = useState(null) // null = All
   const [editingSection, setEditingSection] = useState(null)
   const [draft, setDraft] = useState('')
@@ -18,6 +19,27 @@ export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete }) 
   const [editName, setEditName] = useState(poi.name)
   const [editLetter, setEditLetter] = useState(poi.letter)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [generatingImage, setGeneratingImage] = useState(false)
+  const [imageError, setImageError] = useState(null)
+
+  async function handleGenerateImage() {
+    setGeneratingImage(true)
+    setImageError(null)
+    try {
+      const descriptionText = [poi.description, poi.whoIsHere, poi.whatIsHere].filter(Boolean).join(' ')
+      const url = await generateLocationImage({
+        campaignCode, campaign,
+        name: `${cluster.name} — ${poi.name}`,
+        descriptionText,
+        type: 'point of interest',
+      })
+      onUpdate({ ...poi, imageUrl: url })
+    } catch (err) {
+      setImageError(err.message || 'Image generation failed.')
+    } finally {
+      setGeneratingImage(false)
+    }
+  }
 
   function startEdit(key) {
     setEditingSection(key)
@@ -85,6 +107,31 @@ export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete }) 
           </button>
         )}
       </div>
+
+      {/* POI image */}
+      {poi.imageUrl ? (
+        <div className="relative group/img shrink-0">
+          <img src={poi.imageUrl} alt={poi.name} className="w-full h-36 object-cover" />
+          <button
+            onClick={handleGenerateImage}
+            disabled={generatingImage}
+            className="absolute bottom-2 right-2 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center gap-1 text-[10px] text-white bg-brand-ink/60 hover:bg-brand-ink/80 px-2 py-1 disabled:opacity-40"
+          >
+            <Sparkles size={9} /> {generatingImage ? 'Generating…' : 'Regenerate'}
+          </button>
+        </div>
+      ) : (
+        <div className="px-5 py-2 flex items-center gap-2 shrink-0">
+          <button
+            onClick={handleGenerateImage}
+            disabled={generatingImage}
+            className="flex items-center gap-1.5 text-xs font-normal text-brand-ink/50 border border-brand-ink/15 hover:border-brand-ink/30 hover:text-brand-ink px-2.5 py-1.5 transition-colors disabled:opacity-40"
+          >
+            <Sparkles size={11} /> {generatingImage ? 'Generating…' : 'Generate Image'}
+          </button>
+          {imageError && <p className="text-brand-danger text-[10px]">{imageError}</p>}
+        </div>
+      )}
 
       {/* Section tabs */}
       <div className="flex gap-1.5 px-5 pt-3 pb-2 shrink-0 flex-wrap border-b border-brand-ink/8">

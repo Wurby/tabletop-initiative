@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Sparkles, Trash } from '../icons'
+import { generateLocationImage } from './locationImageGen'
 
 const INDEX_SECTIONS = [
   { key: 'arrival', label: 'Arrival' },
@@ -141,11 +142,32 @@ function PoiGrid({ pois, poiGridRows, poiGridCols, onGridChange, onPoiClick, onA
   )
 }
 
-export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onDelete, onAddPoiWithWizard }) {
+export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onDelete, onAddPoiWithWizard, campaign, campaignCode }) {
   const [editMode, setEditMode] = useState(false)
   const [editName, setEditName] = useState(cluster.name)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [mobileTab, setMobileTab] = useState('index')
+  const [generatingImage, setGeneratingImage] = useState(false)
+  const [imageError, setImageError] = useState(null)
+
+  async function handleGenerateImage() {
+    setGeneratingImage(true)
+    setImageError(null)
+    try {
+      const descriptionText = [cluster.arrival, cluster.situation, cluster.plotHooks].filter(Boolean).join(' ')
+      const url = await generateLocationImage({
+        campaignCode, campaign,
+        name: cluster.name,
+        descriptionText,
+        type: 'location',
+      })
+      onUpdate({ ...cluster, imageUrl: url })
+    } catch (err) {
+      setImageError(err.message || 'Image generation failed.')
+    } finally {
+      setGeneratingImage(false)
+    }
+  }
 
   function updateField(key, value) {
     onUpdate({ ...cluster, [key]: value })
@@ -240,6 +262,31 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
               </button>
             )}
           </div>
+          {/* Location image */}
+          {cluster.imageUrl ? (
+            <div className="relative group/img -mx-5">
+              <img src={cluster.imageUrl} alt={cluster.name} className="w-full h-40 object-cover" />
+              <button
+                onClick={handleGenerateImage}
+                disabled={generatingImage}
+                className="absolute bottom-2 right-2 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center gap-1 text-[10px] text-white bg-brand-ink/60 hover:bg-brand-ink/80 px-2 py-1 disabled:opacity-40"
+              >
+                <Sparkles size={9} /> {generatingImage ? 'Generating…' : 'Regenerate'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleGenerateImage}
+                disabled={generatingImage}
+                className="flex items-center gap-1.5 text-xs font-normal text-brand-ink/50 border border-brand-ink/15 hover:border-brand-ink/30 hover:text-brand-ink px-2.5 py-1.5 transition-colors disabled:opacity-40"
+              >
+                <Sparkles size={11} /> {generatingImage ? 'Generating…' : 'Generate Image'}
+              </button>
+              {imageError && <p className="text-brand-danger text-[10px]">{imageError}</p>}
+            </div>
+          )}
+
           {INDEX_SECTIONS.map((s) => (
             <div key={s.key}>
               <h4 className="text-xs font-bold text-brand-ink/50 uppercase tracking-wider mb-2 pb-1 border-b border-brand-ink/8">
