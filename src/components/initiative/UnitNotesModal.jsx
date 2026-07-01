@@ -2,29 +2,45 @@ import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import NoteOpenModal from '../notes/NoteOpenModal'
 
-function NoteCard({ note, onEdit, onDelete }) {
+function NoteCard({ note, onUpdate, onDelete }) {
   const [expanded, setExpanded] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
   const [openModal, setOpenModal] = useState(false)
 
   return (
     <>
-      {openModal && <NoteOpenModal note={note} onClose={() => setOpenModal(false)} />}
+      {openModal && (
+        <NoteOpenModal
+          note={note}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          onClose={() => setOpenModal(false)}
+        />
+      )}
       <div className="border-b border-brand-ink/10 last:border-0">
         {/* Header row — always visible */}
         <div
-          className="flex items-center gap-2 px-3 py-2 cursor-pointer select-none group/header hover:bg-brand-ink/5 transition-colors"
+          className="flex items-start gap-2 px-3 py-2 cursor-pointer select-none group/header hover:bg-brand-ink/5 transition-colors"
           onClick={() => setExpanded((v) => !v)}
         >
-          <span className="text-brand-ink/30 text-[10px] shrink-0 transition-transform duration-150" style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+          <span
+            className="text-brand-ink/30 text-[10px] shrink-0 mt-0.5 transition-transform duration-150"
+            style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
+          >
             ▶
           </span>
-          <p className="flex-1 text-xs font-normal text-brand-ink truncate">
-            {note.title || note.body?.split('\n')[0] || 'Untitled'}
-          </p>
-          {/* Action buttons — visible on hover of the header */}
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-normal text-brand-ink truncate">
+              {note.title || note.body?.split('\n')[0] || 'Untitled'}
+            </p>
+            {!expanded && note.body && (
+              <p className="text-[10px] text-brand-ink/45 line-clamp-2 leading-snug mt-0.5 whitespace-pre-wrap">
+                {note.body}
+              </p>
+            )}
+          </div>
+          {/* Open button — visible on hover */}
           <div
-            className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity"
+            className="shrink-0 opacity-0 group-hover/header:opacity-100 transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -33,35 +49,6 @@ function NoteCard({ note, onEdit, onDelete }) {
             >
               Open
             </button>
-            <button
-              onClick={() => { onEdit(note); setExpanded(true) }}
-              className="px-1.5 py-0.5 text-[10px] font-normal text-brand-ink/50 hover:text-brand-ink border border-brand-ink/15 hover:border-brand-ink/35 transition-colors"
-            >
-              Edit
-            </button>
-            {confirmDelete ? (
-              <>
-                <button
-                  onClick={() => onDelete(note.id)}
-                  className="text-[10px] font-normal text-brand-danger hover:text-brand-danger/70 transition-colors px-1"
-                >
-                  Yes
-                </button>
-                <button
-                  onClick={() => setConfirmDelete(false)}
-                  className="text-[10px] font-normal text-brand-ink/40 hover:text-brand-ink/60 transition-colors"
-                >
-                  No
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setConfirmDelete(true)}
-                className="px-1.5 py-0.5 text-[10px] font-normal text-brand-ink/50 hover:text-brand-danger border border-brand-ink/15 hover:border-brand-danger/40 transition-colors"
-              >
-                ✕
-              </button>
-            )}
           </div>
         </div>
 
@@ -83,9 +70,6 @@ export function NotesEditor({ folders, notes, onFoldersChange, onNotesChange }) 
   const [showNewFolder, setShowNewFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [confirmDeleteFolderId, setConfirmDeleteFolderId] = useState(null)
-  const [editingId, setEditingId] = useState(null)
-  const [editTitle, setEditTitle] = useState('')
-  const [editBody, setEditBody] = useState('')
   const [showNewNote, setShowNewNote] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newBody, setNewBody] = useState('')
@@ -127,20 +111,8 @@ export function NotesEditor({ folders, notes, onFoldersChange, onNotesChange }) 
     setShowNewNote(false)
   }
 
-  function startEdit(note) {
-    setEditingId(note.id)
-    setEditTitle(note.title ?? '')
-    setEditBody(note.body ?? '')
-    setShowNewNote(false)
-  }
-
-  function saveEdit(note) {
-    onNotesChange(
-      notes.map((n) =>
-        n.id === note.id ? { ...note, title: editTitle.trim(), body: editBody.trim() } : n
-      )
-    )
-    setEditingId(null)
+  function updateNote(updated) {
+    onNotesChange(notes.map((n) => (n.id === updated.id ? updated : n)))
   }
 
   function deleteNote(noteId) {
@@ -153,7 +125,7 @@ export function NotesEditor({ folders, notes, onFoldersChange, onNotesChange }) 
       <div className="flex gap-1.5 flex-wrap items-center px-4">
         {folders.length > 0 && (
           <button
-            onClick={() => setActiveFolderId(null)}
+            onClick={() => { setActiveFolderId(null); setConfirmDeleteFolderId(null) }}
             className={`shrink-0 px-3 py-1 text-xs font-normal border transition-colors ${
               activeFolderId === null
                 ? 'bg-brand-forest text-white border-brand-forest'
@@ -176,22 +148,29 @@ export function NotesEditor({ folders, notes, onFoldersChange, onNotesChange }) 
               {f.name}
             </button>
             {confirmDeleteFolderId === f.id ? (
-              <div className="absolute top-0 right-0 flex items-center gap-0.5 bg-white border border-brand-ink/20 px-1 py-0.5 z-10 shadow-sm">
-                <span className="text-[9px] text-brand-ink/60 mr-0.5">Delete?</span>
-                <button
-                  onClick={() => deleteFolder(f.id)}
-                  className="text-[9px] text-brand-danger hover:text-brand-danger/70 font-normal transition-colors"
-                >
-                  Yes
-                </button>
-                <span className="text-[9px] text-brand-ink/30">/</span>
-                <button
+              <>
+                {/* Backdrop to close on outside click */}
+                <div
+                  className="fixed inset-0 z-[5]"
                   onClick={() => setConfirmDeleteFolderId(null)}
-                  className="text-[9px] text-brand-ink/40 hover:text-brand-ink/60 transition-colors"
-                >
-                  No
-                </button>
-              </div>
+                />
+                <div className="absolute top-0 right-0 flex items-center gap-0.5 bg-white border border-brand-ink/20 px-1 py-0.5 z-10 shadow-sm">
+                  <span className="text-[9px] text-brand-ink/60 mr-0.5">Delete?</span>
+                  <button
+                    onClick={() => deleteFolder(f.id)}
+                    className="text-[9px] text-brand-danger hover:text-brand-danger/70 font-normal transition-colors"
+                  >
+                    Yes
+                  </button>
+                  <span className="text-[9px] text-brand-ink/30">/</span>
+                  <button
+                    onClick={() => setConfirmDeleteFolderId(null)}
+                    className="text-[9px] text-brand-ink/40 hover:text-brand-ink/60 transition-colors"
+                  >
+                    No
+                  </button>
+                </div>
+              </>
             ) : (
               <button
                 onClick={() => setConfirmDeleteFolderId(f.id)}
@@ -213,10 +192,7 @@ export function NotesEditor({ folders, notes, onFoldersChange, onNotesChange }) 
               onChange={(e) => setNewFolderName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') createFolder()
-                if (e.key === 'Escape') {
-                  setShowNewFolder(false)
-                  setNewFolderName('')
-                }
+                if (e.key === 'Escape') { setShowNewFolder(false); setNewFolderName('') }
               }}
             />
             <button
@@ -250,50 +226,18 @@ export function NotesEditor({ folders, notes, onFoldersChange, onNotesChange }) 
           </p>
         )}
 
-        <div className="border border-brand-ink/10">
-          {visibleNotes.map((note) =>
-            editingId === note.id ? (
-              <div key={note.id} className="p-3 flex flex-col gap-2 border-b border-brand-ink/10 last:border-0 bg-brand-mint">
-                <input
-                  className="bg-white border border-brand-ink/20 px-2 py-1 text-xs font-bold text-brand-ink focus:outline-none focus:ring-1 focus:ring-brand-rivulet w-full"
-                  placeholder="Title (optional)"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                />
-                <textarea
-                  autoFocus
-                  rows={4}
-                  className="bg-white border border-brand-ink/20 px-2 py-1 text-xs font-normal text-brand-ink focus:outline-none focus:ring-1 focus:ring-brand-rivulet w-full resize-none font-mono"
-                  placeholder="Notes… (Markdown supported)"
-                  value={editBody}
-                  onChange={(e) => setEditBody(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Escape') setEditingId(null) }}
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => saveEdit(note)}
-                    className="text-xs text-brand-rivulet hover:text-brand-rivulet/70 transition-colors"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setEditingId(null)}
-                    className="text-xs text-brand-ink/40 hover:text-brand-ink/60 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
+        {visibleNotes.length > 0 && (
+          <div className="border border-brand-ink/10">
+            {visibleNotes.map((note) => (
               <NoteCard
                 key={note.id}
                 note={note}
-                onEdit={startEdit}
+                onUpdate={updateNote}
                 onDelete={deleteNote}
               />
-            )
-          )}
-        </div>
+            ))}
+          </div>
+        )}
 
         {showNewNote && (
           <div className="mt-2 border border-brand-ink/10 p-3 flex flex-col gap-2 bg-brand-mint">
@@ -311,11 +255,7 @@ export function NotesEditor({ folders, notes, onFoldersChange, onNotesChange }) 
               value={newBody}
               onChange={(e) => setNewBody(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setShowNewNote(false)
-                  setNewTitle('')
-                  setNewBody('')
-                }
+                if (e.key === 'Escape') { setShowNewNote(false); setNewTitle(''); setNewBody('') }
               }}
             />
             <div className="flex gap-2">
@@ -339,7 +279,7 @@ export function NotesEditor({ folders, notes, onFoldersChange, onNotesChange }) 
       {!showNewNote && (
         <div className="px-4">
           <button
-            onClick={() => { setShowNewNote(true); setEditingId(null) }}
+            onClick={() => setShowNewNote(true)}
             className="w-full py-1.5 text-xs font-normal text-brand-rivulet border border-dashed border-brand-rivulet/30 hover:border-brand-rivulet transition-colors"
           >
             + Note

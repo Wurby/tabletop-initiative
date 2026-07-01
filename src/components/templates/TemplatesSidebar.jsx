@@ -410,12 +410,15 @@ export default function TemplatesSidebar({ campaign, campaignCode, onClose }) {
                 {f.name}
               </button>
               {confirmDeleteFolderId === f.id ? (
-                <div className="absolute top-0 right-0 flex items-center gap-0.5 bg-white border border-brand-ink/20 px-1 py-0.5 z-10 shadow-sm">
-                  <span className="text-[9px] text-brand-ink/60 mr-0.5">Delete?</span>
-                  <button onClick={() => deleteFolder(f.id)} className="text-[9px] text-brand-danger hover:text-brand-danger/70 font-normal transition-colors">Yes</button>
-                  <span className="text-[9px] text-brand-ink/30">/</span>
-                  <button onClick={() => setConfirmDeleteFolderId(null)} className="text-[9px] text-brand-ink/40 hover:text-brand-ink/60 transition-colors">No</button>
-                </div>
+                <>
+                  <div className="fixed inset-0 z-[5]" onClick={() => setConfirmDeleteFolderId(null)} />
+                  <div className="absolute top-0 right-0 flex items-center gap-0.5 bg-white border border-brand-ink/20 px-1 py-0.5 z-10 shadow-sm">
+                    <span className="text-[9px] text-brand-ink/60 mr-0.5">Delete?</span>
+                    <button onClick={() => deleteFolder(f.id)} className="text-[9px] text-brand-danger hover:text-brand-danger/70 font-normal transition-colors">Yes</button>
+                    <span className="text-[9px] text-brand-ink/30">/</span>
+                    <button onClick={() => setConfirmDeleteFolderId(null)} className="text-[9px] text-brand-ink/40 hover:text-brand-ink/60 transition-colors">No</button>
+                  </div>
+                </>
               ) : (
                 <button
                   onClick={() => setConfirmDeleteFolderId(f.id)}
