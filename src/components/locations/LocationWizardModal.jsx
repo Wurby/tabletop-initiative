@@ -192,7 +192,7 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
-      <div className="bg-brand-mint-dark shadow-modal flex max-h-[88vh] w-[860px] max-w-[97vw]">
+      <div className="bg-brand-mint-dark shadow-modal flex h-[88vh] w-[860px] max-w-[97vw] max-h-[88vh]">
 
         {/* Left sidebar — step list */}
         <div className="w-44 shrink-0 border-r border-brand-mint flex flex-col">
@@ -409,7 +409,6 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
               {isLastStep ? 'Finish →' : 'Next →'}
             </button>
           </div>
-        </div>
 
           {/* Notes Drawer — slides in over right panel */}
           <div className={`absolute inset-y-0 right-0 w-60 bg-brand-mint-dark border-l border-brand-mint flex flex-col transition-transform duration-200 z-10 ${showNotesDrawer ? 'translate-x-0' : 'translate-x-full'}`}>
@@ -522,3 +521,4 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
     </div>
   )
 }
+
