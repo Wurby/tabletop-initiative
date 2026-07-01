@@ -105,9 +105,9 @@ export function Sparkles({ className = '', size = 14 }) {
       fill="currentColor"
       className={className}
     >
-      <path d="M25,32 Q30,70 65,72 Q30,74 25,112 Q20,74 -15,72 Q20,70 25,32Z" />
-      <path d="M78,-7 Q81,14 100,15 Q81,16 78,37 Q75,16 56,15 Q75,14 78,-7Z" opacity="0.85" />
-      <path d="M88,64 Q91,79 104,80 Q91,81 88,96 Q85,81 72,80 Q85,79 88,64Z" opacity="0.7" />
+      <path d="M30,37 Q34,63 58,65 Q34,67 30,93 Q26,67 2,65 Q26,63 30,37Z" />
+      <path d="M75,-2 Q78,19 97,20 Q78,21 75,42 Q72,21 53,20 Q72,19 75,-2Z" opacity="0.85" />
+      <path d="M85,60 Q88,77 103,78 Q88,79 85,96 Q82,79 67,78 Q82,77 85,60Z" opacity="0.7" />
     </svg>
   )
 }
