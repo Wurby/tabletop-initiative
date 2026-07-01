@@ -145,7 +145,7 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
         </div>
 
         {/* Large desktop: three-column grid */}
-        <div className="hidden xl:grid xl:grid-cols-3 gap-8 items-start">
+        <div className="hidden xl:grid xl:grid-cols-[3fr_3fr_2fr] gap-4 items-start">
           <DMNotesPanel campaign={campaign} campaignCode={campaignCode} />
           <div className="h-[70vh]">
             <LocationsPanel campaign={campaign} campaignCode={campaignCode} />

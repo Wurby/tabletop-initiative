@@ -146,11 +146,14 @@ export default function GraveyardCard({ campaign, campaignCode }) {
   return (
     <>
       <div className="flex-shrink-0 w-48 bg-brand-mint-dark shadow-card flex flex-col">
-        {/* Header */}
-        <div className="bg-brand-ink px-3 py-2 flex items-center justify-between">
-          <span className="text-white text-xs font-normal tracking-wide">GRAVEYARD</span>
-          <div className="flex items-center gap-2">
-            <span className="text-white/70 font-light text-sm">{totalXp.toLocaleString()}</span>
+        {/* Header — two rows to match UnitCard height */}
+        <div className="bg-brand-ink">
+          <div className="px-2 pt-1.5 pb-0.5 flex items-center justify-between">
+            <span className="text-white/60 text-xs font-normal tracking-wide">GRAVEYARD</span>
+            <span className="text-white/80 font-light text-lg leading-none">{totalXp.toLocaleString()}</span>
+          </div>
+          <div className="px-2 pb-1 flex items-center justify-between border-t border-white/15">
+            <span className="text-white/30 text-xs">XP</span>
             {!isEmpty && (
               <button
                 onClick={() => setShowClear(true)}
