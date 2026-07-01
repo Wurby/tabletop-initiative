@@ -192,7 +192,7 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
-      <div className="flex items-stretch">
+      <div className="flex items-stretch max-h-[60vh] overflow-hidden">
       <div className="bg-brand-mint-dark shadow-modal flex max-h-[60vh] w-[860px] max-w-[97vw]">
 
         {/* Left sidebar — step list */}
@@ -493,13 +493,13 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleNote(note.id) }}
-                        className={`shrink-0 text-[9px] px-1.5 py-0.5 border transition-colors ${
+                        className={`shrink-0 text-[9px] px-1.5 py-0.5 border transition-colors whitespace-nowrap ${
                           selected
                             ? 'bg-brand-rivulet text-white border-brand-rivulet'
                             : 'border-brand-ink/20 text-brand-ink/50 hover:border-brand-ink/50 hover:text-brand-ink'
                         }`}
                       >
-                        {selected ? '✓' : '+'}
+                        {selected ? '✓ In context' : '+ Use for AI'}
                       </button>
                     </div>
                     {expanded && (
