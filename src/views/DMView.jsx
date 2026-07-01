@@ -5,7 +5,7 @@ import { useToast } from '../lib/toast'
 import { dmUpdate } from '../lib/campaign'
 import InitiativeTracker from '../components/initiative/InitiativeTracker'
 import PartyModal from '../components/party/PartyModal'
-import Graveyard from '../components/graveyard/Graveyard'
+import LocationsPanel from '../components/locations/LocationsPanel'
 import SessionLogModal from '../components/session/SessionLogModal'
 import SplitModal from '../components/session/SplitModal'
 import ImageLibrary from '../components/images/ImageLibrary'
@@ -121,7 +121,7 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
           <div className="flex border-b-2 border-brand-forest/10 px-6">
             {[
               { key: 'notes', label: 'Notes' },
-              { key: 'graveyard', label: 'Graveyard' },
+              { key: 'locations', label: 'Locations' },
               { key: 'images', label: 'Images' },
             ].map(({ key, label }) => (
               <button
@@ -138,7 +138,7 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
             ))}
           </div>
           <div className="pt-4">
-            {activePanel === 'graveyard' && <Graveyard campaign={campaign} campaignCode={campaignCode} />}
+            {activePanel === 'locations' && <LocationsPanel campaign={campaign} campaignCode={campaignCode} />}
             {activePanel === 'images' && <ImageLibrary campaign={campaign} campaignCode={campaignCode} />}
             {activePanel === 'notes' && <DMNotesPanel campaign={campaign} campaignCode={campaignCode} />}
           </div>
@@ -147,7 +147,9 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
         {/* Large desktop: three-column grid */}
         <div className="hidden xl:grid xl:grid-cols-3 gap-8 items-start">
           <DMNotesPanel campaign={campaign} campaignCode={campaignCode} />
-          <Graveyard campaign={campaign} campaignCode={campaignCode} />
+          <div className="h-[70vh]">
+            <LocationsPanel campaign={campaign} campaignCode={campaignCode} />
+          </div>
           <ImageLibrary campaign={campaign} campaignCode={campaignCode} />
         </div>
       </div>

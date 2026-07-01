@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useToast } from '../../lib/toast'
 import { dmUpdate } from '../../lib/campaign'
 import UnitCard from './UnitCard'
+import GraveyardCard from '../graveyard/GraveyardCard'
 
 const MIN_SLOTS = 5
 
@@ -151,7 +152,7 @@ function EmptyCard() {
   )
 }
 
-export default function InitiativeTracker({ campaign, campaignCode }) {
+export default function InitiativeTracker({ campaign, campaignCode, showGraveyard = true }) {
   const showError = useToast()
   const units = [...(campaign.initiative ?? [])].sort(
     (a, b) => (b.initiative - a.initiative) || ((a.tiebreak ?? 0) - (b.tiebreak ?? 0))
@@ -450,6 +451,9 @@ export default function InitiativeTracker({ campaign, campaignCode }) {
           />
         ))}
         <AddCard onAdd={handleAdd} />
+        {showGraveyard && (
+          <GraveyardCard campaign={campaign} campaignCode={campaignCode} />
+        )}
         {Array.from({ length: emptyCount }).map((_, i) => (
           <EmptyCard key={i} />
         ))}
