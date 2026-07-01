@@ -192,7 +192,8 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
-      <div className="bg-brand-mint-dark shadow-modal flex h-[88vh] w-[860px] max-w-[97vw] max-h-[88vh]">
+      <div className="flex items-stretch">
+      <div className="bg-brand-mint-dark shadow-modal flex max-h-[60vh] w-[860px] max-w-[97vw]">
 
         {/* Left sidebar — step list */}
         <div className="w-44 shrink-0 border-r border-brand-mint flex flex-col">
@@ -284,7 +285,7 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
         </div>
 
         {/* Right — current step */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Step header */}
           <div className="bg-brand-forest-dark px-5 py-3 shrink-0 flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -409,9 +410,12 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
               {isLastStep ? 'Finish →' : 'Next →'}
             </button>
           </div>
+        </div>
+      </div>
 
-          {/* Notes Drawer — slides in over right panel */}
-          <div className={`absolute inset-y-0 right-0 w-60 bg-brand-mint-dark border-l border-brand-mint flex flex-col transition-transform duration-200 z-10 ${showNotesDrawer ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* Notes Drawer — outside modal, same height via items-stretch */}
+      <div className={`overflow-hidden transition-all duration-200 ${showNotesDrawer ? 'w-60' : 'w-0'}`}>
+        <div className="w-60 h-full bg-brand-mint-dark border-l border-brand-mint flex flex-col shadow-modal">
             <div className="bg-brand-forest-dark px-3 py-2 flex items-center justify-between shrink-0">
               <span className="text-white text-xs font-normal">
                 DM Notes
@@ -521,4 +525,5 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
     </div>
   )
 }
+
 
