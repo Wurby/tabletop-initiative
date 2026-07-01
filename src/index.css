@@ -29,6 +29,44 @@
   }
 }
 
+/* Markdown prose styles for note rendering */
+.note-prose p { margin-bottom: 0.5em; }
+.note-prose p:last-child { margin-bottom: 0; }
+.note-prose h1, .note-prose h2, .note-prose h3 {
+  font-weight: 600;
+  margin-top: 0.75em;
+  margin-bottom: 0.25em;
+}
+.note-prose h1 { font-size: 1em; }
+.note-prose h2 { font-size: 0.9em; }
+.note-prose h3 { font-size: 0.85em; }
+.note-prose ul, .note-prose ol {
+  padding-left: 1.25em;
+  margin-bottom: 0.5em;
+}
+.note-prose ul { list-style-type: disc; }
+.note-prose ol { list-style-type: decimal; }
+.note-prose li { margin-bottom: 0.15em; }
+.note-prose strong { font-weight: 600; }
+.note-prose em { font-style: italic; }
+.note-prose hr {
+  border: none;
+  border-top: 1px solid rgba(26,61,42,0.15);
+  margin: 0.5em 0;
+}
+.note-prose code {
+  font-family: monospace;
+  font-size: 0.9em;
+  background: rgba(26,61,42,0.07);
+  padding: 0.1em 0.3em;
+}
+.note-prose blockquote {
+  border-left: 2px solid rgba(26,61,42,0.2);
+  padding-left: 0.75em;
+  color: rgba(26,61,42,0.7);
+  margin: 0.5em 0;
+}
+
 @font-face {
   font-family: 'BespokeSerif';
   src:

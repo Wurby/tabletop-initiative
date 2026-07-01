@@ -27,13 +27,25 @@ npm run dev -- --host  # expose to LAN (required for iPad access)
 src/
 ├── assets/
 │   └── fonts/           # BespokeSerif web fonts (.woff2, .woff)
-├── components/          # Shared UI components
+├── components/
+│   ├── admin/           # AdminModal.jsx — campaign settings (name, join code display)
+│   ├── graveyard/       # Graveyard.jsx, GraveyardView.jsx
+│   ├── images/          # ImageLibrary.jsx, ImageModal.jsx, ImageGenModal.jsx, LaserPointerModal.jsx
+│   ├── initiative/      # InitiativeTracker.jsx, InitiativeList.jsx, UnitCard.jsx,
+│   │                    # ActiveTurnWrapper.jsx, UnitNotesModal.jsx (exports NotesEditor too)
+│   ├── notes/           # DMNotesPanel.jsx — wraps NotesEditor for campaign-level notes
+│   ├── party/           # PartyModal.jsx
+│   ├── session/         # SessionLogModal.jsx, SplitModal.jsx
+│   ├── templates/       # TemplatesSidebar.jsx, TemplateGenModal.jsx
+│   └── icons.jsx        # All SVG icon components
 ├── views/
 │   ├── DMView.jsx        # Full DM controls
-│   └── TableView.jsx     # Read-only player view
-├── hooks/               # Firebase + Firestore hooks
+│   ├── TableView.jsx     # Read-only player view
+│   └── JoinScreen.jsx    # Campaign join/create entry point
 ├── lib/
 │   ├── firebase.js       # Firebase app init
+│   ├── campaign.js       # dmUpdate() helper — wraps updateDoc + serverTimestamp
+│   ├── toast.jsx         # Toast context + useToast hook
 │   └── xp.js            # 5e XP thresholds constant
 ├── App.jsx
 └── main.jsx
@@ -49,12 +61,23 @@ src/
 
 ```
 campaigns/{joinCode}/
-├── meta:        { name, dmUid }
-├── combat:      { active, activeIndex, display: { type, url, label } }
-├── initiative:  [{ id, name, initiative, hp: { current, max }, ac, visible }]
-├── graveyard:   [{ id, name, xp, killedAt }]
-├── questXp:     [{ id, label, xp, awardedAt }]
-└── images:      [{ url, label, uploadedAt }]
+├── meta:           { name, dmUid, locked, lastActiveAt }
+├── combat:         { active, activeIndex, round,
+│                     display: { type, url, label },
+│                     lastSplit: { clearedAt, dismissed },
+│                     tableError: string | null,
+│                     timerStartedAt, timerPaused, timerAccumulated }
+├── initiative:     [{ id, name, initiative, hp: { current, max }, ac, visible,
+│                      notes: [...], noteFolders: [...] }]
+├── graveyard:      [{ id, name, xp, killedAt }]
+├── questXp:        [{ id, label, xp, awardedAt }]
+├── images:         [{ url, label, uploadedAt }]
+├── party:          [{ id, name, type: 'party'|'follower', hpMax, ac }]
+├── templates:      [{ id, name, type: 'mob'|'ally', hp: { max }, ac,
+│                      noteFolders: [...], notes: [...], folderId }]
+├── dmNotes:        [{ id, title, body, folderId, createdAt }]
+├── dmNoteFolders:  [{ id, name }]
+└── sessionLogs:    [{ id, timestamp, ... }]
 ```
 
 **Storage path:** `campaigns/{joinCode}/images/{filename}`

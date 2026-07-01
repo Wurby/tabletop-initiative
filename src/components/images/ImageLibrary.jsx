@@ -16,6 +16,7 @@ export default function ImageLibrary({ campaign, campaignCode }) {
   const [progress, setProgress] = useState(0)
   const [labelInput, setLabelInput] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [confirmDeleteFolderId, setConfirmDeleteFolderId] = useState(null)
   const [showGenModal, setShowGenModal] = useState(false)
   const [showPointerModal, setShowPointerModal] = useState(false)
   const [activeFolderId, setActiveFolderId] = useState(null)
@@ -149,18 +150,27 @@ export default function ImageLibrary({ campaign, campaignCode }) {
           {folders.map((f) => (
             <div key={f.id} className="relative shrink-0 group/tab">
               <button
-                onClick={() => setActiveFolderId(f.id)}
+                onClick={() => { setActiveFolderId(f.id); setConfirmDeleteFolderId(null) }}
                 className={`pl-3 pr-6 py-1 text-xs font-normal border transition-colors ${activeFolderId === f.id ? 'bg-brand-forest text-white border-brand-forest' : 'border-brand-ink/20 text-brand-ink hover:border-brand-ink/40'}`}
               >
                 {f.name}
               </button>
-              <button
-                onClick={() => deleteFolder(f.id)}
-                className="absolute top-0.5 right-0.5 w-4 h-4 text-white/80 text-[9px] opacity-0 group-hover/tab:opacity-100 transition-opacity flex items-center justify-center leading-none bg-brand-danger/70 hover:bg-brand-danger"
-                title="Delete folder"
-              >
-                ×
-              </button>
+              {confirmDeleteFolderId === f.id ? (
+                <div className="absolute top-0 right-0 flex items-center gap-0.5 bg-white border border-brand-ink/20 px-1 py-0.5 z-10 shadow-sm">
+                  <span className="text-[9px] text-brand-ink/60 mr-0.5">Delete?</span>
+                  <button onClick={() => deleteFolder(f.id)} className="text-[9px] text-brand-danger hover:text-brand-danger/70 font-normal transition-colors">Yes</button>
+                  <span className="text-[9px] text-brand-ink/30">/</span>
+                  <button onClick={() => setConfirmDeleteFolderId(null)} className="text-[9px] text-brand-ink/40 hover:text-brand-ink/60 transition-colors">No</button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmDeleteFolderId(f.id)}
+                  className="absolute top-0.5 right-0.5 w-4 h-4 text-white/80 text-[9px] opacity-0 group-hover/tab:opacity-100 transition-opacity flex items-center justify-center leading-none bg-brand-danger/70 hover:bg-brand-danger"
+                  title="Delete folder"
+                >
+                  ×
+                </button>
+              )}
             </div>
           ))}
           {showNewFolder ? (
