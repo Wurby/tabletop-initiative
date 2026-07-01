@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { Sparkles, Trash } from '../icons'
 
 const INDEX_SECTIONS = [
   { key: 'arrival', label: 'Arrival' },
@@ -93,8 +94,9 @@ function PoiGrid({ pois, poiGridRows, poiGridCols, onGridChange, onPoiClick, onA
           <button
             onClick={onAddPoiWithWizard}
             className="text-[10px] font-normal text-white bg-brand-forest hover:bg-brand-forest-dark px-1.5 py-0.5 transition-colors"
+            title="Add POI with wizard"
           >
-            ✦
+            <Sparkles size={9} />
           </button>
           <button
             onClick={onAddPoi}
@@ -143,6 +145,7 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
   const [editMode, setEditMode] = useState(false)
   const [editName, setEditName] = useState(cluster.name)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [mobileTab, setMobileTab] = useState('index')
 
   function updateField(key, value) {
     onUpdate({ ...cluster, [key]: value })
@@ -179,10 +182,27 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
 
   return (
     <div className="flex flex-col h-full">
+      {/* Mobile tab switcher */}
+      <div className="flex md:hidden border-b border-brand-ink/10 shrink-0">
+        {[{ key: 'index', label: 'Index' }, { key: 'pois', label: 'POIs' }].map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setMobileTab(key)}
+            className={`py-2 px-4 text-sm font-normal transition-colors border-b-2 -mb-[2px] ${
+              mobileTab === key
+                ? 'border-brand-forest text-brand-ink'
+                : 'border-transparent text-brand-ink/40 hover:text-brand-ink/60'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Body: split layout */}
       <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
         {/* INDEX content — left/top */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5 border-r border-brand-ink/8">
+        <div className={`flex-1 overflow-y-auto px-5 py-4 flex-col gap-5 border-r border-brand-ink/8 ${mobileTab === 'pois' ? 'hidden md:flex' : 'flex'}`}>
           {/* Cluster name — editable inline */}
           <div className="pb-1 border-b border-brand-ink/10 flex items-center gap-3">
             <div className="flex-1 min-w-0">
@@ -213,10 +233,10 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
             ) : (
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="text-[10px] text-brand-ink/20 hover:text-brand-danger transition-colors shrink-0"
+                className="text-brand-ink/30 hover:text-brand-danger transition-colors shrink-0"
                 title="Delete location"
               >
-                ✕
+                <Trash size={11} />
               </button>
             )}
           </div>
@@ -236,7 +256,7 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
         </div>
 
         {/* POI grid — right/bottom */}
-        <div className="w-full md:w-56 shrink-0 overflow-y-auto px-3 py-4 bg-brand-mint/30">
+        <div className={`w-full md:w-56 shrink-0 overflow-y-auto px-3 py-4 bg-brand-mint/30 ${mobileTab === 'index' ? 'hidden md:block' : 'block'}`}>
           <PoiGrid
             pois={cluster.pois ?? []}
             poiGridRows={cluster.poiGridRows}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '../../lib/toast'
 import { dmUpdate } from '../../lib/campaign'
+import { Trash } from '../icons'
 
 function ClearModal({ totalXp, defaultPartySize, graveyard, questXp, onConfirm, onClose }) {
   const [partySize, setPartySize] = useState(String(defaultPartySize))
@@ -224,9 +225,9 @@ export default function Graveyard({ campaign, campaignCode }) {
             </button>
             <button
               onClick={() => handleDelete(entry.id)}
-              className="shrink-0 text-xs font-normal text-brand-ink opacity-30 hover:opacity-70 transition-opacity"
+              className="shrink-0 text-brand-ink/30 hover:text-brand-danger transition-colors"
             >
-              ✕
+              <Trash size={12} />
             </button>
           </div>
         ))}
@@ -245,9 +246,9 @@ export default function Graveyard({ campaign, campaignCode }) {
             <div className="w-[18px]" />
             <button
               onClick={() => handleDeleteQuest(entry.id)}
-              className="shrink-0 text-xs font-normal text-brand-ink opacity-30 hover:opacity-70 transition-opacity"
+              className="shrink-0 text-brand-ink/30 hover:text-brand-danger transition-colors"
             >
-              ✕
+              <Trash size={12} />
             </button>
           </div>
         ))}

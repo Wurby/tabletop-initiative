@@ -5,6 +5,7 @@ import ClusterGrid from './ClusterGrid'
 import ClusterView from './ClusterView'
 import PoiDetail from './PoiDetail'
 import LocationWizardModal from './LocationWizardModal'
+import { Sparkles } from '../icons'
 
 function defaultGridDims(n) {
   const slots = n + 2
@@ -154,27 +155,76 @@ export default function LocationsPanel({ campaign, campaignCode }) {
     else if (view === 'cluster') { setActiveClusterId(null); setView('clusters') }
   }
 
+  const [openDropdown, setOpenDropdown] = useState(null)
+
   const crumbs = [
-    { label: 'Locations', onClick: () => { setView('clusters'); setActiveClusterId(null); setActivePoiId(null) } },
-    ...(activeCluster ? [{ label: activeCluster.name, onClick: () => { setView('cluster'); setActivePoiId(null) } }] : []),
-    ...(activePoi ? [{ label: `${activePoi.letter} — ${activePoi.name}`, onClick: null }] : []),
+    { label: 'Locations', onClick: () => { setView('clusters'); setActiveClusterId(null); setActivePoiId(null); setOpenDropdown(null) } },
+    ...(activeCluster ? [{
+      label: activeCluster.name,
+      onClick: () => { setView('cluster'); setActivePoiId(null); setOpenDropdown(null) },
+      siblings: clusters,
+      currentId: activeCluster.id,
+      siblingLabel: (c) => c.name,
+      onSelectSibling: (c) => { openCluster(c); setOpenDropdown(null) },
+    }] : []),
+    ...(activePoi ? [{
+      label: `${activePoi.letter} — ${activePoi.name}`,
+      onClick: null,
+      siblings: activeCluster?.pois ?? [],
+      currentId: activePoi.id,
+      siblingLabel: (p) => `${p.letter} — ${p.name}`,
+      onSelectSibling: (p) => { openPoi(p); setOpenDropdown(null) },
+    }] : []),
   ]
 
   return (
     <section className="flex flex-col h-full">
-      <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center shrink-0">
+      <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center shrink-0 relative z-10">
         <div className="flex items-center gap-2 flex-wrap">
           {crumbs.map((c, i) => {
             const isLeaf = i === crumbs.length - 1
+            const hasDropdown = (c.siblings?.length ?? 0) > 1
+            const dropdownOpen = openDropdown === i
             return (
-              <span key={i} className="flex items-center gap-2">
+              <span key={i} className="flex items-center gap-2 relative">
                 {i > 0 && <span className="text-white/30 text-xl">›</span>}
-                {c.onClick && !isLeaf ? (
-                  <button onClick={c.onClick} className="text-xl font-normal text-white/60 hover:text-white transition-colors">
-                    {c.label}
-                  </button>
-                ) : (
-                  <span className="text-xl font-normal text-white">{c.label}</span>
+                <span className="flex items-center gap-1">
+                  {c.onClick && !isLeaf ? (
+                    <button onClick={c.onClick} className="text-xl font-normal text-white/60 hover:text-white transition-colors">
+                      {c.label}
+                    </button>
+                  ) : (
+                    <span className="text-xl font-normal text-white">{c.label}</span>
+                  )}
+                  {hasDropdown && (
+                    <button
+                      onClick={() => setOpenDropdown(dropdownOpen ? null : i)}
+                      className="text-white/40 hover:text-white transition-colors text-xs leading-none pb-0.5"
+                      title="Switch to sibling"
+                    >
+                      ▾
+                    </button>
+                  )}
+                </span>
+                {dropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[5]" onClick={() => setOpenDropdown(null)} />
+                    <div className="absolute top-full left-0 mt-1 z-10 bg-brand-forest-dark shadow-modal min-w-44 py-1 max-h-64 overflow-y-auto">
+                      {c.siblings.map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => c.onSelectSibling(s)}
+                          className={`w-full text-left px-3 py-1.5 text-sm font-normal transition-colors ${
+                            s.id === c.currentId
+                              ? 'text-white bg-white/10'
+                              : 'text-white/70 hover:text-white hover:bg-white/5'
+                          }`}
+                        >
+                          {c.siblingLabel(s)}
+                        </button>
+                      ))}
+                    </div>
+                  </>
                 )}
               </span>
             )
@@ -192,7 +242,7 @@ export default function LocationsPanel({ campaign, campaignCode }) {
                   onClick={handleAddCluster}
                   className="text-xs font-normal text-white bg-brand-forest hover:bg-brand-forest-dark px-4 py-2 transition-colors flex items-center gap-1.5"
                 >
-                  ✦ Build First Location
+                  <Sparkles size={11} /> Build First Location
                 </button>
                 <button
                   onClick={handleAddBlankCluster}

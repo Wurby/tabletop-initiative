@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Sparkles } from '../icons'
 
 function defaultGridDims(n) {
   const slots = n + 2
@@ -88,7 +89,7 @@ export default function ClusterGrid({ clusters, gridRows, gridCols, onGridChange
             onClick={onAddCluster}
             className="text-xs font-normal text-white bg-brand-forest hover:bg-brand-forest-dark px-2 py-0.5 transition-colors flex items-center gap-1"
           >
-            ✦ New
+            <Sparkles size={10} /> New
           </button>
           {onAddBlankCluster && (
             <button

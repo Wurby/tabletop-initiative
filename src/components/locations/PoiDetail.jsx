@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { Trash } from '../icons'
 
 const SECTIONS = [
   { key: 'description', label: 'Description' },
@@ -77,10 +78,10 @@ export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete }) 
         ) : (
           <button
             onClick={() => setConfirmDelete(true)}
-            className="text-[10px] text-brand-ink/20 hover:text-brand-danger transition-colors shrink-0"
+            className="text-brand-ink/30 hover:text-brand-danger transition-colors shrink-0"
             title="Delete POI"
           >
-            ✕
+            <Trash size={11} />
           </button>
         )}
       </div>

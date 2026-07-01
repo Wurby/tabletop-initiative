@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '../../lib/toast'
 import { dmUpdate } from '../../lib/campaign'
+import { Trash } from '../icons'
 
 function MemberRow({ member, onUpdate, onDelete }) {
   const [local, setLocal] = useState(member)
@@ -49,9 +50,10 @@ function MemberRow({ member, onUpdate, onDelete }) {
       />
       <button
         onClick={() => onDelete(member.id)}
-        className="shrink-0 text-xs font-normal text-brand-ink opacity-30 hover:opacity-70 transition-opacity"
+        className="shrink-0 text-brand-ink/30 hover:text-brand-danger transition-colors"
+        title="Remove member"
       >
-        ✕
+        <Trash size={11} />
       </button>
     </div>
   )
