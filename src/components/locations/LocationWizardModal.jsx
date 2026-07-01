@@ -266,18 +266,18 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
             )}
           </div>
 
-          <div className="border-t border-brand-mint p-3 flex flex-col gap-1.5">
+          <div className="border-t border-brand-mint p-3 flex flex-col gap-2">
             {onSkip && (
               <button
                 onClick={onSkip}
-                className="text-[10px] text-brand-ink/30 hover:text-brand-ink/60 transition-colors text-left"
+                className="w-full py-1.5 text-xs font-normal text-brand-ink/60 border border-brand-ink/20 hover:border-brand-ink/40 hover:text-brand-ink transition-colors"
               >
                 Skip — blank canvas
               </button>
             )}
             <button
               onClick={onClose}
-              className="text-[10px] text-brand-ink/30 hover:text-brand-ink/60 transition-colors text-left"
+              className="w-full py-1.5 text-xs font-normal text-brand-ink/60 border border-brand-ink/20 hover:border-brand-ink/40 hover:text-brand-ink transition-colors"
             >
               Cancel
             </button>
@@ -414,8 +414,8 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
       </div>
 
       {/* Notes Drawer — outside modal, same height via items-stretch */}
-      <div className={`overflow-hidden transition-all duration-200 ${showNotesDrawer ? 'w-60' : 'w-0'}`}>
-        <div className="w-60 h-full bg-brand-mint-dark border-l border-brand-mint flex flex-col shadow-modal">
+      <div className={`overflow-hidden transition-all duration-200 ${showNotesDrawer ? 'w-[312px]' : 'w-0'}`}>
+        <div className="w-[312px] h-full bg-brand-mint-dark border-l border-brand-mint flex flex-col shadow-modal">
             <div className="bg-brand-forest-dark px-3 py-2 flex items-center justify-between shrink-0">
               <span className="text-white text-xs font-normal">
                 DM Notes
@@ -462,7 +462,7 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto flex flex-col">
+            <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
               {drawerNotes.length === 0 && (
                 <p className="text-brand-ink/30 text-xs font-light py-4 text-center">No notes</p>
               )}
