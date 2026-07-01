@@ -192,7 +192,7 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
-      <div className="flex items-stretch max-h-[60vh] overflow-hidden">
+      <div className="relative">
       <div className="bg-brand-mint-dark shadow-modal flex max-h-[60vh] w-[860px] max-w-[97vw]">
 
         {/* Left sidebar — step list */}
@@ -413,8 +413,8 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
         </div>
       </div>
 
-      {/* Notes Drawer — outside modal, same height via items-stretch */}
-      <div className={`overflow-hidden transition-all duration-200 ${showNotesDrawer ? 'w-[312px]' : 'w-0'}`}>
+      {/* Notes Drawer — absolutely to the right of the modal, same height */}
+      <div className={`absolute top-0 left-full h-full overflow-hidden transition-all duration-200 ${showNotesDrawer ? 'w-[312px]' : 'w-0'}`}>
         <div className="w-[312px] h-full bg-brand-mint-dark border-l border-brand-mint flex flex-col shadow-modal">
             <div className="bg-brand-forest-dark px-3 py-2 flex items-center justify-between shrink-0">
               <span className="text-white text-xs font-normal">
