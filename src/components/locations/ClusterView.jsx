@@ -96,7 +96,7 @@ function PoiGrid({ pois, poiGridRows, poiGridCols, onGridChange, onPoiClick, onA
             className="text-[10px] font-normal text-white bg-brand-forest hover:bg-brand-forest-dark px-1.5 py-0.5 transition-colors"
             title="Add POI with wizard"
           >
-            <Sparkles size={9} />
+            <Sparkles size={12} />
           </button>
           <button
             onClick={onAddPoi}
