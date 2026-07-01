@@ -54,7 +54,7 @@ function EditableField({ value, editMode, onChange, placeholder, rows = 5 }) {
   )
 }
 
-function PoiGrid({ pois, poiGridRows, poiGridCols, onGridChange, onPoiClick, onAddPoi }) {
+function PoiGrid({ pois, poiGridRows, poiGridCols, onGridChange, onPoiClick, onAddPoi, onAddPoiWithWizard }) {
   const n = pois.length
   const cols = poiGridCols ?? Math.max(2, Math.ceil(Math.sqrt(n + 2)))
   const rows = poiGridRows ?? Math.ceil((n + 2) / cols)
@@ -87,14 +87,22 @@ function PoiGrid({ pois, poiGridRows, poiGridCols, onGridChange, onPoiClick, onA
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-1">
         <span className="text-[10px] text-brand-ink/40">{n} POI{n !== 1 ? 's' : ''}</span>
-        <button
-          onClick={onAddPoi}
-          className="text-[10px] font-normal text-brand-rivulet border border-brand-rivulet/30 hover:border-brand-rivulet px-1.5 py-0.5 transition-colors"
-        >
-          + POI
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onAddPoiWithWizard}
+            className="text-[10px] font-normal text-white bg-brand-forest hover:bg-brand-forest-dark px-1.5 py-0.5 transition-colors"
+          >
+            ✦
+          </button>
+          <button
+            onClick={onAddPoi}
+            className="text-[10px] font-normal text-brand-ink/40 hover:text-brand-ink/70 border border-brand-ink/15 hover:border-brand-ink/30 px-1.5 py-0.5 transition-colors"
+          >
+            + blank
+          </button>
+        </div>
       </div>
       <div
         className="grid gap-1.5"
@@ -131,7 +139,7 @@ function PoiGrid({ pois, poiGridRows, poiGridCols, onGridChange, onPoiClick, onA
   )
 }
 
-export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onDelete }) {
+export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onDelete, onAddPoiWithWizard }) {
   const [editMode, setEditMode] = useState(false)
   const [editName, setEditName] = useState(cluster.name)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -236,6 +244,7 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
             onGridChange={updatePois}
             onPoiClick={onPoiClick}
             onAddPoi={addPoi}
+            onAddPoiWithWizard={onAddPoiWithWizard}
           />
         </div>
       </div>

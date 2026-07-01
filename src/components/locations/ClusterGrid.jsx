@@ -7,7 +7,7 @@ function defaultGridDims(n) {
   return { rows, cols }
 }
 
-export default function ClusterGrid({ clusters, gridRows, gridCols, onGridChange, onClusterClick, onAddCluster, campaignCode }) {
+export default function ClusterGrid({ clusters, gridRows, gridCols, onGridChange, onClusterClick, onAddCluster, onAddBlankCluster }) {
   const n = clusters.length
   const dims = defaultGridDims(n)
   const rows = gridRows ?? dims.rows
@@ -86,10 +86,18 @@ export default function ClusterGrid({ clusters, gridRows, gridCols, onGridChange
           )}
           <button
             onClick={onAddCluster}
-            className="text-xs font-normal text-brand-rivulet border border-brand-rivulet/30 hover:border-brand-rivulet px-2 py-0.5 transition-colors"
+            className="text-xs font-normal text-white bg-brand-forest hover:bg-brand-forest-dark px-2 py-0.5 transition-colors flex items-center gap-1"
           >
-            + Cluster
+            ✦ New
           </button>
+          {onAddBlankCluster && (
+            <button
+              onClick={onAddBlankCluster}
+              className="text-xs font-normal text-brand-ink/40 hover:text-brand-ink/70 border border-brand-ink/15 hover:border-brand-ink/30 px-2 py-0.5 transition-colors"
+            >
+              + Blank
+            </button>
+          )}
         </div>
       </div>
 

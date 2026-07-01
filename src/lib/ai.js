@@ -13,3 +13,7 @@ export const imagenModel = getGenerativeModel(ai, {
 export const geminiModel = getGenerativeModel(ai, {
   model: 'gemini-2.5-flash-lite',
 })
+
+export const geminiFlashModel = getGenerativeModel(ai, {
+  model: 'gemini-2.5-flash',
+})
