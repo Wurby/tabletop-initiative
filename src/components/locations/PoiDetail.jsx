@@ -135,7 +135,7 @@ export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete }) 
         <div className="ml-auto border-l border-brand-ink/10 shrink-0 flex">
           {confirmDelete ? (
             <>
-              <span className="px-3 py-1.5 text-[10px] text-brand-ink/50 border-r border-brand-ink/10">Delete?</span>
+              <span className="px-3 py-1.5 text-[10px] text-brand-ink/50 border-r border-brand-ink/10">Delete "{poi.letter} — {poi.name}"?</span>
               <button onClick={() => onDelete(poi.id)} className="px-3 py-1.5 text-[10px] font-normal text-brand-danger hover:bg-brand-ink/5 transition-colors border-r border-brand-ink/10">Yes</button>
               <button onClick={() => setConfirmDelete(false)} className="px-3 py-1.5 text-[10px] font-normal text-brand-ink/40 hover:text-brand-ink hover:bg-brand-ink/5 transition-colors">No</button>
             </>

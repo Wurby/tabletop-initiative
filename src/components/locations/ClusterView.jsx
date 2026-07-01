@@ -198,7 +198,7 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
             </div>
             {confirmDelete ? (
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-brand-ink/50">Delete?</span>
+                <span className="text-xs text-brand-ink/50">Delete "{cluster.name}"?</span>
                 <button onClick={() => onDelete(cluster.id)} className="text-xs text-brand-danger hover:text-brand-danger-dark transition-colors">Yes</button>
                 <button onClick={() => setConfirmDelete(false)} className="text-xs text-brand-ink/40 hover:text-brand-ink transition-colors">No</button>
               </div>

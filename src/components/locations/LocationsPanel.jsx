@@ -125,21 +125,24 @@ export default function LocationsPanel({ campaign, campaignCode }) {
       {/* Section header */}
       <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center shrink-0">
         <div className="flex items-center gap-2 flex-wrap">
-          {crumbs.map((c, i) => (
-            <span key={i} className="flex items-center gap-2">
-              {i > 0 && <span className="text-white/30 text-base">›</span>}
-              {c.onClick ? (
-                <button
-                  onClick={c.onClick}
-                  className="text-base font-normal text-white/60 hover:text-white transition-colors"
-                >
-                  {c.label}
-                </button>
-              ) : (
-                <span className="text-xl font-normal text-white">{c.label}</span>
-              )}
-            </span>
-          ))}
+          {crumbs.map((c, i) => {
+            const isLeaf = i === crumbs.length - 1
+            return (
+              <span key={i} className="flex items-center gap-2">
+                {i > 0 && <span className="text-white/30 text-xl">›</span>}
+                {c.onClick && !isLeaf ? (
+                  <button
+                    onClick={c.onClick}
+                    className="text-xl font-normal text-white/60 hover:text-white transition-colors"
+                  >
+                    {c.label}
+                  </button>
+                ) : (
+                  <span className="text-xl font-normal text-white">{c.label}</span>
+                )}
+              </span>
+            )
+          })}
         </div>
       </div>
 
