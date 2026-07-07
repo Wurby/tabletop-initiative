@@ -16,6 +16,8 @@ export interface Campaign {
   templateFolders?: NamedFolder[];
   dmNotes?: Note[];
   dmNoteFolders?: NamedFolder[];
+  items?: Item[];
+  itemFolders?: NamedFolder[];
   sessionLogs?: unknown[];
   locations?: Cluster[];
   locationsGridRows?: number;
@@ -86,6 +88,22 @@ export interface Template {
   folderId: string | null;
   noteFolders?: NamedFolder[];
   notes?: Note[];
+}
+
+export interface Item {
+  id: string;
+  createdAt: number;
+  name: string;
+  type: 'weapon' | 'armor' | 'consumable' | 'wondrous' | 'gear' | 'treasure' | 'misc';
+  quantity: number;
+  value: number;
+  weight: number;
+  rarity: 'common' | 'uncommon' | 'rare' | 'very-rare' | 'legendary' | 'artifact' | null;
+  attunement: boolean;
+  ownerIds: string[];
+  folderId: string | null;
+  imageUrl: string | null;
+  notes: string;
 }
 
 export interface Poi {

@@ -2,7 +2,7 @@
 
 Remote MCP server exposing Tabletop Initiative campaign data to Claude. Structured
 read tools cover every collection; write tools are scoped to locations, templates,
-and notes — the "AI authors into the app instead of Obsidian markdown" surface.
+notes, and items — the "AI authors into the app instead of Obsidian markdown" surface.
 
 Mirrors the hand-rolled JSON-RPC pattern from `GPA/mcp` (no MCP SDK dependency, a
 single Vercel function), with one real difference: this server writes live

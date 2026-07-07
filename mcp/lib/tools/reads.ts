@@ -27,6 +27,7 @@ export function getCampaignSummary(campaign: Campaign): string {
     `Party members: ${(campaign.party ?? []).length}`,
     `Templates: ${(campaign.templates ?? []).length}`,
     `DM notes: ${(campaign.dmNotes ?? []).length}`,
+    `Items: ${(campaign.items ?? []).length}`,
     `Locations: ${clusters.length} cluster${clusters.length !== 1 ? 's' : ''}, ${poiCount} POI${poiCount !== 1 ? 's' : ''}`,
     `Session logs: ${(campaign.sessionLogs ?? []).length}`,
   ].join('\n');
@@ -115,6 +116,50 @@ export function getDmNote(campaign: Campaign, args: { id: string }): string {
   const n = (campaign.dmNotes ?? []).find((note) => note.id === args.id);
   if (!n) throw new Error(`No DM note with id "${args.id}".`);
   return `**${n.title || '(untitled)'}** (id: ${n.id})\n\n${n.body}`;
+}
+
+export function listItems(campaign: Campaign): string {
+  const items = campaign.items ?? [];
+  if (items.length === 0) return 'No items yet.';
+  const folderName = (id: string | null) =>
+    id ? (campaign.itemFolders ?? []).find((f) => f.id === id)?.name ?? null : null;
+  const ownerNames = (ids: string[]) =>
+    ids
+      .map((id) => (campaign.party ?? []).find((m) => m.id === id)?.name)
+      .filter(Boolean)
+      .join(', ');
+  return items
+    .map((i) => {
+      const folder = folderName(i.folderId);
+      const owners = ownerNames(i.ownerIds ?? []);
+      return [
+        `- [${i.id}] ${i.name} (${i.type}, qty ${i.quantity}, ${i.value}gp, ${i.weight}lb`,
+        i.rarity ? `, ${i.rarity}` : '',
+        i.attunement ? ', attunement' : '',
+        ')',
+        folder ? ` — folder: ${folder}` : '',
+        owners ? ` — owned by: ${owners}` : ' — unattached',
+      ].join('');
+    })
+    .join('\n');
+}
+
+export function getItem(campaign: Campaign, args: { id: string }): string {
+  const i = (campaign.items ?? []).find((item) => item.id === args.id);
+  if (!i) throw new Error(`No item with id "${args.id}".`);
+  const folder = i.folderId ? (campaign.itemFolders ?? []).find((f) => f.id === i.folderId)?.name : null;
+  const owners = (i.ownerIds ?? [])
+    .map((id) => (campaign.party ?? []).find((m) => m.id === id)?.name)
+    .filter(Boolean)
+    .join(', ');
+  return [
+    `**${i.name}** (id: ${i.id}, ${i.type}${i.rarity ? `, ${i.rarity}` : ''})`,
+    `Quantity: ${i.quantity} | Value: ${i.value}gp | Weight: ${i.weight}lb | Attunement: ${i.attunement ? 'yes' : 'no'}`,
+    `Folder: ${folder ?? '(unfiled)'}`,
+    `Owners: ${owners || '(unattached)'}`,
+    '',
+    i.notes || '(no notes)',
+  ].join('\n');
 }
 
 export function listImages(campaign: Campaign): string {

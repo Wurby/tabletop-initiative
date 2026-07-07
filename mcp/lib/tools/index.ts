@@ -7,6 +7,8 @@ import {
   getTemplate,
   listDmNotes,
   getDmNote,
+  listItems,
+  getItem,
   listImages,
   getParty,
   getInitiative,
@@ -17,6 +19,7 @@ import {
 import { upsertCluster, deleteCluster, upsertPoi, deletePoi } from './locations.js';
 import { upsertTemplate, deleteTemplate } from './templates.js';
 import { upsertNote, deleteNote, upsertNoteFolder, deleteNoteFolder } from './notes.js';
+import { upsertItem, deleteItem, upsertItemFolder, deleteItemFolder } from './items.js';
 
 export interface ToolContent {
   content: Array<{ type: 'text'; text: string }>;
@@ -27,6 +30,9 @@ const NOTE_SCOPE_PROPS = {
   scope: { type: 'string', enum: ['dm', 'template'], description: 'Which notes to target: campaign-wide DM notes, or a specific template\'s notes.' },
   template_id: { type: 'string', description: 'Required when scope is "template" — the template\'s id.' },
 };
+
+const ITEM_TYPE_ENUM = ['weapon', 'armor', 'consumable', 'wondrous', 'gear', 'treasure', 'misc'];
+const RARITY_ENUM = ['common', 'uncommon', 'rare', 'very-rare', 'legendary', 'artifact'];
 
 export const TOOLS = [
   // ── Reads ──────────────────────────────────────────────────────────────────
@@ -77,6 +83,20 @@ export const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: { id: { type: 'string', description: 'Note id from list_dm_notes.' } },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'list_items',
+    description: 'List every tracked item, with id, type, quantity, value, weight, rarity, attunement, folder, and owning party members.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'get_item',
+    description: 'Fetch full detail for an item, including its notes body.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string', description: 'Item id from list_items.' } },
       required: ['id'],
     },
   },
@@ -238,6 +258,60 @@ export const TOOLS = [
       required: ['scope', 'id'],
     },
   },
+
+  // ── Item writes ───────────────────────────────────────────────────────────
+  {
+    name: 'upsert_item',
+    description: 'Create a new tracked item or update an existing one.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Omit to create a new item; provide to update an existing one.' },
+        name: { type: 'string' },
+        type: { type: 'string', enum: ITEM_TYPE_ENUM },
+        quantity: { type: 'number', description: 'Defaults to 1 on create.' },
+        value: { type: 'number', description: 'Value in gold pieces.' },
+        weight: { type: 'number', description: 'Weight in pounds.' },
+        rarity: { type: 'string', enum: RARITY_ENUM, description: 'Omit or null for a mundane (non-magic) item.' },
+        attunement: { type: 'boolean' },
+        owner_ids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Party member ids holding this item. Capped at `quantity` — extra ids are dropped, not rejected.',
+        },
+        folder_id: { type: 'string', description: 'Item folder id, or omit/null for unfiled.' },
+        notes: { type: 'string', description: 'Description/notes body (Markdown supported).' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'delete_item',
+    description: 'Delete a tracked item.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string' } },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'upsert_item_folder',
+    description: 'Create a new item folder or rename an existing one.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string' }, name: { type: 'string' } },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'delete_item_folder',
+    description: 'Delete an item folder. Items inside it become unfiled, not deleted.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string' } },
+      required: ['id'],
+    },
+  },
 ];
 
 function text(str: string): ToolContent {
@@ -272,6 +346,10 @@ export async function callTool(mcpKey: string, params: unknown): Promise<ToolCon
         return text(listDmNotes(campaign));
       case 'get_dm_note':
         return text(getDmNote(campaign, args));
+      case 'list_items':
+        return text(listItems(campaign));
+      case 'get_item':
+        return text(getItem(campaign, args));
       case 'list_images':
         return text(listImages(campaign));
       case 'get_party':
@@ -307,6 +385,15 @@ export async function callTool(mcpKey: string, params: unknown): Promise<ToolCon
         return text(await upsertNoteFolder(code, campaign, args));
       case 'delete_note_folder':
         return text(await deleteNoteFolder(code, campaign, args));
+
+      case 'upsert_item':
+        return text(await upsertItem(code, campaign, args));
+      case 'delete_item':
+        return text(await deleteItem(code, campaign, args));
+      case 'upsert_item_folder':
+        return text(await upsertItemFolder(code, campaign, args));
+      case 'delete_item_folder':
+        return text(await deleteItemFolder(code, campaign, args));
 
       default:
         return errorText(`Unknown tool: ${p.name}`);
