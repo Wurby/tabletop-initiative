@@ -35,7 +35,7 @@ src/
 │   │                    # ActiveTurnWrapper.jsx, UnitNotesModal.jsx (exports NotesEditor too)
 │   ├── items/           # ItemsDrawer.jsx, ItemDetailModal.jsx — item tracker
 │   ├── locations/       # LocationsPanel.jsx, ClusterGrid/View.jsx, PoiDetail.jsx,
-│   │                    # LocationWizardModal.jsx, locationImageGen.js
+│   │                    # LocationWizardModal.jsx
 │   ├── mcp/             # CampaignMcpModal.jsx — per-campaign MCP connector URL (DM view header)
 │   ├── notes/           # DMNotesPanel.jsx — wraps NotesEditor for campaign-level notes
 │   ├── party/           # PartyModal.jsx
@@ -50,6 +50,8 @@ src/
 │   ├── firebase.js       # Firebase app init
 │   ├── campaign.js       # dmUpdate() helper — wraps updateDoc + serverTimestamp
 │   ├── mcp.js            # generateMcpKey() / mcpServerUrl() for the MCP connector
+│   ├── imageGen.js       # generateEntityImage() — shared AI image gen, used by
+│   │                     # locations, items, and templates
 │   ├── toast.jsx         # Toast context + useToast hook
 │   └── xp.js            # 5e XP thresholds constant
 ├── App.jsx
@@ -82,7 +84,7 @@ campaigns/{joinCode}/
 ├── images:         [{ id, url, storagePath, label, folderId, uploadedAt }]
 ├── folders:        [{ id, name }]  — image library folders
 ├── party:          [{ id, name, type: 'party'|'follower', hpMax, ac }]
-├── templates:      [{ id, name, type: 'mob'|'ally', hp: { max }, ac,
+├── templates:      [{ id, name, type: 'mob'|'ally', hp: { max }, ac, imageUrl,
 │                      noteFolders: [...], notes: [...], folderId }]
 ├── templateFolders: [{ id, name }]
 ├── dmNotes:        [{ id, title, body, folderId, createdAt }]
@@ -114,6 +116,7 @@ There is no login flow; anyone holding a campaign's MCP URL can read/write it.
 - **No drag-and-drop** on the initiative list — it is sorted by numeric `initiative` value.
 - **`visible` flag** on initiative entries controls whether a unit appears in the table view. DM always sees all units.
 - **Item `ownerIds`** is a plain list of party member ids (not a per-owner split count) capped at the item's `quantity` — it tracks who holds some of a stack, not how many each owns. Items are DM-only and never surfaced in Table view.
+- **AI image generation** (`generateEntityImage` in `lib/imageGen.js`) always saves into the shared `images`/`folders` library, in a folder named `imageFolderName` (created if missing). Locations pass no `imageFolderName`, so each cluster/POI gets its own folder named after itself. Items and templates instead pass the name of their own assigned folder (`itemFolders`/`templateFolders`), falling back to a generic `"Items"`/`"Templates"` catch-all when unassigned — so generated art lands alongside its siblings rather than one folder per entity.
 - Tailwind utility classes only — no CSS modules, no inline styles, no styled-components.
 - Component files use `.jsx` extension.
 - Firebase config is loaded from environment variables — never hardcode keys.

@@ -121,15 +121,14 @@ function ItemCard({ item, folders, party, campaign, campaignCode }) {
   )
 }
 
-export default function ItemsDrawer({ campaign, campaignCode, pinned, onTogglePin, onClose }) {
+export default function ItemsDrawer({ campaign, campaignCode, pinned, onTogglePin, onPin, onClose }) {
   const showError = useToast()
   const items = campaign.items ?? []
   const folders = campaign.itemFolders ?? []
   const party = campaign.party ?? []
   const [activeFolderId, setActiveFolderId] = useState(null)
   const [ownerFilter, setOwnerFilter] = useState(null) // null='All' | 'unattached' | memberId
-  const [showQuickAdd, setShowQuickAdd] = useState(false)
-  const [quickAddName, setQuickAddName] = useState('')
+  const [showAddModal, setShowAddModal] = useState(false)
   const [showNewFolder, setShowNewFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [confirmDeleteFolderId, setConfirmDeleteFolderId] = useState(null)
@@ -142,28 +141,15 @@ export default function ItemsDrawer({ campaign, campaignCode, pinned, onTogglePi
       return (i.ownerIds ?? []).includes(ownerFilter)
     })
 
-  async function handleQuickAdd() {
-    const name = quickAddName.trim()
-    if (!name) return
+  async function handleAdd(fields) {
     const item = {
       id: crypto.randomUUID(),
-      name,
-      type: 'misc',
-      quantity: 1,
-      value: 0,
-      weight: 0,
-      rarity: null,
-      attunement: false,
-      folderId: activeFolderId,
-      ownerIds: [],
-      imageUrl: null,
-      notes: '',
       createdAt: Date.now(),
+      ...fields,
     }
     try {
       await dmUpdate(campaignCode, { items: [...items, item] })
-      setQuickAddName('')
-      setShowQuickAdd(false)
+      setShowAddModal(false)
     } catch {
       showError('Failed to save — check your connection.')
     }
@@ -202,40 +188,12 @@ export default function ItemsDrawer({ campaign, campaignCode, pinned, onTogglePi
         <div className="bg-brand-forest px-4 py-3 flex items-center justify-between shrink-0 gap-2">
           <h2 className="text-white font-normal text-base shrink-0">Items</h2>
           <div className="flex items-center gap-2 min-w-0">
-            {showQuickAdd ? (
-              <div className="flex items-center gap-1 min-w-0">
-                <input
-                  autoFocus
-                  className="w-28 bg-white/15 border border-white/30 px-2 py-1 text-xs text-white placeholder-white/50 focus:outline-none focus:border-white/60"
-                  placeholder="Item name…"
-                  value={quickAddName}
-                  onChange={(e) => setQuickAddName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleQuickAdd()
-                    if (e.key === 'Escape') { setShowQuickAdd(false); setQuickAddName('') }
-                  }}
-                />
-                <button
-                  onClick={handleQuickAdd}
-                  className="text-xs font-normal text-white opacity-70 hover:opacity-100 transition-opacity shrink-0"
-                >
-                  Add
-                </button>
-                <button
-                  onClick={() => { setShowQuickAdd(false); setQuickAddName('') }}
-                  className="text-white opacity-60 hover:opacity-100 transition-opacity text-sm shrink-0"
-                >
-                  ✕
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowQuickAdd(true)}
-                className="text-xs font-normal text-white opacity-70 hover:opacity-100 border border-white/30 hover:border-white/60 px-2 py-1 transition-all shrink-0"
-              >
-                + Item
-              </button>
-            )}
+            <button
+              onClick={() => { onPin(); setShowAddModal(true) }}
+              className="text-xs font-normal text-white opacity-70 hover:opacity-100 border border-white/30 hover:border-white/60 px-2 py-1 transition-all shrink-0"
+            >
+              + Item
+            </button>
             <button
               onClick={onTogglePin}
               className={`shrink-0 transition-opacity ${pinned ? 'text-white opacity-100' : 'text-white opacity-50 hover:opacity-100'}`}
@@ -381,6 +339,19 @@ export default function ItemsDrawer({ campaign, campaignCode, pinned, onTogglePi
           ))}
         </div>
       </div>
+
+      {showAddModal && (
+        <ItemDetailModal
+          item={null}
+          defaultFolderId={activeFolderId}
+          folders={folders}
+          party={party}
+          campaign={campaign}
+          campaignCode={campaignCode}
+          onSave={handleAdd}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
     </>
   )
 }

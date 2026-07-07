@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '../../lib/toast'
 import { dmUpdate } from '../../lib/campaign'
+import { generateEntityImage } from '../../lib/imageGen'
 import { NotesEditor } from '../initiative/UnitNotesModal'
 import { Pen, Trash, Sparkles } from '../icons'
 import TemplateGenModal from './TemplateGenModal'
@@ -24,7 +25,7 @@ function cloneWithFreshIds(noteFolders, notes) {
   return { noteFolders: newFolders, notes: newNotes }
 }
 
-function TemplateModal({ template, defaultFolderId, folders, onSave, onClose, initialData }) {
+function TemplateModal({ template, defaultFolderId, folders, campaign, campaignCode, onSave, onClose, initialData }) {
   const src = initialData ?? template ?? null
   const [editName, setEditName] = useState(src?.name ?? '')
   const [editHpMax, setEditHpMax] = useState(src?.hp?.max ?? 0)
@@ -33,6 +34,32 @@ function TemplateModal({ template, defaultFolderId, folders, onSave, onClose, in
   const [editFolderId, setEditFolderId] = useState(defaultFolderId ?? null)
   const [editFolders, setEditFolders] = useState(src?.noteFolders ?? [])
   const [editNotes, setEditNotes] = useState(src?.notes ?? [])
+  const [editImageUrl, setEditImageUrl] = useState(src?.imageUrl ?? null)
+
+  const [generatingImage, setGeneratingImage] = useState(false)
+  const [imageError, setImageError] = useState(null)
+
+  async function handleGenerateImage() {
+    setGeneratingImage(true)
+    setImageError(null)
+    try {
+      const imageFolderName = folders.find((f) => f.id === editFolderId)?.name ?? 'Templates'
+      const descriptionText = editNotes.map((n) => n.body).filter(Boolean).join(' ')
+      const url = await generateEntityImage({
+        campaignCode,
+        campaign,
+        name: editName.trim() || 'creature',
+        descriptionText,
+        entityType: editType === 'ally' ? 'ally creature' : 'monster',
+        imageFolderName,
+      })
+      setEditImageUrl(url)
+    } catch (err) {
+      setImageError(err.message || 'Image generation failed.')
+    } finally {
+      setGeneratingImage(false)
+    }
+  }
 
   function handleSave() {
     if (!editName.trim()) return
@@ -44,6 +71,7 @@ function TemplateModal({ template, defaultFolderId, folders, onSave, onClose, in
       folderId: editFolderId,
       noteFolders: editFolders,
       notes: editNotes,
+      imageUrl: editImageUrl,
     })
   }
 
@@ -127,6 +155,41 @@ function TemplateModal({ template, defaultFolderId, folders, onSave, onClose, in
                 </div>
               </div>
             )}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-brand-forest text-xs">Image</span>
+              <div className="flex items-center gap-3">
+                {editImageUrl ? (
+                  <img
+                    src={editImageUrl}
+                    alt={editName}
+                    className="w-16 h-16 object-cover shrink-0 border border-brand-ink/10"
+                  />
+                ) : (
+                  <div className="w-16 h-16 shrink-0 bg-brand-mint flex items-center justify-center">
+                    <Sparkles size={18} className="text-brand-ink/15" />
+                  </div>
+                )}
+                <div className="flex flex-col gap-1">
+                  <button
+                    onClick={handleGenerateImage}
+                    disabled={generatingImage}
+                    className="text-xs font-normal text-brand-ink/60 hover:text-brand-ink border border-brand-ink/20 hover:border-brand-ink/40 px-2 py-1 transition-colors disabled:opacity-40 flex items-center gap-1.5"
+                  >
+                    <Sparkles size={11} />
+                    {generatingImage ? 'Generating…' : editImageUrl ? 'Regenerate' : 'Generate'}
+                  </button>
+                  {editImageUrl && (
+                    <button
+                      onClick={() => setEditImageUrl(null)}
+                      className="text-xs font-normal text-brand-ink/40 hover:text-brand-danger transition-colors text-left"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+              {imageError && <p className="text-brand-danger text-xs">{imageError}</p>}
+            </div>
           </div>
           <div className="flex border-t border-brand-mint shrink-0">
             <button
@@ -224,6 +287,9 @@ function TemplateCard({ template, folders, campaign, campaignCode }) {
     <>
       <div className="shadow-card flex flex-col">
         <div className={`${TYPE_HEADER[template.type] ?? TYPE_HEADER.mob} px-3 py-2 flex items-center gap-2`}>
+          {template.imageUrl && (
+            <img src={template.imageUrl} alt={template.name} className="w-6 h-6 object-cover shrink-0" />
+          )}
           <span className="text-white/60 text-xs font-bold w-4 text-center shrink-0">
             {TYPE_LABEL[template.type] ?? 'M'}
           </span>
@@ -289,6 +355,8 @@ function TemplateCard({ template, folders, campaign, campaignCode }) {
           template={template}
           defaultFolderId={template.folderId ?? null}
           folders={folders}
+          campaign={campaign}
+          campaignCode={campaignCode}
           onSave={handleSave}
           onClose={() => setShowEdit(false)}
         />
@@ -480,6 +548,8 @@ export default function TemplatesSidebar({ campaign, campaignCode, onClose }) {
           template={null}
           defaultFolderId={activeFolderId}
           folders={folders}
+          campaign={campaign}
+          campaignCode={campaignCode}
           onSave={handleAdd}
           onClose={() => setShowAddModal(false)}
         />
@@ -490,6 +560,8 @@ export default function TemplatesSidebar({ campaign, campaignCode, onClose }) {
           initialData={genSeed}
           defaultFolderId={activeFolderId}
           folders={folders}
+          campaign={campaign}
+          campaignCode={campaignCode}
           onSave={(fields) => { handleAdd(fields); setGenSeed(null) }}
           onClose={() => setGenSeed(null)}
         />

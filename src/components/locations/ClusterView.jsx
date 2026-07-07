@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Sparkles, Trash } from '../icons'
-import { generateLocationImage } from './locationImageGen'
+import { generateEntityImage } from '../../lib/imageGen'
 
 const INDEX_SECTIONS = [
   { key: 'arrival', label: 'Arrival' },
@@ -156,11 +156,11 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
     setImageError(null)
     try {
       const descriptionText = [cluster.arrival, cluster.situation, cluster.plotHooks].filter(Boolean).join(' ')
-      const url = await generateLocationImage({
+      const url = await generateEntityImage({
         campaignCode, campaign,
         name: cluster.name,
         descriptionText,
-        type: 'location',
+        entityType: 'location',
       })
       onUpdate({ ...cluster, imageUrl: url })
     } catch (err) {

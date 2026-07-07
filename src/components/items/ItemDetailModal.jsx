@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { generateLocationImage } from '../locations/locationImageGen'
+import { generateEntityImage } from '../../lib/imageGen'
 import { Sparkles } from '../icons'
 import { ITEM_TYPES, ITEM_TYPE_LABELS, RARITIES, RARITY_LABELS } from './itemConstants'
 
@@ -42,12 +42,14 @@ export default function ItemDetailModal({
     setGeneratingImage(true)
     setImageError(null)
     try {
-      const url = await generateLocationImage({
+      const imageFolderName = folders.find((f) => f.id === editFolderId)?.name ?? 'Items'
+      const url = await generateEntityImage({
         campaignCode,
         campaign,
         name: editName.trim() || 'item',
         descriptionText: editNotes,
-        type: 'item',
+        entityType: 'item',
+        imageFolderName,
       })
       setEditImageUrl(url)
     } catch (err) {

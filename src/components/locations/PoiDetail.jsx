@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Sparkles, Trash } from '../icons'
-import { generateLocationImage } from './locationImageGen'
+import { generateEntityImage } from '../../lib/imageGen'
 
 const SECTIONS = [
   { key: 'description', label: 'Description' },
@@ -28,11 +28,11 @@ export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete, ca
     setImageError(null)
     try {
       const descriptionText = [poi.description, poi.whoIsHere, poi.whatIsHere].filter(Boolean).join(' ')
-      const url = await generateLocationImage({
+      const url = await generateEntityImage({
         campaignCode, campaign,
         name: `${cluster.name} — ${poi.name}`,
         descriptionText,
-        type: 'point of interest',
+        entityType: 'point of interest',
       })
       onUpdate({ ...poi, imageUrl: url })
     } catch (err) {

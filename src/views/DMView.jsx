@@ -210,6 +210,7 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
           campaignCode={campaignCode}
           pinned={itemsPinned}
           onTogglePin={() => setItemsPinned((v) => !v)}
+          onPin={() => setItemsPinned(true)}
           onClose={() => setItemsOpen(false)}
         />
       )}
