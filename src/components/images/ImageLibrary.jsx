@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react'
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
 import { storage } from '../../lib/firebase'
-import { dmUpdate } from '../../lib/campaign'
+import { dmUpdate, pushImageToTable, clearTableDisplay } from '../../lib/campaign'
+import { clearImageReferences } from '../../lib/imageRefs'
 import { Trash, Pen, Sparkles } from '../icons'
 import ImageGenModal from './ImageGenModal'
 import LaserPointerModal from './LaserPointerModal'
@@ -61,19 +62,17 @@ export default function ImageLibrary({ campaign, campaignCode }) {
   }
 
   async function handleSelect(image) {
-    await dmUpdate(campaignCode, {
-      'combat.display': { type: 'image', url: image.url, label: image.label },
-    })
+    await pushImageToTable(campaignCode, image.url, image.label)
   }
 
   async function handleClear() {
-    await dmUpdate(campaignCode, { 'combat.display': { type: 'none', url: '', label: '' } })
+    await clearTableDisplay(campaignCode)
   }
 
   async function handleDelete(image) {
     try { await deleteObject(ref(storage, image.storagePath)) } catch { /* already gone */ }
     const nextImages = images.filter((i) => i.id !== image.id)
-    const updates = { images: nextImages }
+    const updates = { images: nextImages, ...clearImageReferences(campaign, image.url) }
     if (display?.url === image.url) updates['combat.display'] = { type: 'none', url: '', label: '' }
     await dmUpdate(campaignCode, updates)
   }

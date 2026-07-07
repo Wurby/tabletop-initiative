@@ -471,6 +471,8 @@ export default function InitiativeTracker({ campaign, campaignCode, showGraveyar
             onKill={handleKill}
             scrollRef={i === activeIndex ? activeRef : null}
             hasTie={initiativeCounts[unit.initiative] > 1}
+            campaign={campaign}
+            campaignCode={campaignCode}
           />
         ))}
         <AddCard onAdd={handleAdd} />

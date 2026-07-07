@@ -2,6 +2,8 @@ import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Sparkles, Trash } from '../icons'
 import { generateEntityImage } from '../../lib/imageGen'
+import ImagePreviewModal from '../images/ImagePreviewModal'
+import ImagePickerModal from '../images/ImagePickerModal'
 
 const INDEX_SECTIONS = [
   { key: 'arrival', label: 'Arrival' },
@@ -150,6 +152,8 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
   const [mobileTab, setMobileTab] = useState('index')
   const [generatingImage, setGeneratingImage] = useState(false)
   const [imageError, setImageError] = useState(null)
+  const [showPicker, setShowPicker] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
 
   async function handleGenerateImage() {
     setGeneratingImage(true)
@@ -276,14 +280,24 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
           {/* Location image */}
           {cluster.imageUrl ? (
             <div className="relative group/img -mx-5">
-              <img src={cluster.imageUrl} alt={cluster.name} className="w-full h-40 object-cover" />
-              <button
-                onClick={handleGenerateImage}
-                disabled={generatingImage}
-                className="absolute bottom-2 right-2 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center gap-1 text-[10px] text-white bg-brand-ink/60 hover:bg-brand-ink/80 px-2 py-1 disabled:opacity-40"
-              >
-                <Sparkles size={9} /> {generatingImage ? 'Generating…' : 'Regenerate'}
+              <button onClick={() => setShowPreview(true)} className="block w-full">
+                <img src={cluster.imageUrl} alt={cluster.name} className="w-full h-40 object-cover" />
               </button>
+              <div className="absolute bottom-2 right-2 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center gap-1">
+                <button
+                  onClick={handleGenerateImage}
+                  disabled={generatingImage}
+                  className="flex items-center gap-1 text-[10px] text-white bg-brand-ink/60 hover:bg-brand-ink/80 px-2 py-1 disabled:opacity-40"
+                >
+                  <Sparkles size={9} /> {generatingImage ? 'Generating…' : 'Regenerate'}
+                </button>
+                <button
+                  onClick={() => setShowPicker(true)}
+                  className="text-[10px] text-white bg-brand-ink/60 hover:bg-brand-ink/80 px-2 py-1"
+                >
+                  Choose
+                </button>
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -294,8 +308,30 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
               >
                 <Sparkles size={11} /> {generatingImage ? 'Generating…' : 'Generate Image'}
               </button>
+              <button
+                onClick={() => setShowPicker(true)}
+                className="text-xs font-normal text-brand-ink/50 border border-brand-ink/15 hover:border-brand-ink/30 hover:text-brand-ink px-2.5 py-1.5 transition-colors"
+              >
+                Choose Existing
+              </button>
               {imageError && <p className="text-brand-danger text-[10px]">{imageError}</p>}
             </div>
+          )}
+          {showPicker && (
+            <ImagePickerModal
+              campaign={campaign}
+              onSelect={(url) => { onUpdate({ ...cluster, imageUrl: url }); setShowPicker(false) }}
+              onClose={() => setShowPicker(false)}
+            />
+          )}
+          {showPreview && cluster.imageUrl && (
+            <ImagePreviewModal
+              url={cluster.imageUrl}
+              label={cluster.name}
+              campaign={campaign}
+              campaignCode={campaignCode}
+              onClose={() => setShowPreview(false)}
+            />
           )}
 
           {INDEX_SECTIONS.map((s) => (

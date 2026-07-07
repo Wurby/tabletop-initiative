@@ -5,6 +5,8 @@ import { generateEntityImage } from '../../lib/imageGen'
 import { NotesEditor } from '../initiative/UnitNotesModal'
 import { Pen, Trash, Sparkles } from '../icons'
 import TemplateGenModal from './TemplateGenModal'
+import ImagePreviewModal from '../images/ImagePreviewModal'
+import ImagePickerModal from '../images/ImagePickerModal'
 
 const TYPE_HEADER = { mob: 'bg-brand-danger', ally: 'bg-brand-rivulet' }
 const TYPE_CYCLE = { mob: 'ally', ally: 'mob' }
@@ -38,6 +40,8 @@ function TemplateModal({ template, defaultFolderId, folders, campaign, campaignC
 
   const [generatingImage, setGeneratingImage] = useState(false)
   const [imageError, setImageError] = useState(null)
+  const [showPicker, setShowPicker] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
 
   async function handleGenerateImage() {
     setGeneratingImage(true)
@@ -157,19 +161,21 @@ function TemplateModal({ template, defaultFolderId, folders, campaign, campaignC
             )}
             <div className="flex flex-col gap-1.5">
               <span className="text-brand-forest text-xs">Image</span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-start gap-3">
                 {editImageUrl ? (
-                  <img
-                    src={editImageUrl}
-                    alt={editName}
-                    className="w-16 h-16 object-cover shrink-0 border border-brand-ink/10"
-                  />
+                  <button onClick={() => setShowPreview(true)} className="shrink-0">
+                    <img
+                      src={editImageUrl}
+                      alt={editName}
+                      className="w-32 h-32 object-cover border border-brand-ink/10"
+                    />
+                  </button>
                 ) : (
-                  <div className="w-16 h-16 shrink-0 bg-brand-mint flex items-center justify-center">
-                    <Sparkles size={18} className="text-brand-ink/15" />
+                  <div className="w-32 h-32 shrink-0 bg-brand-mint flex items-center justify-center">
+                    <Sparkles size={28} className="text-brand-ink/15" />
                   </div>
                 )}
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1.5">
                   <button
                     onClick={handleGenerateImage}
                     disabled={generatingImage}
@@ -177,6 +183,12 @@ function TemplateModal({ template, defaultFolderId, folders, campaign, campaignC
                   >
                     <Sparkles size={11} />
                     {generatingImage ? 'Generating…' : editImageUrl ? 'Regenerate' : 'Generate'}
+                  </button>
+                  <button
+                    onClick={() => setShowPicker(true)}
+                    className="text-xs font-normal text-brand-ink/60 hover:text-brand-ink border border-brand-ink/20 hover:border-brand-ink/40 px-2 py-1 transition-colors"
+                  >
+                    Choose existing
                   </button>
                   {editImageUrl && (
                     <button
@@ -190,6 +202,22 @@ function TemplateModal({ template, defaultFolderId, folders, campaign, campaignC
               </div>
               {imageError && <p className="text-brand-danger text-xs">{imageError}</p>}
             </div>
+            {showPicker && (
+              <ImagePickerModal
+                campaign={campaign}
+                onSelect={(url) => { setEditImageUrl(url); setShowPicker(false) }}
+                onClose={() => setShowPicker(false)}
+              />
+            )}
+            {showPreview && editImageUrl && (
+              <ImagePreviewModal
+                url={editImageUrl}
+                label={editName}
+                campaign={campaign}
+                campaignCode={campaignCode}
+                onClose={() => setShowPreview(false)}
+              />
+            )}
           </div>
           <div className="flex border-t border-brand-mint shrink-0">
             <button
@@ -229,6 +257,7 @@ function TemplateCard({ template, folders, campaign, campaignCode }) {
   const showError = useToast()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
   const templates = campaign.templates ?? []
   const noteCount = (template.notes ?? []).length
 
@@ -273,6 +302,7 @@ function TemplateCard({ template, folders, campaign, campaignCode }) {
       tiebreak: 0,
       noteFolders: clonedFolders,
       notes: clonedNotes,
+      imageUrl: template.imageUrl ?? null,
     }
     try {
       await dmUpdate(campaignCode, {
@@ -288,7 +318,12 @@ function TemplateCard({ template, folders, campaign, campaignCode }) {
       <div className="shadow-card flex flex-col">
         <div className={`${TYPE_HEADER[template.type] ?? TYPE_HEADER.mob} px-3 py-2 flex items-center gap-2`}>
           {template.imageUrl && (
-            <img src={template.imageUrl} alt={template.name} className="w-6 h-6 object-cover shrink-0" />
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowPreview(true) }}
+              className="shrink-0"
+            >
+              <img src={template.imageUrl} alt={template.name} className="w-10 h-10 object-cover" />
+            </button>
           )}
           <span className="text-white/60 text-xs font-bold w-4 text-center shrink-0">
             {TYPE_LABEL[template.type] ?? 'M'}
@@ -359,6 +394,15 @@ function TemplateCard({ template, folders, campaign, campaignCode }) {
           campaignCode={campaignCode}
           onSave={handleSave}
           onClose={() => setShowEdit(false)}
+        />
+      )}
+      {showPreview && template.imageUrl && (
+        <ImagePreviewModal
+          url={template.imageUrl}
+          label={template.name}
+          campaign={campaign}
+          campaignCode={campaignCode}
+          onClose={() => setShowPreview(false)}
         />
       )}
     </>

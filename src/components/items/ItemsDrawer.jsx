@@ -4,11 +4,13 @@ import { dmUpdate } from '../../lib/campaign'
 import { Pen, Trash, Pin } from '../icons'
 import ItemDetailModal from './ItemDetailModal'
 import { ITEM_TYPE_LABELS, RARITY_LABELS } from './itemConstants'
+import ImagePreviewModal from '../images/ImagePreviewModal'
 
 function ItemCard({ item, folders, party, campaign, campaignCode }) {
   const showError = useToast()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
   const items = campaign.items ?? []
   const owners = (item.ownerIds ?? [])
     .map((id) => party.find((m) => m.id === id))
@@ -38,7 +40,9 @@ function ItemCard({ item, folders, party, campaign, campaignCode }) {
       <div className="shadow-card flex flex-col bg-white">
         <div className="bg-brand-mint-dark px-3 py-2 flex items-center gap-2">
           {item.imageUrl && (
-            <img src={item.imageUrl} alt={item.name} className="w-8 h-8 object-cover shrink-0" />
+            <button onClick={() => setShowPreview(true)} className="shrink-0">
+              <img src={item.imageUrl} alt={item.name} className="w-12 h-12 object-cover" />
+            </button>
           )}
           <div className="flex-1 min-w-0">
             <p className="text-brand-ink text-sm font-normal truncate">{item.name}</p>
@@ -115,6 +119,15 @@ function ItemCard({ item, folders, party, campaign, campaignCode }) {
           campaignCode={campaignCode}
           onSave={handleSave}
           onClose={() => setShowEdit(false)}
+        />
+      )}
+      {showPreview && item.imageUrl && (
+        <ImagePreviewModal
+          url={item.imageUrl}
+          label={item.name}
+          campaign={campaign}
+          campaignCode={campaignCode}
+          onClose={() => setShowPreview(false)}
         />
       )}
     </>

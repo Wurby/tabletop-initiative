@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { generateEntityImage } from '../../lib/imageGen'
 import { Sparkles } from '../icons'
 import { ITEM_TYPES, ITEM_TYPE_LABELS, RARITIES, RARITY_LABELS } from './itemConstants'
+import ImagePreviewModal from '../images/ImagePreviewModal'
+import ImagePickerModal from '../images/ImagePickerModal'
 
 export default function ItemDetailModal({
   item,
@@ -27,6 +29,8 @@ export default function ItemDetailModal({
 
   const [generatingImage, setGeneratingImage] = useState(false)
   const [imageError, setImageError] = useState(null)
+  const [showPicker, setShowPicker] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
 
   const ownerCap = Math.max(0, Number(editQuantity) || 0)
 
@@ -268,37 +272,63 @@ export default function ItemDetailModal({
 
             <div className="flex flex-col gap-1.5">
               <span className="text-brand-forest text-xs">Image</span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-start gap-3">
                 {editImageUrl ? (
-                  <img
-                    src={editImageUrl}
-                    alt={editName}
-                    className="w-16 h-16 object-cover shrink-0 border border-brand-ink/10"
-                  />
+                  <button onClick={() => setShowPreview(true)} className="shrink-0">
+                    <img
+                      src={editImageUrl}
+                      alt={editName}
+                      className="w-32 h-32 object-cover border border-brand-ink/10"
+                    />
+                  </button>
                 ) : (
-                  <div className="w-16 h-16 shrink-0 bg-brand-mint flex items-center justify-center">
-                    <Sparkles size={18} className="text-brand-ink/15" />
+                  <div className="w-32 h-32 shrink-0 bg-brand-mint flex items-center justify-center">
+                    <Sparkles size={28} className="text-brand-ink/15" />
                   </div>
                 )}
-                <button
-                  onClick={handleGenerateImage}
-                  disabled={generatingImage}
-                  className="text-xs font-normal text-brand-ink/60 hover:text-brand-ink border border-brand-ink/20 hover:border-brand-ink/40 px-2 py-1 transition-colors disabled:opacity-40 flex items-center gap-1.5"
-                >
-                  <Sparkles size={11} />
-                  {generatingImage ? 'Generating…' : editImageUrl ? 'Regenerate' : 'Generate'}
-                </button>
-                {editImageUrl && (
+                <div className="flex flex-col gap-1.5">
                   <button
-                    onClick={() => setEditImageUrl(null)}
-                    className="text-xs font-normal text-brand-ink/40 hover:text-brand-danger transition-colors"
+                    onClick={handleGenerateImage}
+                    disabled={generatingImage}
+                    className="text-xs font-normal text-brand-ink/60 hover:text-brand-ink border border-brand-ink/20 hover:border-brand-ink/40 px-2 py-1 transition-colors disabled:opacity-40 flex items-center gap-1.5"
                   >
-                    Remove
+                    <Sparkles size={11} />
+                    {generatingImage ? 'Generating…' : editImageUrl ? 'Regenerate' : 'Generate'}
                   </button>
-                )}
+                  <button
+                    onClick={() => setShowPicker(true)}
+                    className="text-xs font-normal text-brand-ink/60 hover:text-brand-ink border border-brand-ink/20 hover:border-brand-ink/40 px-2 py-1 transition-colors"
+                  >
+                    Choose existing
+                  </button>
+                  {editImageUrl && (
+                    <button
+                      onClick={() => setEditImageUrl(null)}
+                      className="text-xs font-normal text-brand-ink/40 hover:text-brand-danger transition-colors text-left"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
               </div>
               {imageError && <p className="text-brand-danger text-xs">{imageError}</p>}
             </div>
+            {showPicker && (
+              <ImagePickerModal
+                campaign={campaign}
+                onSelect={(url) => { setEditImageUrl(url); setShowPicker(false) }}
+                onClose={() => setShowPicker(false)}
+              />
+            )}
+            {showPreview && editImageUrl && (
+              <ImagePreviewModal
+                url={editImageUrl}
+                label={editName}
+                campaign={campaign}
+                campaignCode={campaignCode}
+                onClose={() => setShowPreview(false)}
+              />
+            )}
 
             <div className="flex flex-col gap-1.5">
               <span className="text-brand-forest text-xs">Notes</span>

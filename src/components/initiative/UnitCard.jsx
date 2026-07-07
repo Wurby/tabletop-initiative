@@ -3,6 +3,7 @@ import { EyeOpen, EyeClosed, Pen } from '../icons'
 import ActiveTurnWrapper from './ActiveTurnWrapper'
 import { CR_XP, CR_PAGE_SIZE } from '../../lib/xp'
 import UnitNotesModal from './UnitNotesModal'
+import ImagePreviewModal from '../images/ImagePreviewModal'
 
 const TYPE_HEADER = {
   party: 'bg-brand-forest',
@@ -101,6 +102,8 @@ export default function UnitCard({
   onSetActive,
   scrollRef,
   hasTie = false,
+  campaign,
+  campaignCode,
 }) {
   const [local, setLocal] = useState(unit)
   const [killing, setKilling] = useState(false)
@@ -109,6 +112,7 @@ export default function UnitCard({
   const [showControls, setShowControls] = useState(false)
   const [showConditionPicker, setShowConditionPicker] = useState(false)
   const [showNotesModal, setShowNotesModal] = useState(false)
+  const [showImagePreview, setShowImagePreview] = useState(false)
   const [customInput, setCustomInput] = useState('')
   const popoverRef = useRef(null)
   const conditionRef = useRef(null)
@@ -295,6 +299,14 @@ export default function UnitCard({
               placeholder="Status…" value={local.status ?? ''}
               onChange={(e) => setLocal({ ...local, status: e.target.value })}
               onBlur={(e) => commit('status', e.target.value)} />
+            {local.imageUrl && (
+              <button
+                onClick={() => setShowImagePreview(true)}
+                className="shrink-0 w-5 h-5 overflow-hidden border border-brand-ink/15 hover:border-brand-ink/40 transition-colors"
+                title="View image">
+                <img src={local.imageUrl} alt={local.name} className="w-full h-full object-cover" />
+              </button>
+            )}
             <button
               onClick={() => setShowNotesModal(true)}
               className="shrink-0 w-4 h-4 flex items-center justify-center text-brand-ink/25 hover:text-brand-ink/60 transition-colors"
@@ -423,6 +435,15 @@ export default function UnitCard({
         unit={local}
         onUpdate={(updated) => { setLocal(updated); onUpdate(updated) }}
         onClose={() => setShowNotesModal(false)}
+      />
+    )}
+    {showImagePreview && local.imageUrl && (
+      <ImagePreviewModal
+        url={local.imageUrl}
+        label={local.name}
+        campaign={campaign}
+        campaignCode={campaignCode}
+        onClose={() => setShowImagePreview(false)}
       />
     )}
   </>
