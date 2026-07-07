@@ -33,7 +33,7 @@ src/
 │   ├── images/          # ImageLibrary.jsx, ImageModal.jsx, ImageGenModal.jsx, LaserPointerModal.jsx
 │   ├── initiative/      # InitiativeTracker.jsx, InitiativeList.jsx, UnitCard.jsx,
 │   │                    # ActiveTurnWrapper.jsx, UnitNotesModal.jsx (exports NotesEditor too)
-│   ├── items/           # ItemsDrawer.jsx, ItemDetailModal.jsx — item tracker
+│   ├── items/           # ItemsDrawer.jsx, ItemDetailModal.jsx (edit), ItemViewModal.jsx (read-only) — item tracker
 │   ├── locations/       # LocationsPanel.jsx, ClusterGrid/View.jsx, PoiDetail.jsx,
 │   │                    # LocationWizardModal.jsx
 │   ├── mcp/             # CampaignMcpModal.jsx — per-campaign MCP connector URL (DM view header)

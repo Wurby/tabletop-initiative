@@ -41,6 +41,7 @@ Phase 3 (Item Tracker) — shipped 2026-07-07.
   - Pinned (toggle button in the drawer header): stays open regardless of outside clicks, and the DM view's 3-column grid gains a left margin so `DMNotesPanel` is never covered
 - DM-only — items are never surfaced to players in Table view
 - MCP integration: `mcp/lib/tools/items.ts` adds `list_items`/`get_item` reads and `upsert_item`/`delete_item`/`upsert_item_folder`/`delete_item_folder` writes, registered in `mcp/lib/tools/index.ts`; `get_campaign_summary` now includes an item count
+- `ItemViewModal.jsx` — read-only detail view (rendered Markdown notes, image, stats) reachable via a "View" button on each item card, separate from the always-editable `ItemDetailModal` ✓
 
 ---
 

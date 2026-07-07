@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { useToast } from '../../lib/toast'
 import { dmUpdate } from '../../lib/campaign'
-import { Pen, Trash, Pin } from '../icons'
+import { Pen, Trash, Pin, EyeOpen } from '../icons'
 import ItemDetailModal from './ItemDetailModal'
+import ItemViewModal from './ItemViewModal'
 import { ITEM_TYPE_LABELS, RARITY_LABELS } from './itemConstants'
 import ImagePreviewModal from '../images/ImagePreviewModal'
 
 function ItemCard({ item, folders, party, campaign, campaignCode }) {
   const showError = useToast()
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showView, setShowView] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const items = campaign.items ?? []
@@ -77,8 +79,15 @@ function ItemCard({ item, folders, party, campaign, campaignCode }) {
         </div>
         <div className="border-t border-brand-mint flex">
           <button
-            onClick={() => { setShowEdit(true); setConfirmDelete(false) }}
+            onClick={() => { setShowView(true); setConfirmDelete(false) }}
             className="py-1.5 px-3 flex items-center justify-center hover:bg-brand-mint transition-colors"
+            title="View"
+          >
+            <EyeOpen size={11} className="text-brand-ink/40" />
+          </button>
+          <button
+            onClick={() => { setShowEdit(true); setConfirmDelete(false) }}
+            className="py-1.5 px-3 flex items-center justify-center hover:bg-brand-mint transition-colors border-l border-brand-mint"
             title="Edit"
           >
             <Pen size={11} className="text-brand-ink/40" />
@@ -109,6 +118,14 @@ function ItemCard({ item, folders, party, campaign, campaignCode }) {
           )}
         </div>
       </div>
+      {showView && (
+        <ItemViewModal
+          item={item}
+          party={party}
+          onEdit={() => { setShowView(false); setShowEdit(true) }}
+          onClose={() => setShowView(false)}
+        />
+      )}
       {showEdit && (
         <ItemDetailModal
           item={item}
