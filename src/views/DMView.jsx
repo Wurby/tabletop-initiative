@@ -11,6 +11,7 @@ import SplitModal from '../components/session/SplitModal'
 import ImageLibrary from '../components/images/ImageLibrary'
 import AdminModal from '../components/admin/AdminModal'
 import TemplatesSidebar from '../components/templates/TemplatesSidebar'
+import ItemsDrawer from '../components/items/ItemsDrawer'
 import DMNotesPanel from '../components/notes/DMNotesPanel'
 import CampaignMcpModal from '../components/mcp/CampaignMcpModal'
 import { Lock, LockOpen, Plug } from '../components/icons'
@@ -23,6 +24,8 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
   const [mcpOpen, setMcpOpen] = useState(false)
   const [lockDialogOpen, setLockDialogOpen] = useState(false)
   const [templateOpen, setTemplateOpen] = useState(false)
+  const [itemsOpen, setItemsOpen] = useState(false)
+  const [itemsPinned, setItemsPinned] = useState(false)
   const [activePanel, setActivePanel] = useState('notes')
   const locked = campaign.meta?.locked ?? false
 
@@ -67,7 +70,7 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
   }
 
   return (
-    <div className="min-h-screen bg-brand-mint text-brand-ink">
+    <div className={`min-h-screen bg-brand-mint text-brand-ink transition-[margin] duration-200 ${itemsPinned ? 'ml-80' : ''}`}>
       <header className="bg-brand-forest-dark text-white px-6 py-3 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-light">{campaign.meta?.name}</h1>
@@ -91,6 +94,12 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
             className="text-xs font-normal text-white opacity-70 hover:opacity-100 border border-white/30 hover:border-white/60 px-2 py-1 transition-all"
           >
             Templates
+          </button>
+          <button
+            onClick={() => setItemsOpen(true)}
+            className="text-xs font-normal text-white opacity-70 hover:opacity-100 border border-white/30 hover:border-white/60 px-2 py-1 transition-all"
+          >
+            Items
           </button>
           <button
             onClick={() => setLockDialogOpen(true)}
@@ -193,6 +202,15 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
           campaign={campaign}
           campaignCode={campaignCode}
           onClose={() => setTemplateOpen(false)}
+        />
+      )}
+      {itemsOpen && (
+        <ItemsDrawer
+          campaign={campaign}
+          campaignCode={campaignCode}
+          pinned={itemsPinned}
+          onTogglePin={() => setItemsPinned((v) => !v)}
+          onClose={() => setItemsOpen(false)}
         />
       )}
 

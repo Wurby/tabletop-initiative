@@ -3,6 +3,8 @@
 ## Complete
 Phases 1–7.5 (Combat Controls, DM Notes, AI Template Generation, Template Polish + Initiative Card Redesign, Note Viewing & Markdown, Locations: Display, Locations: Build Wizard, Locations: Image Generation) — all shipped and audited against the live code on 2026-07-07.
 
+Phase 3 (Item Tracker) — shipped 2026-07-07.
+
 ---
 
 ## Bugs
@@ -19,13 +21,29 @@ Phases 1–7.5 (Combat Controls, DM Notes, AI Template Generation, Template Poli
 
 ## Phase 2 — Firestore MCP Server ✓
 - Standalone `mcp/` subproject (hand-rolled JSON-RPC, Vercel-hosted) exposes read tools across every collection and structured write tools for locations/templates/notes
-- Auth: per-campaign `meta.mcpKey`, generated from a new plug-icon button in the DM view header, baked into the connector URL (`/api/mcp/<mcpKey>`) — no shared secret, no dependency on Phase 4 auth
+- Auth: per-campaign `meta.mcpKey`, generated from a new plug-icon button in the DM view header, baked into the connector URL (`/api/mcp/<mcpKey>`) — no shared secret, no dependency on Phase 5 auth
 - Deployed and live at https://tabletop-initiative-mcp.vercel.app (Vercel project `wurbys-projects/tabletop-initiative-mcp`, Root Directory `mcp/`, `.vercel` link lives at repo root); `VITE_MCP_BASE_URL` set in the app's `.env.local`
 - Smoke-tested: tools/list returns all 21 tools, tools/call correctly rejects an invalid key, confirming the Firebase Admin service account auth works end-to-end
 
 ---
 
-## Phase 3 — AI Note Assistance
+## Phase 3 — Item Tracker ✓
+- New `items[]` / `itemFolders[]` collections on the campaign doc, mirroring the `dmNotes`/`dmNoteFolders` pattern
+- Item shape: `{ id, name, type, quantity, value (gp), weight, rarity, attunement, ownerIds, folderId, imageUrl, notes }`
+- Item type: Weapon / Armor / Consumable / Wondrous Item / Gear / Treasure / Misc
+- Rarity: standard 5e six-tier (Common, Uncommon, Rare, Very Rare, Legendary, Artifact)
+- Ownership: single owner by default; multiple owners only allowed when quantity > 1, capped at quantity — tracks who holds some of a stack, not a per-owner split count
+- Organization: folder tabs (same pattern as DM Notes) plus an owner filter (party members + "Unattached")
+- Add/edit flow: quick inline "+ Item" (name only) creates the item immediately; opening it launches a full modal for the remaining fields, reusing the markdown body editor from notes for the description
+- Optional per-item image, generated the same way as template/location art (`TemplateGenModal` / `locationImageGen.js` pattern)
+- New pinnable drawer panel, left-anchored (mirrors `TemplatesSidebar` but on the left):
+  - Unpinned (default): floating overlay, covers `DMNotesPanel` (left column of the 3-col grid), closes on backdrop click — same behavior as the Templates drawer today
+  - Pinned (toggle button in the drawer header): stays open regardless of outside clicks, and the DM view's 3-column grid gains a left margin so `DMNotesPanel` is never covered
+- DM-only — items are never surfaced to players in Table view
+
+---
+
+## Phase 4 — AI Note Assistance
 - AI assist button in the note edit modal
 - Prompt-based editing: rewrite, expand, summarize, format as Markdown, etc.
 - Streamed response replaces or appends to the note body
@@ -33,7 +51,7 @@ Phases 1–7.5 (Combat Controls, DM Notes, AI Template Generation, Template Poli
 
 ---
 
-## Phase 4 — Auth Upgrade + Monetization
+## Phase 5 — Auth Upgrade + Monetization
 - Replace anonymous auth with Google OAuth and/or email + password
 - Link existing anonymous sessions to real accounts on sign-up
 - Stripe integration for subscription management

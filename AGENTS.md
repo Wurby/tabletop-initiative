@@ -33,6 +33,7 @@ src/
 │   ├── images/          # ImageLibrary.jsx, ImageModal.jsx, ImageGenModal.jsx, LaserPointerModal.jsx
 │   ├── initiative/      # InitiativeTracker.jsx, InitiativeList.jsx, UnitCard.jsx,
 │   │                    # ActiveTurnWrapper.jsx, UnitNotesModal.jsx (exports NotesEditor too)
+│   ├── items/           # ItemsDrawer.jsx, ItemDetailModal.jsx — item tracker
 │   ├── locations/       # LocationsPanel.jsx, ClusterGrid/View.jsx, PoiDetail.jsx,
 │   │                    # LocationWizardModal.jsx, locationImageGen.js
 │   ├── mcp/             # CampaignMcpModal.jsx — per-campaign MCP connector URL (DM view header)
@@ -86,6 +87,9 @@ campaigns/{joinCode}/
 ├── templateFolders: [{ id, name }]
 ├── dmNotes:        [{ id, title, body, folderId, createdAt }]
 ├── dmNoteFolders:  [{ id, name }]
+├── items:          [{ id, name, type, quantity, value, weight, rarity, attunement,
+│                      ownerIds, folderId, imageUrl, notes, createdAt }]
+├── itemFolders:    [{ id, name }]
 ├── sessionLogs:    [{ id, timestamp, ... }]
 └── locations:      [{ id, name, gridRow, gridCol, arrival, situation, plotHooks, imageUrl,
 │                      poiGridRows, poiGridCols,
@@ -109,6 +113,7 @@ There is no login flow; anyone holding a campaign's MCP URL can read/write it.
 - **Join code is the document ID** in Firestore and never changes for the lifetime of a campaign.
 - **No drag-and-drop** on the initiative list — it is sorted by numeric `initiative` value.
 - **`visible` flag** on initiative entries controls whether a unit appears in the table view. DM always sees all units.
+- **Item `ownerIds`** is a plain list of party member ids (not a per-owner split count) capped at the item's `quantity` — it tracks who holds some of a stack, not how many each owns. Items are DM-only and never surfaced in Table view.
 - Tailwind utility classes only — no CSS modules, no inline styles, no styled-components.
 - Component files use `.jsx` extension.
 - Firebase config is loaded from environment variables — never hardcode keys.
