@@ -113,6 +113,31 @@ function Revealed({ show, children }) {
   return show ? children : <EyeClosed className="text-brand-ink opacity-30" size={12} />
 }
 
+function SpellSlotsDisplay({ slots }) {
+  const list = [...(slots ?? [])].sort((a, b) => a.level - b.level)
+  if (list.length === 0) return null
+  return (
+    <div className="flex flex-col gap-1 mt-1">
+      {list.map((s) => {
+        const used = s.used ?? Array(s.max).fill(false)
+        return (
+          <div key={s.level} className="flex items-center gap-1.5">
+            <span className="text-brand-forest text-[10px] font-normal w-5 shrink-0">L{s.level}</span>
+            <div className="flex items-center gap-1 flex-wrap">
+              {Array.from({ length: s.max }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-3 h-3 rounded-full border ${used[i] ? 'bg-brand-rivulet border-brand-rivulet' : 'border-brand-ink/30'}`}
+                />
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function InitiativeList({ campaign }) {
   const units = [...(campaign.initiative ?? [])].sort(
     (a, b) => (b.initiative - a.initiative) || ((a.tiebreak ?? 0) - (b.tiebreak ?? 0))
@@ -206,6 +231,7 @@ export default function InitiativeList({ campaign }) {
                       </div>
                     )}
                     {isParty && unit.showDeathSaves && <DeathSavesDisplay unit={unit} />}
+                    {unit.showSpellSlots && <SpellSlotsDisplay slots={unit.spellSlots} />}
                   </div>
 
                   {isParty && (Number(unit.inspired) || 0) > 0 && (

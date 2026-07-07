@@ -3,6 +3,7 @@ import { useToast } from '../../lib/toast'
 import { dmUpdate } from '../../lib/campaign'
 import { generateEntityImage } from '../../lib/imageGen'
 import { NotesEditor } from '../initiative/UnitNotesModal'
+import SpellSlotsEditor from '../initiative/SpellSlotsEditor'
 import { Pen, Trash, Sparkles } from '../icons'
 import TemplateGenModal from './TemplateGenModal'
 import ImagePreviewModal from '../images/ImagePreviewModal'
@@ -37,6 +38,7 @@ function TemplateModal({ template, defaultFolderId, folders, campaign, campaignC
   const [editFolders, setEditFolders] = useState(src?.noteFolders ?? [])
   const [editNotes, setEditNotes] = useState(src?.notes ?? [])
   const [editImageUrl, setEditImageUrl] = useState(src?.imageUrl ?? null)
+  const [editSpellSlots, setEditSpellSlots] = useState(src?.spellSlots ?? [])
 
   const [generatingImage, setGeneratingImage] = useState(false)
   const [imageError, setImageError] = useState(null)
@@ -76,6 +78,7 @@ function TemplateModal({ template, defaultFolderId, folders, campaign, campaignC
       noteFolders: editFolders,
       notes: editNotes,
       imageUrl: editImageUrl,
+      spellSlots: editSpellSlots,
     })
   }
 
@@ -218,6 +221,10 @@ function TemplateModal({ template, defaultFolderId, folders, campaign, campaignC
                 onClose={() => setShowPreview(false)}
               />
             )}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-brand-forest text-xs">Spell Slots</span>
+              <SpellSlotsEditor slots={editSpellSlots} onChange={setEditSpellSlots} expendable={false} />
+            </div>
           </div>
           <div className="flex border-t border-brand-mint shrink-0">
             <button
@@ -303,6 +310,8 @@ function TemplateCard({ template, folders, campaign, campaignCode }) {
       noteFolders: clonedFolders,
       notes: clonedNotes,
       imageUrl: template.imageUrl ?? null,
+      showSpellSlots: false,
+      spellSlots: (template.spellSlots ?? []).map((s) => ({ ...s, used: Array(s.max).fill(false) })),
     }
     try {
       await dmUpdate(campaignCode, {

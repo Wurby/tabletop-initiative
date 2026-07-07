@@ -5,6 +5,8 @@ Phases 1–7.5 (Combat Controls, DM Notes, AI Template Generation, Template Poli
 
 Phase 3 (Item Tracker) — shipped 2026-07-07.
 
+Phase 4 (Spell Slot Tracking) — shipped 2026-07-07.
+
 ---
 
 ## Bugs
@@ -21,7 +23,7 @@ Phase 3 (Item Tracker) — shipped 2026-07-07.
 
 ## Phase 2 — Firestore MCP Server ✓
 - Standalone `mcp/` subproject (hand-rolled JSON-RPC, Vercel-hosted) exposes read tools across every collection and structured write tools for locations/templates/notes
-- Auth: per-campaign `meta.mcpKey`, generated from a new plug-icon button in the DM view header, baked into the connector URL (`/api/mcp/<mcpKey>`) — no shared secret, no dependency on Phase 5 auth
+- Auth: per-campaign `meta.mcpKey`, generated from a new plug-icon button in the DM view header, baked into the connector URL (`/api/mcp/<mcpKey>`) — no shared secret, no dependency on Phase 6 auth
 - Deployed and live at https://tabletop-initiative-mcp.vercel.app (Vercel project `wurbys-projects/tabletop-initiative-mcp`, Root Directory `mcp/`, `.vercel` link lives at repo root); `VITE_MCP_BASE_URL` set in the app's `.env.local`
 - Smoke-tested: tools/list returns all 21 tools, tools/call correctly rejects an invalid key, confirming the Firebase Admin service account auth works end-to-end
 
@@ -45,7 +47,17 @@ Phase 3 (Item Tracker) — shipped 2026-07-07.
 
 ---
 
-## Phase 4 — AI Note Assistance
+## Phase 4 — Spell Slot Tracking ✓
+- New fields: `spellSlots: [{ level, max, used: boolean[] }]` (sorted by level) and `showSpellSlots` (boolean, default false) on initiative units — `showSpellSlots` mirrors `showDeathSaves` exactly, including player visibility: `InitiativeList.jsx` renders the same pips to players when true
+- Scope: any unit type (party/follower/ally/mob), DM opts in per-unit — broader than death saves' party-only restriction, since templates (mob/ally only) need it too
+- Toggle: new "SS" button added to the footer row that's already universal across all types (alongside visibility-eye/HP/AC), not the existing AC/init/HP Controls popover and not restricted like the DS/Inspiration row
+- Inline editing, no separate modal: "+" adds a level (picks 1–9, skipping already-added ones), "×" per row removes a level entirely, small "−/+" next to each level's pips resizes that level's slot count
+- Pips are circles (not death saves' squares), individually click-to-toggle used/available, plus a "Reset" action inside the expanded section that refills every level for that unit in one click
+- Templates (`TemplatesSidebar.jsx`'s `TemplateModal`): same inline pip editor — `spellSlots: [{ level, max }]` (no `used`, nothing to expend pre-combat), every pip always renders "available". Carries over to the unit on "+ Init" with `used` freshly initialized to all-`false`, matching how `imageUrl` already carries over
+
+---
+
+## Phase 5 — AI Note Assistance
 - AI assist button in the note edit modal
 - Prompt-based editing: rewrite, expand, summarize, format as Markdown, etc.
 - Streamed response replaces or appends to the note body
@@ -53,7 +65,7 @@ Phase 3 (Item Tracker) — shipped 2026-07-07.
 
 ---
 
-## Phase 5 — Auth Upgrade + Monetization
+## Phase 6 — Auth Upgrade + Monetization
 - Replace anonymous auth with Google OAuth and/or email + password
 - Link existing anonymous sessions to real accounts on sign-up
 - Stripe integration for subscription management
@@ -62,12 +74,6 @@ Phase 3 (Item Tracker) — shipped 2026-07-07.
 - Max tier: all AI features (template generation, location building via MCP)
 - Feature flag/entitlement checks throughout app
 - Retroactively wire up "Max tier" gating on the location wizard's AI conversation and image generation (built ungated in Phase 7/7.5, pending this phase's entitlement system)
-
----
-
-## Long-term — Spell Slot Tracking
-- Track spell slots per NPC/unit during combat directly on initiative cards
-- Available and expended slots visible at a glance during encounter
 
 ---
 

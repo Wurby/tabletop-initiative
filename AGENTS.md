@@ -32,7 +32,8 @@ src/
 │   ├── graveyard/       # Graveyard.jsx, GraveyardView.jsx
 │   ├── images/          # ImageLibrary.jsx, ImageModal.jsx, ImageGenModal.jsx, LaserPointerModal.jsx
 │   ├── initiative/      # InitiativeTracker.jsx, InitiativeList.jsx, UnitCard.jsx,
-│   │                    # ActiveTurnWrapper.jsx, UnitNotesModal.jsx (exports NotesEditor too)
+│   │                    # ActiveTurnWrapper.jsx, UnitNotesModal.jsx (exports NotesEditor too),
+│   │                    # SpellSlotsEditor.jsx (also used by templates/TemplatesSidebar.jsx)
 │   ├── items/           # ItemsDrawer.jsx, ItemDetailModal.jsx (edit), ItemViewModal.jsx (read-only) — item tracker
 │   ├── locations/       # LocationsPanel.jsx, ClusterGrid/View.jsx, PoiDetail.jsx,
 │   │                    # LocationWizardModal.jsx
@@ -78,6 +79,7 @@ campaigns/{joinCode}/
 │                     tableError: string | null,
 │                     timerStartedAt, timerPaused, timerAccumulated }
 ├── initiative:     [{ id, name, initiative, hp: { current, max }, ac, visible, imageUrl,
+│                      showSpellSlots, spellSlots: [{ level, max, used: boolean[] }],
 │                      notes: [...], noteFolders: [...] }]
 ├── graveyard:      [{ id, name, xp, killedAt }]
 ├── questXp:        [{ id, label, xp, awardedAt }]
@@ -85,7 +87,7 @@ campaigns/{joinCode}/
 ├── folders:        [{ id, name }]  — image library folders
 ├── party:          [{ id, name, type: 'party'|'follower', hpMax, ac }]
 ├── templates:      [{ id, name, type: 'mob'|'ally', hp: { max }, ac, imageUrl,
-│                      noteFolders: [...], notes: [...], folderId }]
+│                      spellSlots: [{ level, max }], noteFolders: [...], notes: [...], folderId }]
 ├── templateFolders: [{ id, name }]
 ├── dmNotes:        [{ id, title, body, folderId, createdAt }]
 ├── dmNoteFolders:  [{ id, name }]
@@ -120,6 +122,7 @@ There is no login flow; anyone holding a campaign's MCP URL can read/write it.
 - **The `images`/`folders` library is the single source of truth for image lifecycle.** Every `imageUrl` field (on locations, POIs, items, templates, initiative units) is just a reference to a library entry's `url` — entities never own their image. Deleting an image in `ImageLibrary.jsx` calls `clearImageReferences` (`lib/imageRefs.js`) to null out every reference across all five domains in the same write, so nothing is left pointing at a dead URL. "Choose existing" buttons (via `ImagePickerModal`) let a DM re-link an entity to any library image instead of only ever generating a new one; "Regenerate" always adds a new library entry rather than overwriting the old one in place.
 - **Two distinct click behaviors, by design.** In `ImageLibrary.jsx` (the Images panel), clicking a thumbnail directly calls `pushImageToTable` (`lib/campaign.js`) — that grid's whole purpose is picking what's live on the table, with a highlight/Clear UI built around it. Everywhere else a thumbnail appears (locations, POIs, items, templates, initiative units), clicking instead opens `ImagePreviewModal` — a private, DM-only peek with an explicit "Show to Table" button inside it that calls the same `pushImageToTable`. Peeking never touches `combat.display`; only the explicit button does. This keeps a stray click on, say, an item icon mid-session from accidentally revealing it to players.
 - **`ImagePreviewModal` also surfaces the laser-pointer/label workflow.** It takes `campaign` (not just `campaignCode`) so it can derive `isLive` by comparing its `url` against `campaign.combat.display`. Once an image is live, the modal shows "Add Pointer / Labels" (swaps in `LaserPointerModal` for marker/text annotation, same as the Images panel's pointer icon) and "Clear from table" (`clearTableDisplay` in `lib/campaign.js`) — so the full annotate/clear workflow is reachable from any thumbnail, not just the Images panel.
+- **Spell slots follow the `showDeathSaves` pattern, but broader.** `showSpellSlots` gates visibility identically on both `UnitCard.jsx` (DM) and `InitiativeList.jsx` (players) — off by default, one boolean drives both views. Unlike death saves, it's not `isParty`-gated: any unit type can have it toggled on, since templates (mob/ally only) need to configure slots too. `SpellSlotsEditor.jsx` (`components/initiative/`) is the single editable pip UI shared by `UnitCard` (`expendable={true}` — click a pip to toggle used/available, plus a "Reset" that refills every level) and `TemplateModal` (`expendable={false}` — pips are configuration-only, always render "available"). Levels are an explicit add/remove list (`+`/`×`), not a fixed 1–9 table with zeros. On "+ Init", a template's `spellSlots: [{level, max}]` clones onto the new unit with `used` freshly initialized to `Array(max).fill(false)`.
 - **Templates carry their `imageUrl` onto the initiative unit** when added via "+ Init" (`TemplatesSidebar.jsx`'s `handleAddToInitiative`) — shown as a small clickable thumbnail next to the notes button on `UnitCard`.
 - Tailwind utility classes only — no CSS modules, no inline styles, no styled-components.
 - Component files use `.jsx` extension.

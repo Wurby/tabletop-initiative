@@ -4,6 +4,7 @@ import ActiveTurnWrapper from './ActiveTurnWrapper'
 import { CR_XP, CR_PAGE_SIZE } from '../../lib/xp'
 import UnitNotesModal from './UnitNotesModal'
 import ImagePreviewModal from '../images/ImagePreviewModal'
+import SpellSlotsEditor from './SpellSlotsEditor'
 
 const TYPE_HEADER = {
   party: 'bg-brand-forest',
@@ -380,6 +381,9 @@ export default function UnitCard({
           )}
 
           {isParty && local.showDeathSaves && <DeathSaves unit={local} onUpdate={(u) => push(u)} />}
+          {local.showSpellSlots && (
+            <SpellSlotsEditor slots={local.spellSlots ?? []} onChange={(next) => commit('spellSlots', next)} />
+          )}
         </div>
 
         {/* Footer */}
@@ -402,6 +406,10 @@ export default function UnitCard({
                 AC
               </button>
             )}
+            <button onClick={() => push({ ...local, showSpellSlots: !local.showSpellSlots })}
+              className={`flex-1 py-1.5 text-xs font-bold transition-colors border-l border-brand-mint ${local.showSpellSlots ? 'text-brand-rivulet bg-brand-mint' : 'text-brand-ink opacity-30 hover:opacity-60'}`}>
+              SS
+            </button>
           </div>
           {!isFollower && (
             <div className="flex border-t border-brand-mint">
