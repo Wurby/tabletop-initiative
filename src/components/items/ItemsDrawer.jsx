@@ -23,6 +23,7 @@ function ItemCard({ item, folders, party, campaign, campaignCode }) {
     try {
       await dmUpdate(campaignCode, { items: next })
       setShowEdit(false)
+      setShowView(true)
     } catch {
       showError('Failed to save — check your connection.')
     }
