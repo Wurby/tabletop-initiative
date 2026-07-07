@@ -1,81 +1,135 @@
+import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { ITEM_TYPE_LABELS, RARITY_LABELS } from './itemConstants'
+import ImagePreviewModal from '../images/ImagePreviewModal'
 
-export default function ItemViewModal({ item, party, onEdit, onClose }) {
+const PILL = 'inline-block px-2 py-1 text-xs font-normal border bg-brand-forest text-white border-brand-forest'
+const PILL_NEUTRAL = 'inline-block px-2 py-1 text-xs font-normal border border-brand-ink/20 text-brand-ink'
+const PILL_OWNER = 'inline-block px-2 py-0.5 text-xs font-normal border bg-brand-rivulet text-white border-brand-rivulet'
+
+export default function ItemViewModal({ item, folders, party, campaign, campaignCode, onEdit, onClose }) {
+  const [showPreview, setShowPreview] = useState(false)
+  const folderName = item.folderId ? folders.find((f) => f.id === item.folderId)?.name : null
   const owners = (item.ownerIds ?? [])
     .map((id) => party.find((m) => m.id === id))
     .filter(Boolean)
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-ink/50">
-      <div className="bg-white shadow-modal w-[560px] max-w-[95vw] max-h-[85vh] flex flex-col">
-        <div className="bg-brand-forest px-5 py-3 flex items-center justify-between shrink-0 gap-4">
-          <h2 className="text-white font-normal text-base truncate flex-1">{item.name}</h2>
-          <div className="flex items-center gap-2 shrink-0">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-ink/40">
+      <div className="bg-brand-mint-dark shadow-modal flex max-h-[85vh] w-[760px] max-w-[95vw]">
+        {/* Left pane — core stats */}
+        <div className="flex flex-col w-72 shrink-0 border-r border-brand-mint">
+          <div className="bg-brand-forest px-4 py-3 shrink-0">
+            <h2 className="text-white font-normal text-base">View Item</h2>
+          </div>
+          <div className="flex flex-col gap-3 p-4 flex-1 overflow-y-auto">
+            <p className="text-brand-ink text-sm font-normal">{item.name}</p>
+            <div className="flex flex-col gap-1">
+              <span className="text-brand-forest text-xs">Type</span>
+              <span className={PILL}>{ITEM_TYPE_LABELS[item.type] ?? 'Misc'}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-brand-forest text-xs">Rarity</span>
+              <span className={PILL}>{item.rarity ? (RARITY_LABELS[item.rarity] ?? item.rarity) : 'Mundane'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-brand-forest text-xs w-14 shrink-0">Qty</span>
+              <span className="w-16 bg-white border border-brand-mint-dark px-1 py-0.5 text-brand-ink text-sm font-normal text-center">
+                {item.quantity ?? 0}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-brand-forest text-xs w-14 shrink-0">Value gp</span>
+              <span className="w-16 bg-white border border-brand-mint-dark px-1 py-0.5 text-brand-ink text-sm font-normal text-center">
+                {item.value ?? 0}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-brand-forest text-xs w-14 shrink-0">Weight lb</span>
+              <span className="w-16 bg-white border border-brand-mint-dark px-1 py-0.5 text-brand-ink text-sm font-normal text-center">
+                {item.weight ?? 0}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-brand-forest text-xs">Attunement</span>
+              <span className={item.attunement ? PILL : PILL_NEUTRAL}>{item.attunement ? 'Yes' : 'No'}</span>
+            </div>
+          </div>
+          <div className="flex border-t border-brand-mint shrink-0">
             <button
               onClick={onEdit}
-              className="text-xs font-normal text-white/70 hover:text-white border border-white/30 hover:border-white/60 px-3 py-1 transition-colors"
+              className="flex-1 py-2 text-xs font-normal text-white bg-brand-forest hover:bg-brand-forest-dark transition-colors"
             >
               Edit
             </button>
             <button
               onClick={onClose}
-              className="text-white opacity-60 hover:opacity-100 transition-opacity text-sm ml-1"
+              className="flex-1 py-2 text-xs font-normal text-brand-ink hover:bg-brand-mint transition-colors border-l border-brand-mint"
             >
-              ✕
+              Close
             </button>
           </div>
         </div>
 
-        <div className="overflow-y-auto flex-1 px-6 py-5 flex flex-col gap-4">
-          <div className="flex items-start gap-4">
-            {item.imageUrl && (
-              <img
-                src={item.imageUrl}
-                alt={item.name}
-                className="w-24 h-24 object-cover border border-brand-ink/10 shrink-0"
-              />
-            )}
-            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-              <p className="text-brand-ink/60 text-xs font-normal">
-                {ITEM_TYPE_LABELS[item.type] ?? 'Misc'}
-                {item.rarity && ` · ${RARITY_LABELS[item.rarity] ?? item.rarity}`}
-                {item.attunement && ' · Requires Attunement'}
-              </p>
-              <div className="flex items-center gap-4 text-sm">
-                <span className="text-brand-forest font-normal">
-                  Qty <span className="text-brand-ink">{item.quantity ?? 0}</span>
-                </span>
-                <span className="text-brand-forest font-normal">
-                  Value <span className="text-brand-ink">{item.value ?? 0}gp</span>
-                </span>
-                <span className="text-brand-forest font-normal">
-                  Weight <span className="text-brand-ink">{item.weight ?? 0}lb</span>
-                </span>
+        {/* Right pane — folder, owners, image, notes */}
+        <div className="flex flex-col flex-1 overflow-y-auto">
+          <div className="p-4 flex flex-col gap-4">
+            {folders.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-brand-forest text-xs">Folder</span>
+                <span className={PILL_NEUTRAL}>{folderName ?? 'None'}</span>
               </div>
-              <div className="flex flex-wrap gap-1 mt-1">
+            )}
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-brand-forest text-xs">Owners</span>
+              <div className="flex flex-wrap gap-1">
                 {owners.length > 0 ? (
                   owners.map((o) => (
-                    <span
-                      key={o.id}
-                      className="bg-brand-mint text-brand-ink/70 text-[10px] font-normal px-1.5 py-0.5"
-                    >
+                    <span key={o.id} className={PILL_OWNER}>
                       {o.name}
                     </span>
                   ))
                 ) : (
-                  <span className="text-brand-ink/30 text-[10px] font-normal">Unattached</span>
+                  <p className="text-brand-ink/40 text-xs font-light">Unattached</p>
                 )}
               </div>
             </div>
-          </div>
 
-          <div className="note-prose text-brand-ink text-sm font-normal border-t border-brand-ink/10 pt-4">
-            {item.notes ? (
-              <ReactMarkdown>{item.notes}</ReactMarkdown>
-            ) : (
-              <p className="text-brand-ink/30 italic">No notes</p>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-brand-forest text-xs">Image</span>
+              {item.imageUrl ? (
+                <button onClick={() => setShowPreview(true)} className="shrink-0 self-start">
+                  <img
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="w-32 h-32 object-cover border border-brand-ink/10"
+                  />
+                </button>
+              ) : (
+                <p className="text-brand-ink/40 text-xs font-light">No image</p>
+              )}
+            </div>
+            {showPreview && item.imageUrl && (
+              <ImagePreviewModal
+                url={item.imageUrl}
+                label={item.name}
+                campaign={campaign}
+                campaignCode={campaignCode}
+                onClose={() => setShowPreview(false)}
+              />
             )}
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-brand-forest text-xs">Notes</span>
+              <div className="note-prose bg-white border border-brand-mint-dark px-2 py-1.5 text-brand-ink text-xs font-normal w-full min-h-36">
+                {item.notes ? (
+                  <ReactMarkdown>{item.notes}</ReactMarkdown>
+                ) : (
+                  <p className="text-brand-ink/30 italic">No notes</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

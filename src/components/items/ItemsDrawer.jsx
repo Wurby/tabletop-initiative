@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useToast } from '../../lib/toast'
 import { dmUpdate } from '../../lib/campaign'
-import { Pen, Trash, Pin, EyeOpen } from '../icons'
+import { Pen, Trash, Pin } from '../icons'
 import ItemDetailModal from './ItemDetailModal'
 import ItemViewModal from './ItemViewModal'
 import { ITEM_TYPE_LABELS, RARITY_LABELS } from './itemConstants'
@@ -40,15 +40,15 @@ function ItemCard({ item, folders, party, campaign, campaignCode }) {
   return (
     <>
       <div className="shadow-card flex flex-col bg-white">
-        <div className="bg-brand-mint-dark px-3 py-2 flex items-center gap-2">
+        <div className="bg-brand-forest px-3 py-2 flex items-center gap-2">
           {item.imageUrl && (
             <button onClick={() => setShowPreview(true)} className="shrink-0">
               <img src={item.imageUrl} alt={item.name} className="w-12 h-12 object-cover" />
             </button>
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-brand-ink text-sm font-normal truncate">{item.name}</p>
-            <p className="text-brand-ink/50 text-[10px] font-normal">
+            <p className="text-white text-sm font-normal truncate">{item.name}</p>
+            <p className="text-white/60 text-[10px] font-normal">
               {ITEM_TYPE_LABELS[item.type] ?? 'Misc'}
               {item.rarity && ` · ${RARITY_LABELS[item.rarity] ?? item.rarity}`}
               {item.attunement && ' · Attunement'}
@@ -79,15 +79,8 @@ function ItemCard({ item, folders, party, campaign, campaignCode }) {
         </div>
         <div className="border-t border-brand-mint flex">
           <button
-            onClick={() => { setShowView(true); setConfirmDelete(false) }}
-            className="py-1.5 px-3 flex items-center justify-center hover:bg-brand-mint transition-colors"
-            title="View"
-          >
-            <EyeOpen size={11} className="text-brand-ink/40" />
-          </button>
-          <button
             onClick={() => { setShowEdit(true); setConfirmDelete(false) }}
-            className="py-1.5 px-3 flex items-center justify-center hover:bg-brand-mint transition-colors border-l border-brand-mint"
+            className="py-1.5 px-3 flex items-center justify-center hover:bg-brand-mint transition-colors"
             title="Edit"
           >
             <Pen size={11} className="text-brand-ink/40" />
@@ -108,20 +101,31 @@ function ItemCard({ item, folders, party, campaign, campaignCode }) {
               </button>
             </>
           ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="flex-1 py-1.5 flex items-center justify-center hover:bg-brand-mint transition-colors border-l border-brand-mint"
-              title="Delete"
-            >
-              <Trash size={11} className="text-brand-ink/40" />
-            </button>
+            <>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="py-1.5 px-3 flex items-center justify-center hover:bg-brand-mint transition-colors border-l border-brand-mint"
+                title="Delete"
+              >
+                <Trash size={11} className="text-brand-ink/40" />
+              </button>
+              <button
+                onClick={() => { setShowView(true); setConfirmDelete(false) }}
+                className="flex-1 py-1.5 text-xs font-normal text-brand-rivulet hover:bg-brand-mint transition-colors border-l border-brand-mint"
+              >
+                View
+              </button>
+            </>
           )}
         </div>
       </div>
       {showView && (
         <ItemViewModal
           item={item}
+          folders={folders}
           party={party}
+          campaign={campaign}
+          campaignCode={campaignCode}
           onEdit={() => { setShowView(false); setShowEdit(true) }}
           onClose={() => setShowView(false)}
         />
