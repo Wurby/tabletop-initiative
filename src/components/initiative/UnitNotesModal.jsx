@@ -19,7 +19,9 @@ function NoteCard({ note, onUpdate, onDelete }) {
       <div className="border-b border-brand-ink/10 last:border-0">
         {/* Header row — always visible */}
         <div
-          className="flex items-start gap-2 px-3 py-2 cursor-pointer select-none group/header hover:bg-brand-ink/5 transition-colors"
+          className={`flex items-start gap-2 px-3 py-2 cursor-pointer select-none group/header transition-colors ${
+            expanded ? 'bg-brand-forest/10 hover:bg-brand-forest/15' : 'hover:bg-brand-ink/5'
+          }`}
           onClick={() => setExpanded((v) => !v)}
         >
           <span

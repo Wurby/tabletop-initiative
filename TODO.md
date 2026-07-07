@@ -2,12 +2,19 @@
 
 Phases 1–4 complete. ✓
 
+## Bugs
+- Clicking the turn indicator on an initiative card does not start the timer
+- When a unit dies, the turn sometimes advances unexpectedly (likely current-turn index not adjusted when the initiative array shrinks)
+
+---
+
 ## Phase 5 — Note Viewing & Markdown
-- Notes collapsed by default everywhere (body hidden, click to expand inline)
-- "Open" action on each note launches a full modal view with the complete content rendered
-- Render note body as Markdown in both inline expanded view and modal (react-markdown or similar)
-- Clear visual boundary/separator between individual notes
-- Folders should not be easily deletable in Images, DM Notes, Templates, and unit card notes — add friction (confirm step or similar)
+- Notes collapsed by default everywhere (body hidden, click to expand inline) ✓
+- "Open" action on each note launches a full modal view with the complete content rendered ✓
+- Render note body as Markdown in both inline expanded view and modal (react-markdown or similar) ✓
+- Clear visual boundary/separator between individual notes ✓
+- Folders should not be easily deletable in Images, DM Notes, Templates, and unit card notes — add friction (confirm step or similar) ✓
+- DM Notes: when a note is expanded, its header should use a muted/desaturated version of the standard header color (same hue, lower emphasis) ✓
 
 ---
 

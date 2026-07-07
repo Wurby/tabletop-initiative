@@ -95,6 +95,7 @@ campaigns/{joinCode}/
 - Tailwind utility classes only — no CSS modules, no inline styles, no styled-components.
 - Component files use `.jsx` extension.
 - Firebase config is loaded from environment variables — never hardcode keys.
+- **Never start the dev server or verify changes via the browser** — the user handles all manual/visual verification themselves. Rely on lint/build/reading code to confirm correctness instead.
 
 ---
 
