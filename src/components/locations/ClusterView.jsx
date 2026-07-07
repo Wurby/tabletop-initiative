@@ -19,8 +19,8 @@ function EditableField({ value, editMode, onChange, placeholder, rows = 5 }) {
         rows={rows}
         className="w-full bg-white border border-brand-ink/15 px-3 py-2 text-sm font-normal text-brand-ink focus:outline-none focus:border-brand-rivulet/50 resize-none font-mono leading-relaxed"
         placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        defaultValue={value}
+        onBlur={(e) => onChange(e.target.value)}
       />
     )
   }
@@ -143,7 +143,8 @@ function PoiGrid({ pois, poiGridRows, poiGridCols, onGridChange, onPoiClick, onA
 }
 
 export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onDelete, onAddPoiWithWizard, campaign, campaignCode }) {
-  const [editMode, setEditMode] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [docEditMode, setDocEditMode] = useState(false)
   const [editName, setEditName] = useState(cluster.name)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [mobileTab, setMobileTab] = useState('index')
@@ -199,7 +200,7 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
 
   function saveName() {
     if (editName.trim()) onUpdate({ ...cluster, name: editName.trim() })
-    setEditMode(false)
+    setEditingName(false)
   }
 
   return (
@@ -228,24 +229,34 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
           {/* Cluster name — editable inline */}
           <div className="pb-1 border-b border-brand-ink/10 flex items-center gap-3">
             <div className="flex-1 min-w-0">
-              {editMode ? (
+              {editingName ? (
                 <input
                   autoFocus
                   className="w-full bg-transparent text-brand-ink text-lg font-normal border-b border-brand-rivulet/40 focus:outline-none pb-0.5"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   onBlur={saveName}
-                  onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') { setEditName(cluster.name); setEditMode(false) } }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') { setEditName(cluster.name); setEditingName(false) } }}
                 />
               ) : (
                 <h3
                   className="text-lg font-normal text-brand-ink cursor-text hover:opacity-70 transition-opacity truncate"
-                  onClick={() => setEditMode(true)}
+                  onClick={() => setEditingName(true)}
                 >
                   {cluster.name}
                 </h3>
               )}
             </div>
+            <button
+              onClick={() => setDocEditMode((v) => !v)}
+              className={`text-xs font-normal border px-2 py-1 transition-colors shrink-0 ${
+                docEditMode
+                  ? 'bg-brand-forest text-white border-brand-forest'
+                  : 'text-brand-ink/50 border-brand-ink/15 hover:border-brand-ink/30 hover:text-brand-ink'
+              }`}
+            >
+              {docEditMode ? 'Done' : 'Edit'}
+            </button>
             {confirmDelete ? (
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-xs text-brand-ink/50">Delete "{cluster.name}"?</span>
@@ -294,7 +305,7 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
               </h4>
               <EditableField
                 value={cluster[s.key] ?? ''}
-                editMode={false}
+                editMode={docEditMode}
                 onChange={(v) => updateField(s.key, v)}
                 placeholder={`${s.label}… (Markdown supported)`}
               />

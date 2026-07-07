@@ -31,9 +31,9 @@ Reply with only the image prompt — no explanation, no quotes.`
   await uploadBytes(ref(storage, storagePath), blob)
   const url = await getDownloadURL(ref(storage, storagePath))
 
-  // Find or create a "Locations" folder in the image library
+  // Find or create a folder named after this location/POI in the image library
   const folders = campaign.folders ?? []
-  const folderName = 'Locations'
+  const folderName = name
   let folder = folders.find(f => f.name === folderName)
   let nextFolders = folders
   if (!folder) {

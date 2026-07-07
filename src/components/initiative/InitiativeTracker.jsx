@@ -252,12 +252,31 @@ export default function InitiativeTracker({ campaign, campaignCode, showGraveyar
   }
 
   async function setActiveIndex(next) {
-    const idx = units.length > 0 ? ((next % units.length) + units.length) % units.length : 0
+    if (units.length === 0) return
+    const idx = ((next % units.length) + units.length) % units.length
+    const saved = Number(localStorage.getItem(lsKey(idx))) || 0
+
+    localStorage.setItem(lsKey(activeIndex), String(snapshotElapsed()))
+
     try {
-      await dmUpdate(campaignCode, { 'combat.activeIndex': idx })
+      await dmUpdate(campaignCode, {
+        'combat.activeIndex': idx,
+        'combat.timerStartedAt': Date.now(),
+        'combat.timerPaused': false,
+        'combat.timerAccumulated': saved,
+      })
     } catch {
       showError('Failed to save — check your connection.')
     }
+  }
+
+  function indexAfterRemoval(removedId) {
+    const removedIdx = units.findIndex((u) => u.id === removedId)
+    if (removedIdx === -1) return activeIndex
+    const nextLength = units.length - 1
+    if (nextLength <= 0) return 0
+    const next = removedIdx < activeIndex ? activeIndex - 1 : activeIndex
+    return ((next % nextLength) + nextLength) % nextLength
   }
 
   async function setRound(next) {
@@ -327,7 +346,10 @@ export default function InitiativeTracker({ campaign, campaignCode, showGraveyar
   async function handleDelete(id) {
     const next = (campaign.initiative ?? []).filter((u) => u.id !== id)
     try {
-      await dmUpdate(campaignCode, { initiative: next })
+      await dmUpdate(campaignCode, {
+        initiative: next,
+        'combat.activeIndex': indexAfterRemoval(id),
+      })
     } catch {
       showError('Failed to save — check your connection.')
     }
@@ -339,6 +361,7 @@ export default function InitiativeTracker({ campaign, campaignCode, showGraveyar
       await dmUpdate(campaignCode, {
         initiative: (campaign.initiative ?? []).filter((u) => u.id !== unit.id),
         graveyard: [...(campaign.graveyard ?? []), entry],
+        'combat.activeIndex': indexAfterRemoval(unit.id),
       })
     } catch {
       showError('Failed to save — check your connection.')

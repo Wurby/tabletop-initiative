@@ -19,6 +19,7 @@ export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete, ca
   const [editName, setEditName] = useState(poi.name)
   const [editLetter, setEditLetter] = useState(poi.letter)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [docEditMode, setDocEditMode] = useState(false)
   const [generatingImage, setGeneratingImage] = useState(false)
   const [imageError, setImageError] = useState(null)
 
@@ -60,7 +61,7 @@ export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete, ca
     setEditingName(false)
   }
 
-  const visibleSections = activeSection ? SECTIONS.filter(s => s.key === activeSection) : SECTIONS
+  const visibleSections = !docEditMode && activeSection ? SECTIONS.filter(s => s.key === activeSection) : SECTIONS
 
   return (
     <div className="flex flex-col h-full">
@@ -90,6 +91,21 @@ export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete, ca
             <span className="text-brand-ink/50 mr-1">{poi.letter}</span>{poi.name}
           </h3>
         )}
+
+        <button
+          onClick={() => {
+            setDocEditMode((v) => !v)
+            setActiveSection(null)
+            setEditingSection(null)
+          }}
+          className={`text-xs font-normal border px-2 py-1 transition-colors shrink-0 ${
+            docEditMode
+              ? 'bg-brand-forest text-white border-brand-forest'
+              : 'text-brand-ink/50 border-brand-ink/15 hover:border-brand-ink/30 hover:text-brand-ink'
+          }`}
+        >
+          {docEditMode ? 'Done' : 'Edit'}
+        </button>
 
         {confirmDelete ? (
           <div className="flex items-center gap-2 shrink-0">
@@ -134,43 +150,53 @@ export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete, ca
       )}
 
       {/* Section tabs */}
-      <div className="flex gap-1.5 px-5 pt-3 pb-2 shrink-0 flex-wrap border-b border-brand-ink/8">
-        <button
-          onClick={() => setActiveSection(null)}
-          className={`px-3 py-1 text-xs font-normal border transition-colors ${
-            activeSection === null
-              ? 'bg-brand-forest text-white border-brand-forest'
-              : 'border-brand-ink/20 text-brand-ink hover:border-brand-ink/40'
-          }`}
-        >
-          All
-        </button>
-        {SECTIONS.map((s) => (
+      {!docEditMode && (
+        <div className="flex gap-1.5 px-5 pt-3 pb-2 shrink-0 flex-wrap border-b border-brand-ink/8">
           <button
-            key={s.key}
-            onClick={() => { setActiveSection(s.key); setEditingSection(null) }}
+            onClick={() => setActiveSection(null)}
             className={`px-3 py-1 text-xs font-normal border transition-colors ${
-              activeSection === s.key
+              activeSection === null
                 ? 'bg-brand-forest text-white border-brand-forest'
                 : 'border-brand-ink/20 text-brand-ink hover:border-brand-ink/40'
             }`}
           >
-            {s.label}
+            All
           </button>
-        ))}
-      </div>
+          {SECTIONS.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => { setActiveSection(s.key); setEditingSection(null) }}
+              className={`px-3 py-1 text-xs font-normal border transition-colors ${
+                activeSection === s.key
+                  ? 'bg-brand-forest text-white border-brand-forest'
+                  : 'border-brand-ink/20 text-brand-ink hover:border-brand-ink/40'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-6">
         {visibleSections.map((s) => (
           <div key={s.key}>
-            {activeSection === null && (
+            {(activeSection === null || docEditMode) && (
               <h4 className="text-xs font-bold text-brand-ink/50 uppercase tracking-wider mb-2 pb-1 border-b border-brand-ink/8">
                 {s.label}
               </h4>
             )}
 
-            {editingSection === s.key ? (
+            {docEditMode ? (
+              <textarea
+                rows={6}
+                className="w-full bg-white border border-brand-ink/15 px-3 py-2 text-sm font-normal text-brand-ink focus:outline-none focus:border-brand-rivulet/50 resize-none font-mono leading-relaxed"
+                placeholder={`${s.label}… (Markdown supported)`}
+                defaultValue={poi[s.key] ?? ''}
+                onBlur={(e) => onUpdate({ ...poi, [s.key]: e.target.value })}
+              />
+            ) : editingSection === s.key ? (
               <div className="flex flex-col gap-2">
                 <textarea
                   autoFocus
