@@ -17,11 +17,11 @@ Phases 1–7.5 (Combat Controls, DM Notes, AI Template Generation, Template Poli
 
 ---
 
-## Phase 2 — Firestore MCP Server
-- Expose full campaign data to Claude Code via MCP server
-- Collections: meta, combat, initiative, graveyard, questXp, images, party, templates, dmNotes, dmNoteFolders, sessionLogs, locations
-- Bridges Claude Code location-building (and template/notes) workflows directly into Firestore
-- AI authors into the app instead of Obsidian markdown
+## Phase 2 — Firestore MCP Server ✓
+- Standalone `mcp/` subproject (hand-rolled JSON-RPC, Vercel-hosted) exposes read tools across every collection and structured write tools for locations/templates/notes
+- Auth: per-campaign `meta.mcpKey`, generated from a new plug-icon button in the DM view header, baked into the connector URL (`/api/mcp/<mcpKey>`) — no shared secret, no dependency on Phase 4 auth
+- Deployed and live at https://tabletop-initiative-mcp.vercel.app (Vercel project `wurbys-projects/tabletop-initiative-mcp`, Root Directory `mcp/`, `.vercel` link lives at repo root); `VITE_MCP_BASE_URL` set in the app's `.env.local`
+- Smoke-tested: tools/list returns all 21 tools, tools/call correctly rejects an invalid key, confirming the Firebase Admin service account auth works end-to-end
 
 ---
 

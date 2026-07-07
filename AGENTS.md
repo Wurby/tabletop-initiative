@@ -28,11 +28,14 @@ src/
 ├── assets/
 │   └── fonts/           # BespokeSerif web fonts (.woff2, .woff)
 ├── components/
-│   ├── admin/           # AdminModal.jsx — campaign settings (name, join code display)
+│   ├── admin/           # AdminModal.jsx — app-owner-only panel (hidden header dot), cross-campaign
 │   ├── graveyard/       # Graveyard.jsx, GraveyardView.jsx
 │   ├── images/          # ImageLibrary.jsx, ImageModal.jsx, ImageGenModal.jsx, LaserPointerModal.jsx
 │   ├── initiative/      # InitiativeTracker.jsx, InitiativeList.jsx, UnitCard.jsx,
 │   │                    # ActiveTurnWrapper.jsx, UnitNotesModal.jsx (exports NotesEditor too)
+│   ├── locations/       # LocationsPanel.jsx, ClusterGrid/View.jsx, PoiDetail.jsx,
+│   │                    # LocationWizardModal.jsx, locationImageGen.js
+│   ├── mcp/             # CampaignMcpModal.jsx — per-campaign MCP connector URL (DM view header)
 │   ├── notes/           # DMNotesPanel.jsx — wraps NotesEditor for campaign-level notes
 │   ├── party/           # PartyModal.jsx
 │   ├── session/         # SessionLogModal.jsx, SplitModal.jsx
@@ -45,10 +48,14 @@ src/
 ├── lib/
 │   ├── firebase.js       # Firebase app init
 │   ├── campaign.js       # dmUpdate() helper — wraps updateDoc + serverTimestamp
+│   ├── mcp.js            # generateMcpKey() / mcpServerUrl() for the MCP connector
 │   ├── toast.jsx         # Toast context + useToast hook
 │   └── xp.js            # 5e XP thresholds constant
 ├── App.jsx
 └── main.jsx
+
+mcp/                      # Sibling subproject — standalone Vercel-hosted MCP server.
+                           # See mcp/README.md for architecture and deployment.
 ```
 
 ---
@@ -61,7 +68,7 @@ src/
 
 ```
 campaigns/{joinCode}/
-├── meta:           { name, dmUid, locked, lastActiveAt }
+├── meta:           { name, dmUid, locked, lastActiveAt, mcpKey }
 ├── combat:         { active, activeIndex, round,
 │                     display: { type, url, label },
 │                     lastSplit: { clearedAt, dismissed },
@@ -71,14 +78,24 @@ campaigns/{joinCode}/
 │                      notes: [...], noteFolders: [...] }]
 ├── graveyard:      [{ id, name, xp, killedAt }]
 ├── questXp:        [{ id, label, xp, awardedAt }]
-├── images:         [{ url, label, uploadedAt }]
+├── images:         [{ id, url, storagePath, label, folderId, uploadedAt }]
+├── folders:        [{ id, name }]  — image library folders
 ├── party:          [{ id, name, type: 'party'|'follower', hpMax, ac }]
 ├── templates:      [{ id, name, type: 'mob'|'ally', hp: { max }, ac,
 │                      noteFolders: [...], notes: [...], folderId }]
+├── templateFolders: [{ id, name }]
 ├── dmNotes:        [{ id, title, body, folderId, createdAt }]
 ├── dmNoteFolders:  [{ id, name }]
-└── sessionLogs:    [{ id, timestamp, ... }]
+├── sessionLogs:    [{ id, timestamp, ... }]
+└── locations:      [{ id, name, gridRow, gridCol, arrival, situation, plotHooks, imageUrl,
+│                      poiGridRows, poiGridCols,
+│                      pois: [{ id, letter, name, gridRow, gridCol, description, encounters,
+│                               whatIsHere, whoIsHere, quests, imageUrl }] }]
 ```
+
+**`meta.mcpKey`** is a per-campaign secret (generated from the DM view's plug icon)
+that authenticates the standalone MCP server in `mcp/` — see `mcp/README.md`.
+There is no login flow; anyone holding a campaign's MCP URL can read/write it.
 
 **Storage path:** `campaigns/{joinCode}/images/{filename}`
 
@@ -108,9 +125,11 @@ VITE_FIREBASE_PROJECT_ID
 VITE_FIREBASE_STORAGE_BUCKET
 VITE_FIREBASE_MESSAGING_SENDER_ID
 VITE_FIREBASE_APP_ID
+VITE_MCP_BASE_URL   # deployed mcp/ server origin, e.g. https://dnd-mcp.vercel.app
 ```
 
-These live in `.env.local` (gitignored).
+These live in `.env.local` (gitignored). `mcp/` is a separate Vercel-deployed
+subproject with its own env vars — see `mcp/README.md`.
 
 ---
 

@@ -112,6 +112,28 @@ export function Sparkles({ className = '', size = 14 }) {
   )
 }
 
+export function Plug({ className = '', size = 14 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M9 2v6" />
+      <path d="M15 2v6" />
+      <rect x="6" y="8" width="12" height="8" />
+      <path d="M12 16v3" />
+      <path d="M8 22h8" />
+    </svg>
+  )
+}
+
 export function EyeClosed({ className = '', size = 14 }) {
   return (
     <svg

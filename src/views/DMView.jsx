@@ -12,13 +12,15 @@ import ImageLibrary from '../components/images/ImageLibrary'
 import AdminModal from '../components/admin/AdminModal'
 import TemplatesSidebar from '../components/templates/TemplatesSidebar'
 import DMNotesPanel from '../components/notes/DMNotesPanel'
-import { Lock, LockOpen } from '../components/icons'
+import CampaignMcpModal from '../components/mcp/CampaignMcpModal'
+import { Lock, LockOpen, Plug } from '../components/icons'
 
 export default function DMView({ campaign, campaignCode, onLeave }) {
   const showError = useToast()
   const [partyOpen, setPartyOpen] = useState(false)
   const [sessionLogOpen, setSessionLogOpen] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
+  const [mcpOpen, setMcpOpen] = useState(false)
   const [lockDialogOpen, setLockDialogOpen] = useState(false)
   const [templateOpen, setTemplateOpen] = useState(false)
   const [activePanel, setActivePanel] = useState('notes')
@@ -97,6 +99,13 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
           >
             {locked ? <Lock size={13} /> : <LockOpen size={13} />}
           </button>
+          <button
+            onClick={() => setMcpOpen(true)}
+            className="text-white opacity-30 hover:opacity-60 transition-colors"
+            title="MCP server — connect Claude to this campaign"
+          >
+            <Plug size={13} />
+          </button>
           <span className="text-xs font-bold bg-white text-brand-forest px-2 py-1">DM</span>
           <button
             onClick={onLeave}
@@ -172,6 +181,13 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
         <SplitModal split={lastSplit} onClose={handleDismissSplit} canDismiss />
       )}
       {adminOpen && <AdminModal onClose={() => setAdminOpen(false)} />}
+      {mcpOpen && (
+        <CampaignMcpModal
+          campaign={campaign}
+          campaignCode={campaignCode}
+          onClose={() => setMcpOpen(false)}
+        />
+      )}
       {templateOpen && (
         <TemplatesSidebar
           campaign={campaign}

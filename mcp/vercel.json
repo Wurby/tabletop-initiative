@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/mcp/[key].ts": {
+      "maxDuration": 30
+    }
+  }
+}
