@@ -46,6 +46,8 @@ export interface InitiativeUnit {
   type: string;
   visible: boolean;
   conditions?: string[];
+  showSpellSlots?: boolean;
+  spellSlots?: InitiativeSpellSlot[];
 }
 
 export interface GraveyardEntry {
@@ -78,6 +80,15 @@ export interface PartyMember {
   ac: number;
 }
 
+export interface SpellSlot {
+  level: number;
+  max: number;
+}
+
+export interface InitiativeSpellSlot extends SpellSlot {
+  used: boolean[];
+}
+
 export interface Template {
   id: string;
   createdAt: number;
@@ -86,6 +97,8 @@ export interface Template {
   hp: { max: number };
   ac: number;
   folderId: string | null;
+  imageUrl?: string | null;
+  spellSlots?: SpellSlot[];
   noteFolders?: NamedFolder[];
   notes?: Note[];
 }

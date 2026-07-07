@@ -1,4 +1,4 @@
-import type { Campaign } from '../campaignAccess.js';
+import type { Campaign, SpellSlot } from '../campaignAccess.js';
 
 function fmtNotes(notes: Campaign['dmNotes'], folders: Campaign['dmNoteFolders']): string {
   if (!notes || notes.length === 0) return '(no notes)';
@@ -77,6 +77,12 @@ export function getLocation(campaign: Campaign, args: { cluster_id: string; poi_
   ].join('\n');
 }
 
+function fmtSpellSlots(slots: SpellSlot[] | undefined): string {
+  const list = [...(slots ?? [])].sort((a, b) => a.level - b.level);
+  if (list.length === 0) return '';
+  return list.map((s) => `L${s.level}×${s.max}`).join(', ');
+}
+
 export function listTemplates(campaign: Campaign): string {
   const templates = campaign.templates ?? [];
   if (templates.length === 0) return 'No templates yet.';
@@ -85,7 +91,8 @@ export function listTemplates(campaign: Campaign): string {
   return templates
     .map((t) => {
       const folder = folderName(t.folderId);
-      return `- [${t.id}] ${t.name} (${t.type}, HP ${t.hp?.max ?? 0}, AC ${t.ac ?? 0})${folder ? ` — folder: ${folder}` : ''}`;
+      const slots = fmtSpellSlots(t.spellSlots);
+      return `- [${t.id}] ${t.name} (${t.type}, HP ${t.hp?.max ?? 0}, AC ${t.ac ?? 0})${folder ? ` — folder: ${folder}` : ''}${slots ? ` — slots: ${slots}` : ''}`;
     })
     .join('\n');
 }
@@ -93,9 +100,11 @@ export function listTemplates(campaign: Campaign): string {
 export function getTemplate(campaign: Campaign, args: { id: string }): string {
   const t = (campaign.templates ?? []).find((tpl) => tpl.id === args.id);
   if (!t) throw new Error(`No template with id "${args.id}".`);
+  const slots = fmtSpellSlots(t.spellSlots);
   return [
     `**${t.name}** (id: ${t.id}, ${t.type})`,
     `HP: ${t.hp?.max ?? 0} | AC: ${t.ac ?? 0}`,
+    `Spell slots: ${slots || '(none)'}`,
     '',
     'Notes:',
     fmtNotes(t.notes, t.noteFolders),
@@ -185,10 +194,13 @@ export function getInitiative(campaign: Campaign): string {
   const units = campaign.initiative ?? [];
   if (units.length === 0) return 'No units in initiative.';
   return units
-    .map(
-      (u) =>
-        `- [${u.id}] ${u.name} (init ${u.initiative}, HP ${u.hp?.current ?? 0}/${u.hp?.max ?? 0}, AC ${u.ac}, ${u.visible ? 'visible' : 'hidden'})`
-    )
+    .map((u) => {
+      const slots = [...(u.spellSlots ?? [])]
+        .sort((a, b) => a.level - b.level)
+        .map((s) => `L${s.level} ${s.used.filter(Boolean).length}/${s.max} used`)
+        .join(', ');
+      return `- [${u.id}] ${u.name} (init ${u.initiative}, HP ${u.hp?.current ?? 0}/${u.hp?.max ?? 0}, AC ${u.ac}, ${u.visible ? 'visible' : 'hidden'})${slots ? ` — slots: ${slots}` : ''}`;
+    })
     .join('\n');
 }
 

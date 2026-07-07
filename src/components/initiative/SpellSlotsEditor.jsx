@@ -15,8 +15,8 @@ export default function SpellSlotsEditor({ slots, onChange, expendable = true })
   const availableLevels = ALL_LEVELS.filter((l) => !usedLevels.has(l))
 
   function addLevel(level) {
-    const next = [...list, { level, max: 1, used: expendable ? [false] : undefined }]
-    onChange(sortSlots(next))
+    const entry = expendable ? { level, max: 1, used: [false] } : { level, max: 1 }
+    onChange(sortSlots([...list, entry]))
     setShowAddPicker(false)
   }
 
@@ -29,8 +29,9 @@ export default function SpellSlotsEditor({ slots, onChange, expendable = true })
       list.map((s) => {
         if (s.level !== level) return s
         const max = Math.max(1, s.max + delta)
-        const used = expendable ? Array.from({ length: max }, (_, i) => s.used?.[i] ?? false) : undefined
-        return { ...s, max, used }
+        if (!expendable) return { level: s.level, max }
+        const used = Array.from({ length: max }, (_, i) => s.used?.[i] ?? false)
+        return { level: s.level, max, used }
       })
     )
   }
@@ -74,21 +75,21 @@ export default function SpellSlotsEditor({ slots, onChange, expendable = true })
             <div className="flex items-center gap-0.5 shrink-0">
               <button
                 onClick={() => resize(s.level, -1)}
-                className="w-3.5 h-3.5 flex items-center justify-center text-[9px] text-brand-ink/40 hover:text-brand-ink/70 transition-colors"
+                className="w-4 h-4 flex items-center justify-center text-[10px] font-bold border border-brand-ink/20 text-brand-ink/70 hover:border-brand-ink/40 hover:text-brand-ink transition-colors"
                 title="Fewer slots"
               >
                 −
               </button>
               <button
                 onClick={() => resize(s.level, 1)}
-                className="w-3.5 h-3.5 flex items-center justify-center text-[9px] text-brand-ink/40 hover:text-brand-ink/70 transition-colors"
+                className="w-4 h-4 flex items-center justify-center text-[10px] font-bold border border-brand-ink/20 text-brand-ink/70 hover:border-brand-ink/40 hover:text-brand-ink transition-colors"
                 title="More slots"
               >
                 +
               </button>
               <button
                 onClick={() => removeLevel(s.level)}
-                className="w-3.5 h-3.5 flex items-center justify-center text-[9px] text-brand-ink/30 hover:text-brand-danger transition-colors"
+                className="w-4 h-4 flex items-center justify-center text-[10px] font-bold border border-brand-ink/20 text-brand-ink/70 hover:border-brand-danger hover:text-brand-danger transition-colors"
                 title="Remove level"
               >
                 ×

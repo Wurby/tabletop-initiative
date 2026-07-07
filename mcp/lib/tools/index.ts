@@ -17,7 +17,7 @@ import {
   listSessionLogs,
 } from './reads.js';
 import { upsertCluster, deleteCluster, upsertPoi, deletePoi } from './locations.js';
-import { upsertTemplate, deleteTemplate } from './templates.js';
+import { upsertTemplate, deleteTemplate, upsertTemplateFolder, deleteTemplateFolder } from './templates.js';
 import { upsertNote, deleteNote, upsertNoteFolder, deleteNoteFolder } from './notes.js';
 import { upsertItem, deleteItem, upsertItemFolder, deleteItemFolder } from './items.js';
 
@@ -201,6 +201,18 @@ export const TOOLS = [
         hp_max: { type: 'number' },
         ac: { type: 'number' },
         folder_id: { type: 'string', description: 'Template folder id, or omit/null for unfiled.' },
+        spell_slots: {
+          type: 'array',
+          description: 'Spell slot levels this template\'s casters have, config-only (no "used" state — that\'s tracked once cloned onto an initiative unit via "+ Init"). Replaces the full list when provided.',
+          items: {
+            type: 'object',
+            properties: {
+              level: { type: 'number', description: 'Spell level, 1-9.' },
+              max: { type: 'number', description: 'Number of slots at this level.' },
+            },
+            required: ['level', 'max'],
+          },
+        },
       },
       required: ['name'],
     },
@@ -208,6 +220,24 @@ export const TOOLS = [
   {
     name: 'delete_template',
     description: 'Delete a unit template.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string' } },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'upsert_template_folder',
+    description: 'Create a new template folder or rename an existing one.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string' }, name: { type: 'string' } },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'delete_template_folder',
+    description: 'Delete a template folder. Templates inside it become unfiled, not deleted.',
     inputSchema: {
       type: 'object',
       properties: { id: { type: 'string' } },
@@ -376,6 +406,10 @@ export async function callTool(mcpKey: string, params: unknown): Promise<ToolCon
         return text(await upsertTemplate(code, campaign, args));
       case 'delete_template':
         return text(await deleteTemplate(code, campaign, args));
+      case 'upsert_template_folder':
+        return text(await upsertTemplateFolder(code, campaign, args));
+      case 'delete_template_folder':
+        return text(await deleteTemplateFolder(code, campaign, args));
 
       case 'upsert_note':
         return text(await upsertNote(code, campaign, args));

@@ -23,7 +23,7 @@ Phase 4 (Spell Slot Tracking) — shipped 2026-07-07.
 
 ## Phase 2 — Firestore MCP Server ✓
 - Standalone `mcp/` subproject (hand-rolled JSON-RPC, Vercel-hosted) exposes read tools across every collection and structured write tools for locations/templates/notes
-- Auth: per-campaign `meta.mcpKey`, generated from a new plug-icon button in the DM view header, baked into the connector URL (`/api/mcp/<mcpKey>`) — no shared secret, no dependency on Phase 6 auth
+- Auth: per-campaign `meta.mcpKey`, generated from a new plug-icon button in the DM view header, baked into the connector URL (`/api/mcp/<mcpKey>`) — no shared secret, no dependency on Phase 7 auth
 - Deployed and live at https://tabletop-initiative-mcp.vercel.app (Vercel project `wurbys-projects/tabletop-initiative-mcp`, Root Directory `mcp/`, `.vercel` link lives at repo root); `VITE_MCP_BASE_URL` set in the app's `.env.local`
 - Smoke-tested: tools/list returns all 21 tools, tools/call correctly rejects an invalid key, confirming the Firebase Admin service account auth works end-to-end
 
@@ -54,10 +54,22 @@ Phase 4 (Spell Slot Tracking) — shipped 2026-07-07.
 - Inline editing, no separate modal: "+" adds a level (picks 1–9, skipping already-added ones), "×" per row removes a level entirely, small "−/+" next to each level's pips resizes that level's slot count
 - Pips are circles (not death saves' squares), individually click-to-toggle used/available, plus a "Reset" action inside the expanded section that refills every level for that unit in one click
 - Templates (`TemplatesSidebar.jsx`'s `TemplateModal`): same inline pip editor — `spellSlots: [{ level, max }]` (no `used`, nothing to expend pre-combat), every pip always renders "available". Carries over to the unit on "+ Init" with `used` freshly initialized to all-`false`, matching how `imageUrl` already carries over
+- MCP integration: `upsert_template` gains a `spell_slots` field (config-only, same `{level, max}` shape as the template), validated (level 1-9, max ≥ 1, no duplicate levels) in `mcp/lib/tools/templates.ts`; `list_templates`/`get_template` surface it in their output; `get_initiative` surfaces live `used/max` per level too; `Template`/`SpellSlot`/`InitiativeSpellSlot` types added to `mcp/lib/campaignAccess.ts` (also backfilled the missing `imageUrl` field on `Template` while in there)
+- MCP folder-coverage audit: `templateFolders` had no CRUD tool at all (only a template's own nested `noteFolders` was covered, via `upsert_note_folder` scope="template"). Added `upsert_template_folder`/`delete_template_folder`, mirroring the `upsert_item_folder`/`delete_item_folder` pattern. Every other `NamedFolder` collection now has MCP coverage — `dmNoteFolders`/template `noteFolders` (note-folder tools, scoped), `itemFolders` (item-folder tools), `templateFolders` (template-folder tools) — except the image library's `folders`, which stays app-only on purpose since the whole image domain (generate/upload/list-write) is deliberately excluded from MCP writes
 
 ---
 
-## Phase 5 — AI Note Assistance
+## Phase 5 — Merge Follower + Ally
+- Merged unit type is "ally" (letter "A" on cards). `campaign.party[]`'s `type:'follower'` creation path is removed entirely — Templates + the blank "+ Add" card remain the only way to create an ally, ephemeral in `initiative[]` only, unchanged from today
+- `PartyModal.jsx` simplifies to party-members-only: no P/F type toggle, no HP field (only followers ever had one — real party HP lives on the initiative card), `MemberRow`'s type badge removed entirely (dead info once every listed member is `'party'`)
+- Legacy `type:'follower'` data is never migrated — it's treated as a permanent synonym for `type:'ally'` everywhere color/label/footer-behavior is derived (`UnitCard.jsx`, `InitiativeList.jsx`, `InitiativeTracker.jsx`'s `AddCard` preview). No Firestore rewrite script. Net effect: legacy followers gain the Kill+Delete footer buttons they never had, since they now render via the merged ally path
+- Header color unified to solid `bg-brand-rivulet` for ally — retires the rivulet→forest gradient that `UnitCard.jsx`/`InitiativeList.jsx` inconsistently used for `'follower'` today (a 3rd copy in `InitiativeTracker.jsx` already used solid, so this was already inconsistent pre-merge)
+- `campaign.party[]` keeps an explicit `type` field going forward (`'party'` on every new entry) — not dropped from the schema. `PartyModal.jsx` filters its displayed list to `type === 'party'` but every write (add/update/delete) operates on the full unfiltered array, so a pre-existing `'follower'` entry is hidden from the roster UI but never silently dropped or clobbered
+- MCP: no `upsert_template` schema change needed (its type enum was already `mob|ally` — templates never had `'follower'`). `get_party` filtered to `type === 'party'` too, matching the app's new stance on what the roster actually is
+
+---
+
+## Phase 6 — AI Note Assistance
 - AI assist button in the note edit modal
 - Prompt-based editing: rewrite, expand, summarize, format as Markdown, etc.
 - Streamed response replaces or appends to the note body
@@ -65,7 +77,7 @@ Phase 4 (Spell Slot Tracking) — shipped 2026-07-07.
 
 ---
 
-## Phase 6 — Auth Upgrade + Monetization
+## Phase 7 — Auth Upgrade + Monetization
 - Replace anonymous auth with Google OAuth and/or email + password
 - Link existing anonymous sessions to real accounts on sign-up
 - Stripe integration for subscription management
