@@ -185,9 +185,9 @@ export function listImages(campaign: Campaign): string {
 }
 
 export function getParty(campaign: Campaign): string {
-  const party = campaign.party ?? [];
+  const party = (campaign.party ?? []).filter((p) => p.type === 'party');
   if (party.length === 0) return 'No party members yet.';
-  return party.map((p) => `- [${p.id}] ${p.name} (${p.type}, HP ${p.hpMax}, AC ${p.ac})`).join('\n');
+  return party.map((p) => `- [${p.id}] ${p.name} (AC ${p.ac})`).join('\n');
 }
 
 export function getInitiative(campaign: Campaign): string {

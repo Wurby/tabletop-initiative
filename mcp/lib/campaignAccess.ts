@@ -75,8 +75,9 @@ export interface ImageEntry {
 export interface PartyMember {
   id: string;
   name: string;
+  // 'follower' is retired — no longer created, kept only for legacy stored data.
   type: 'party' | 'follower';
-  hpMax: number;
+  hpMax?: number;
   ac: number;
 }
 

@@ -5,15 +5,7 @@ import { CR_XP, CR_PAGE_SIZE } from '../../lib/xp'
 import UnitNotesModal from './UnitNotesModal'
 import ImagePreviewModal from '../images/ImagePreviewModal'
 import SpellSlotsEditor from './SpellSlotsEditor'
-
-const TYPE_HEADER = {
-  party: 'bg-brand-forest',
-  follower: 'bg-[linear-gradient(to_right,var(--color-brand-rivulet),var(--color-brand-forest))]',
-  ally: 'bg-brand-rivulet',
-  mob: 'bg-brand-danger',
-}
-const TYPE_CYCLE = { ally: 'mob', mob: 'ally' }
-const TYPE_LABEL = { party: 'P', follower: 'F', ally: 'A', mob: 'M' }
+import { TYPE_HEADER, TYPE_LABEL, TYPE_CYCLE, isAllyType } from '../../lib/unitType'
 
 const CONDITIONS_5E = [
   'Blinded', 'Charmed', 'Deafened', 'Exhausted', 'Frightened',
@@ -169,8 +161,7 @@ export default function UnitCard({
   }
 
   const isParty = local.type === 'party'
-  const isAlly = local.type === 'ally'
-  const isFollower = local.type === 'follower'
+  const isAlly = isAllyType(local.type)
 
   if (killing) {
     const totalPages = Math.ceil(CR_XP.length / CR_PAGE_SIZE)
@@ -228,7 +219,7 @@ export default function UnitCard({
           className={`${TYPE_HEADER[local.type] ?? TYPE_HEADER.mob} relative`}>
           {/* Row 1: type badge | name | initiative */}
           <div className="px-2 pt-1.5 pb-0.5 flex items-center gap-1">
-            {isParty || isFollower ? (
+            {isParty ? (
               <span className="text-white/60 text-xs font-bold w-5 text-center shrink-0">{TYPE_LABEL[local.type]}</span>
             ) : (
               <button onClick={() => push({ ...local, type: TYPE_CYCLE[local.type] ?? 'mob' })}
@@ -400,7 +391,7 @@ export default function UnitCard({
                 HP
               </button>
             )}
-            {!isAlly && !isParty && !isFollower && (
+            {!isAlly && !isParty && (
               <button onClick={() => push({ ...local, showAc: !local.showAc })}
                 className={`flex-1 py-1.5 text-xs font-bold transition-colors border-l border-brand-mint ${local.showAc ? 'text-brand-rivulet bg-brand-mint' : 'text-brand-ink opacity-30 hover:opacity-60'}`}>
                 AC
@@ -411,30 +402,28 @@ export default function UnitCard({
               SS
             </button>
           </div>
-          {!isFollower && (
-            <div className="flex border-t border-brand-mint">
-              {isParty ? (
-                <>
-                  <button onClick={() => push({ ...local, showDeathSaves: !local.showDeathSaves })}
-                    className={`flex-1 py-1.5 text-xs font-bold transition-colors border-r border-brand-mint ${local.showDeathSaves ? 'text-brand-rivulet bg-brand-mint' : 'text-brand-danger hover:bg-brand-mint'}`}>
-                    DS
-                  </button>
-                  <button onClick={() => push({ ...local, inspired: ((Number(local.inspired) || 0) + 3) % 4 })}
-                    className={`flex-1 py-1.5 text-xs transition-colors ${(Number(local.inspired) || 0) > 0 ? 'text-amber-400 bg-brand-mint' : 'text-brand-ink opacity-30 hover:opacity-60'}`}
-                    title={`Inspiration: ${Number(local.inspired) || 0}/3`}>
-                    {'★'.repeat(Number(local.inspired) || 0) || '★'}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => setKilling(true)}
-                    className="flex-1 py-1.5 text-xs font-normal text-brand-danger hover:bg-brand-mint transition-colors">Kill</button>
-                  <button onClick={() => onDelete(unit.id)}
-                    className="py-1.5 px-2.5 text-xs font-normal text-brand-ink opacity-30 hover:opacity-70 transition-opacity border-l border-brand-mint">✕</button>
-                </>
-              )}
-            </div>
-          )}
+          <div className="flex border-t border-brand-mint">
+            {isParty ? (
+              <>
+                <button onClick={() => push({ ...local, showDeathSaves: !local.showDeathSaves })}
+                  className={`flex-1 py-1.5 text-xs font-bold transition-colors border-r border-brand-mint ${local.showDeathSaves ? 'text-brand-rivulet bg-brand-mint' : 'text-brand-danger hover:bg-brand-mint'}`}>
+                  DS
+                </button>
+                <button onClick={() => push({ ...local, inspired: ((Number(local.inspired) || 0) + 3) % 4 })}
+                  className={`flex-1 py-1.5 text-xs transition-colors ${(Number(local.inspired) || 0) > 0 ? 'text-amber-400 bg-brand-mint' : 'text-brand-ink opacity-30 hover:opacity-60'}`}
+                  title={`Inspiration: ${Number(local.inspired) || 0}/3`}>
+                  {'★'.repeat(Number(local.inspired) || 0) || '★'}
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => setKilling(true)}
+                  className="flex-1 py-1.5 text-xs font-normal text-brand-danger hover:bg-brand-mint transition-colors">Kill</button>
+                <button onClick={() => onDelete(unit.id)}
+                  className="py-1.5 px-2.5 text-xs font-normal text-brand-ink opacity-30 hover:opacity-70 transition-opacity border-l border-brand-mint">✕</button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </ActiveTurnWrapper>

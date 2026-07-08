@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { EyeClosed } from '../icons'
 import ActiveTurnWrapper from './ActiveTurnWrapper'
+import { TYPE_HEADER, isAllyType } from '../../lib/unitType'
 
 function formatTime(ms) {
   const s = Math.floor(ms / 1000)
@@ -27,14 +28,6 @@ function useElapsed(combat) {
   }, [combat?.timerAccumulated, combat?.timerStartedAt, combat?.timerPaused])
 
   return elapsed
-}
-
-function headerColor(type) {
-  if (type === 'party') return 'bg-brand-forest'
-  if (type === 'follower')
-    return 'bg-[linear-gradient(to_right,var(--color-brand-rivulet),var(--color-brand-forest))]'
-  if (type === 'ally') return 'bg-brand-rivulet'
-  return 'bg-brand-danger'
 }
 
 function healthState(current, max) {
@@ -171,8 +164,7 @@ export default function InitiativeList({ campaign }) {
           {units.map((unit, i) => {
             const active = i === activeIndex
             const isParty = unit.type === 'party'
-            const isAlly = unit.type === 'ally'
-            const isFollower = unit.type === 'follower'
+            const isAlly = isAllyType(unit.type)
 
             if (!unit.visible) {
               return (
@@ -193,7 +185,7 @@ export default function InitiativeList({ campaign }) {
               <ActiveTurnWrapper key={unit.id} ref={active ? activeRef : null} isActive={active} type={unit.type}>
                 <div className="w-48 h-full min-h-28 bg-brand-mint-dark shadow-card flex flex-col transition-all">
                   {/* Header: two rows — name / AC + initiative */}
-                  <div className={`${headerColor(unit.type)}`}>
+                  <div className={`${TYPE_HEADER[unit.type] ?? TYPE_HEADER.mob}`}>
                     <div className="px-2 pt-1.5 pb-0.5">
                       <span className="text-white font-normal text-sm block truncate">
                         {unit.name}
@@ -202,7 +194,7 @@ export default function InitiativeList({ campaign }) {
                     <div className="px-2 pb-1 flex items-center justify-between border-t border-white/15">
                       <span className="text-xs font-normal">
                         <span className="text-white/40">AC</span>{' '}
-                        {isParty || isAlly || isFollower || unit.showAc ? (
+                        {isParty || isAlly || unit.showAc ? (
                           <span className="text-white">{unit.ac}</span>
                         ) : (
                           <EyeClosed className="text-white/40 inline" size={10} />

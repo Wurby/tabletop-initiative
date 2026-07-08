@@ -5,7 +5,6 @@ import { Trash } from '../icons'
 
 function MemberRow({ member, onUpdate, onDelete }) {
   const [local, setLocal] = useState(member)
-  const isFollower = member.type === 'follower'
 
   function commit(field, value) {
     const updated = { ...local, [field]: value }
@@ -15,11 +14,6 @@ function MemberRow({ member, onUpdate, onDelete }) {
 
   return (
     <div className="flex items-center gap-2 py-2 border-b border-brand-mint last:border-0">
-      <span
-        className={`text-xs font-bold w-4 shrink-0 ${isFollower ? 'text-brand-rivulet' : 'text-brand-forest'}`}
-      >
-        {isFollower ? 'F' : 'P'}
-      </span>
       <input
         className="flex-1 bg-transparent text-brand-ink text-sm font-normal focus:outline-none border-b border-transparent focus:border-brand-ink/20 min-w-0"
         aria-label={local.name}
@@ -28,18 +22,6 @@ function MemberRow({ member, onUpdate, onDelete }) {
         onBlur={(e) => commit('name', e.target.value)}
         placeholder="Name"
       />
-      {isFollower && (
-        <>
-          <span className="text-brand-ink/50 text-xs shrink-0">HP</span>
-          <input
-            className="w-10 text-center text-sm font-normal text-brand-ink bg-transparent focus:outline-none border-b border-transparent focus:border-brand-ink/20 shrink-0"
-            type="number"
-            value={local.hpMax ?? ''}
-            onChange={(e) => setLocal({ ...local, hpMax: e.target.value })}
-            onBlur={(e) => commit('hpMax', Number(e.target.value) || 0)}
-          />
-        </>
-      )}
       <span className="text-brand-ink/50 text-xs shrink-0">AC</span>
       <input
         className="w-10 text-center text-sm font-normal text-brand-ink bg-transparent focus:outline-none border-b border-transparent focus:border-brand-ink/20 shrink-0"
@@ -62,19 +44,15 @@ function MemberRow({ member, onUpdate, onDelete }) {
 export default function PartyModal({ campaign, campaignCode, onClose }) {
   const showError = useToast()
   const party = campaign.party ?? []
+  const displayedParty = party.filter((m) => m.type === 'party')
   const [newName, setNewName] = useState('')
   const [newAc, setNewAc] = useState('')
-  const [newHpMax, setNewHpMax] = useState('')
-  const [newType, setNewType] = useState('party')
 
   async function handleUpdate(updated) {
     const nextParty = party.map((m) => (m.id === updated.id ? updated : m))
-    const nextInit = (campaign.initiative ?? []).map((u) => {
-      if (u.id !== updated.id) return u
-      const synced = { ...u, name: updated.name, ac: updated.ac }
-      if (updated.type === 'follower') synced.hp = { ...u.hp, max: updated.hpMax ?? u.hp?.max ?? 0 }
-      return synced
-    })
+    const nextInit = (campaign.initiative ?? []).map((u) =>
+      u.id === updated.id ? { ...u, name: updated.name, ac: updated.ac } : u
+    )
     try {
       await dmUpdate(campaignCode, {
         party: nextParty,
@@ -100,25 +78,17 @@ export default function PartyModal({ campaign, campaignCode, onClose }) {
 
   async function handleAdd() {
     if (!newName.trim()) return
-    const isFollower = newType === 'follower'
     const id = crypto.randomUUID()
-    const hpMax = isFollower ? Number(newHpMax) || 0 : 0
-    const member = {
-      id,
-      name: newName.trim(),
-      ac: Number(newAc) || 0,
-      type: newType,
-      ...(isFollower ? { hpMax } : {}),
-    }
+    const member = { id, name: newName.trim(), ac: Number(newAc) || 0, type: 'party' }
     const unit = {
       id,
       name: member.name,
       initiative: 0,
-      hp: { current: hpMax, max: hpMax, temp: 0 },
+      hp: { current: 0, max: 0, temp: 0 },
       ac: member.ac,
       status: '',
       visible: false,
-      type: newType,
+      type: 'party',
       showHp: false,
       showAc: false,
       showDeathSaves: false,
@@ -131,8 +101,6 @@ export default function PartyModal({ campaign, campaignCode, onClose }) {
       })
       setNewName('')
       setNewAc('')
-      setNewHpMax('')
-      setNewType('party')
     } catch {
       showError('Failed to save — check your connection.')
     }
@@ -152,24 +120,17 @@ export default function PartyModal({ campaign, campaignCode, onClose }) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-2">
-          {party.length === 0 && (
+          {displayedParty.length === 0 && (
             <p className="text-brand-ink opacity-40 text-sm font-light py-4 text-center">
               No members yet
             </p>
           )}
-          {party.map((m) => (
+          {displayedParty.map((m) => (
             <MemberRow key={m.id} member={m} onUpdate={handleUpdate} onDelete={handleDelete} />
           ))}
         </div>
 
         <div className="border-t border-brand-mint px-4 py-3 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setNewType((t) => (t === 'party' ? 'follower' : 'party'))}
-            className={`shrink-0 text-xs font-bold w-5 text-center transition-colors ${newType === 'follower' ? 'text-brand-rivulet' : 'text-brand-forest'}`}
-          >
-            {newType === 'party' ? 'P' : 'F'}
-          </button>
           <input
             className="flex-1 bg-white border border-brand-mint-dark px-2 py-1 text-brand-ink text-sm font-normal focus:outline-none focus:ring-2 focus:ring-brand-rivulet min-w-0"
             placeholder="Name"
@@ -177,19 +138,6 @@ export default function PartyModal({ campaign, campaignCode, onClose }) {
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           />
-          {newType === 'follower' && (
-            <>
-              <span className="text-brand-ink/50 text-xs shrink-0">HP</span>
-              <input
-                className="w-12 bg-white border border-brand-mint-dark px-2 py-1 text-brand-ink text-sm font-normal text-center focus:outline-none focus:ring-2 focus:ring-brand-rivulet shrink-0"
-                type="number"
-                placeholder="—"
-                value={newHpMax}
-                onChange={(e) => setNewHpMax(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-              />
-            </>
-          )}
           <span className="text-brand-ink/50 text-xs shrink-0">AC</span>
           <input
             className="w-12 bg-white border border-brand-mint-dark px-2 py-1 text-brand-ink text-sm font-normal text-center focus:outline-none focus:ring-2 focus:ring-brand-rivulet shrink-0"

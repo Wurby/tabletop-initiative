@@ -3,17 +3,10 @@ import { useToast } from '../../lib/toast'
 import { dmUpdate } from '../../lib/campaign'
 import UnitCard from './UnitCard'
 import GraveyardCard from '../graveyard/GraveyardCard'
+import EndCombatModal from './EndCombatModal'
+import { TYPE_HEADER, TYPE_LABEL, TYPE_CYCLE } from '../../lib/unitType'
 
 const MIN_SLOTS = 5
-
-const TYPE_HEADER = {
-  party: 'bg-brand-forest',
-  follower: 'bg-brand-forest',
-  ally: 'bg-brand-rivulet',
-  mob: 'bg-brand-danger',
-}
-const TYPE_CYCLE = { ally: 'mob', mob: 'ally' }
-const TYPE_LABEL = { party: 'P', follower: 'F', ally: 'A', mob: 'M' }
 
 function formatTime(ms) {
   const s = Math.floor(ms / 1000)
@@ -166,6 +159,7 @@ export default function InitiativeTracker({ campaign, campaignCode, showGraveyar
   const round = campaign.combat?.round ?? 1
   const timerPaused = campaign.combat?.timerPaused ?? true
   const [confirmEnd, setConfirmEnd] = useState(false)
+  const [showEndCombatModal, setShowEndCombatModal] = useState(false)
   const activeRef = useRef(null)
   const elapsed = useElapsed(campaign.combat)
 
@@ -287,20 +281,34 @@ export default function InitiativeTracker({ campaign, campaignCode, showGraveyar
     }
   }
 
-  async function endCombat() {
-    const survivors = (campaign.initiative ?? []).filter(
-      (u) => u.type === 'party' || u.type === 'follower'
-    )
+  async function handleEndCombatConfirm(resolutions) {
+    const initiativeList = campaign.initiative ?? []
+    const graveyardAdds = []
+    const nextInitiative = []
+    for (const u of initiativeList) {
+      if (u.type === 'party') {
+        nextInitiative.push(u)
+        continue
+      }
+      const resolution = resolutions[u.id]
+      if (resolution?.action === 'kill') {
+        graveyardAdds.push({ ...u, xp: resolution.xp ?? 0, killedAt: Date.now() })
+      } else if (resolution?.action === 'leave') {
+        nextInitiative.push(u)
+      }
+      // 'remove' (or no resolution) — drop from initiative, no graveyard entry
+    }
     try {
       await dmUpdate(campaignCode, {
-        initiative: survivors,
+        initiative: nextInitiative,
+        graveyard: [...(campaign.graveyard ?? []), ...graveyardAdds],
         'combat.activeIndex': 0,
         'combat.round': 1,
         'combat.timerStartedAt': null,
         'combat.timerPaused': true,
         'combat.timerAccumulated': 0,
       })
-      setConfirmEnd(false)
+      setShowEndCombatModal(false)
     } catch {
       showError('Failed to save — check your connection.')
     }
@@ -436,7 +444,7 @@ export default function InitiativeTracker({ campaign, campaignCode, showGraveyar
             <div className="flex items-center gap-2">
               <span className="text-white/70 text-xs font-normal">End combat?</span>
               <button
-                onClick={endCombat}
+                onClick={() => { setConfirmEnd(false); setShowEndCombatModal(true) }}
                 className="text-xs font-normal text-white bg-brand-danger px-2 py-0.5 hover:bg-brand-danger-dark transition-colors"
               >
                 Yes
@@ -483,6 +491,13 @@ export default function InitiativeTracker({ campaign, campaignCode, showGraveyar
           <EmptyCard key={i} />
         ))}
       </div>
+      {showEndCombatModal && (
+        <EndCombatModal
+          units={units.filter((u) => u.type !== 'party')}
+          onConfirm={handleEndCombatConfirm}
+          onClose={() => setShowEndCombatModal(false)}
+        />
+      )}
     </section>
   )
 }

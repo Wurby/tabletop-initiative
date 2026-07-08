@@ -107,7 +107,7 @@ export const TOOLS = [
   },
   {
     name: 'get_party',
-    description: 'List party members and followers with HP max and AC.',
+    description: 'List party members with AC.',
     inputSchema: { type: 'object', properties: {} },
   },
   {

@@ -33,7 +33,8 @@ src/
 │   ├── images/          # ImageLibrary.jsx, ImageModal.jsx, ImageGenModal.jsx, LaserPointerModal.jsx
 │   ├── initiative/      # InitiativeTracker.jsx, InitiativeList.jsx, UnitCard.jsx,
 │   │                    # ActiveTurnWrapper.jsx, UnitNotesModal.jsx (exports NotesEditor too),
-│   │                    # SpellSlotsEditor.jsx (also used by templates/TemplatesSidebar.jsx)
+│   │                    # SpellSlotsEditor.jsx (also used by templates/TemplatesSidebar.jsx),
+│   │                    # EndCombatModal.jsx
 │   ├── items/           # ItemsDrawer.jsx, ItemDetailModal.jsx (edit), ItemViewModal.jsx (read-only) — item tracker
 │   ├── locations/       # LocationsPanel.jsx, ClusterGrid/View.jsx, PoiDetail.jsx,
 │   │                    # LocationWizardModal.jsx
@@ -53,6 +54,9 @@ src/
 │   ├── mcp.js            # generateMcpKey() / mcpServerUrl() for the MCP connector
 │   ├── imageGen.js       # generateEntityImage() — shared AI image gen, used by
 │   │                     # locations, items, and templates
+│   ├── unitType.js       # TYPE_HEADER/TYPE_LABEL/TYPE_CYCLE + isAllyType() — single
+│   │                     # source of truth for unit-type color/label/cycle, used by
+│   │                     # UnitCard, InitiativeList, InitiativeTracker, TemplatesSidebar, TemplateGenModal
 │   ├── toast.jsx         # Toast context + useToast hook
 │   └── xp.js            # 5e XP thresholds constant
 ├── App.jsx
@@ -79,13 +83,15 @@ campaigns/{joinCode}/
 │                     tableError: string | null,
 │                     timerStartedAt, timerPaused, timerAccumulated }
 ├── initiative:     [{ id, name, initiative, hp: { current, max }, ac, visible, imageUrl,
+│                      type: 'party'|'ally'|'mob' ('follower' retired, legacy-only — see Key Conventions),
 │                      showSpellSlots, spellSlots: [{ level, max, used: boolean[] }],
 │                      notes: [...], noteFolders: [...] }]
 ├── graveyard:      [{ id, name, xp, killedAt }]
 ├── questXp:        [{ id, label, xp, awardedAt }]
 ├── images:         [{ id, url, storagePath, label, folderId, uploadedAt }]
 ├── folders:        [{ id, name }]  — image library folders
-├── party:          [{ id, name, type: 'party'|'follower', hpMax, ac }]
+├── party:          [{ id, name, type: 'party', ac }]  — 'follower' is a retired type,
+│                      no longer created; may still exist on legacy entries (no hpMax then)
 ├── templates:      [{ id, name, type: 'mob'|'ally', hp: { max }, ac, imageUrl,
 │                      spellSlots: [{ level, max }], noteFolders: [...], notes: [...], folderId }]
 ├── templateFolders: [{ id, name }]
@@ -124,6 +130,8 @@ There is no login flow; anyone holding a campaign's MCP URL can read/write it.
 - **`ImagePreviewModal` also surfaces the laser-pointer/label workflow.** It takes `campaign` (not just `campaignCode`) so it can derive `isLive` by comparing its `url` against `campaign.combat.display`. Once an image is live, the modal shows "Add Pointer / Labels" (swaps in `LaserPointerModal` for marker/text annotation, same as the Images panel's pointer icon) and "Clear from table" (`clearTableDisplay` in `lib/campaign.js`) — so the full annotate/clear workflow is reachable from any thumbnail, not just the Images panel.
 - **Spell slots follow the `showDeathSaves` pattern, but broader.** `showSpellSlots` gates visibility identically on both `UnitCard.jsx` (DM) and `InitiativeList.jsx` (players) — off by default, one boolean drives both views. Unlike death saves, it's not `isParty`-gated: any unit type can have it toggled on, since templates (mob/ally only) need to configure slots too. `SpellSlotsEditor.jsx` (`components/initiative/`) is the single editable pip UI shared by `UnitCard` (`expendable={true}` — click a pip to toggle used/available, plus a "Reset" that refills every level) and `TemplateModal` (`expendable={false}` — pips are configuration-only, always render "available"). Levels are an explicit add/remove list (`+`/`×`), not a fixed 1–9 table with zeros. On "+ Init", a template's `spellSlots: [{level, max}]` clones onto the new unit with `used` freshly initialized to `Array(max).fill(false)`.
 - **Templates carry their `imageUrl` onto the initiative unit** when added via "+ Init" (`TemplatesSidebar.jsx`'s `handleAddToInitiative`) — shown as a small clickable thumbnail next to the notes button on `UnitCard`.
+- **`'follower'` and `'ally'` are merged into one type: `'ally'`.** `PartyModal.jsx` only ever creates `type:'party'` now — the follower-creation path (with its own HP field and P/F toggle) is gone entirely. `'ally'` is still only ever created via Templates or the blank "+ Add" card, ephemeral in `initiative[]` only, same as before. Legacy `type:'follower'` data is **never migrated** — `isAllyType(type)` (`lib/unitType.js`) treats it as a permanent synonym for `'ally'` everywhere color/label/footer-capability is derived (`UnitCard`, `InitiativeList`, `InitiativeTracker`'s `AddCard` preview, and `TemplatesSidebar`/`TemplateGenModal` which import the same shared `TYPE_HEADER`/`TYPE_LABEL`/`TYPE_CYCLE` instead of each keeping their own copy — the color-inconsistency-between-files bug that motivated this). `PartyModal.jsx` filters its displayed roster to `type === 'party'` (hiding legacy followers from that UI) but every write there operates on the full unfiltered `campaign.party[]` array, so a pre-existing follower entry is never silently dropped. (The `endCombat()` survivor carve-out for `'follower'` that originally shipped with this merge was superseded by the End Combat review flow below — see that entry.)
+- **End Combat is a two-step, no-silent-writes flow.** "End" → inline "End combat? Yes/No" confirm (unchanged) → **Yes** opens `EndCombatModal.jsx`, which lists every non-`party` unit (`ally`, `mob`, and any legacy `follower` — all treated uniformly now, no special-casing) for the DM to resolve individually as **Kill** (expands the same CR-indexed XP picker `UnitCard`'s Kill flow uses, appends `{...unit, xp, killedAt}` to `graveyard[]`), **Remove** (dropped, no XP — same as the card's plain Delete), or **Leave** (stays in `initiative[]` untouched). `mob` rows start unresolved; `ally`/legacy-`follower` rows default to **Leave**. Everything is staged in the modal's local state — nothing is written to Firestore until the final "End Combat" button, which stays disabled while any `mob` row is unresolved. Closing the modal without confirming is a full cancel: no writes, combat keeps running exactly as it was. `party` units are never shown in the modal — they always survive untouched, matching the app's original behavior.
 - Tailwind utility classes only — no CSS modules, no inline styles, no styled-components.
 - Component files use `.jsx` extension.
 - Firebase config is loaded from environment variables — never hardcode keys.

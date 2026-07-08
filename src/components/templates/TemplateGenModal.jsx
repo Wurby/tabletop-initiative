@@ -3,8 +3,7 @@ import { geminiModel } from '../../lib/ai'
 import { Sparkles } from '../icons'
 import { buildPrompt } from './templatePrompt'
 import NotesContextModal from '../notes/NotesContextModal'
-
-const TYPE_HEADER = { mob: 'bg-brand-danger', ally: 'bg-brand-rivulet' }
+import { TYPE_HEADER } from '../../lib/unitType'
 
 const CR_OPTIONS = [
   '0', '1/8', '1/4', '1/2',

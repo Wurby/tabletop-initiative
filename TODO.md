@@ -7,11 +7,14 @@ Phase 3 (Item Tracker) — shipped 2026-07-07.
 
 Phase 4 (Spell Slot Tracking) — shipped 2026-07-07.
 
+Phase 5 (Merge Follower + Ally) — shipped 2026-07-08.
+
 ---
 
 ## Bugs
 - Clicking the turn indicator on an initiative card does not start the timer ✓
 - When a unit dies, the turn sometimes advances unexpectedly (current-turn index not adjusted when the initiative array shrinks) ✓
+- "End Combat" silently deleted every ally/mob with zero DM input and zero XP awarded ✓ — replaced with `EndCombatModal.jsx`: DM resolves each non-party unit as Kill (same CR-indexed XP picker as the card's Kill flow, awards XP to `graveyard[]`), Remove (no XP), or Leave (stays in `initiative[]`). `mob` rows start unresolved (forces a deliberate choice); `ally`/legacy-`follower` rows default to Leave. Nothing writes until the final confirm, which is disabled until every `mob` row is resolved; closing the modal is a full cancel. Supersedes the `endCombat()` survivor carve-out for `'follower'` from Phase 5 — see `AGENTS.md`
 
 ---
 
@@ -59,13 +62,15 @@ Phase 4 (Spell Slot Tracking) — shipped 2026-07-07.
 
 ---
 
-## Phase 5 — Merge Follower + Ally
+## Phase 5 — Merge Follower + Ally ✓
 - Merged unit type is "ally" (letter "A" on cards). `campaign.party[]`'s `type:'follower'` creation path is removed entirely — Templates + the blank "+ Add" card remain the only way to create an ally, ephemeral in `initiative[]` only, unchanged from today
 - `PartyModal.jsx` simplifies to party-members-only: no P/F type toggle, no HP field (only followers ever had one — real party HP lives on the initiative card), `MemberRow`'s type badge removed entirely (dead info once every listed member is `'party'`)
 - Legacy `type:'follower'` data is never migrated — it's treated as a permanent synonym for `type:'ally'` everywhere color/label/footer-behavior is derived (`UnitCard.jsx`, `InitiativeList.jsx`, `InitiativeTracker.jsx`'s `AddCard` preview). No Firestore rewrite script. Net effect: legacy followers gain the Kill+Delete footer buttons they never had, since they now render via the merged ally path
 - Header color unified to solid `bg-brand-rivulet` for ally — retires the rivulet→forest gradient that `UnitCard.jsx`/`InitiativeList.jsx` inconsistently used for `'follower'` today (a 3rd copy in `InitiativeTracker.jsx` already used solid, so this was already inconsistent pre-merge)
 - `campaign.party[]` keeps an explicit `type` field going forward (`'party'` on every new entry) — not dropped from the schema. `PartyModal.jsx` filters its displayed list to `type === 'party'` but every write (add/update/delete) operates on the full unfiltered array, so a pre-existing `'follower'` entry is hidden from the roster UI but never silently dropped or clobbered
-- MCP: no `upsert_template` schema change needed (its type enum was already `mob|ally` — templates never had `'follower'`). `get_party` filtered to `type === 'party'` too, matching the app's new stance on what the roster actually is
+- MCP: no `upsert_template` schema change needed (its type enum was already `mob|ally` — templates never had `'follower'`). `get_party` filtered to `type === 'party'` too, matching the app's new stance on what the roster actually is; `PartyMember.hpMax` marked optional in `mcp/lib/campaignAccess.ts` since only legacy followers ever had one
+- New `src/lib/unitType.js` (`TYPE_HEADER`/`TYPE_LABEL`/`TYPE_CYCLE`/`isAllyType()`) replaces what turned out to be *four* separate hardcoded copies of the same maps (`UnitCard.jsx`, `InitiativeList.jsx`, `InitiativeTracker.jsx`, `TemplatesSidebar.jsx`, plus a near-duplicate in `TemplateGenModal.jsx`) — the direct root cause of the header-color inconsistency this phase already knew about, now fixed at the source instead of patched five times over
+- One exception carved out deliberately: `InitiativeTracker.jsx`'s `endCombat()` survivor filter (`type === 'party' || type === 'follower'`) is untouched — that's about which units persist across combats (a data concern), not color/label/footer rendering, and collapsing it into `isAllyType` would silently wipe out any DM's existing legacy follower the next time combat ends
 
 ---
 

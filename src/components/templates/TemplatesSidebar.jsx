@@ -8,10 +8,7 @@ import { Pen, Trash, Sparkles } from '../icons'
 import TemplateGenModal from './TemplateGenModal'
 import ImagePreviewModal from '../images/ImagePreviewModal'
 import ImagePickerModal from '../images/ImagePickerModal'
-
-const TYPE_HEADER = { mob: 'bg-brand-danger', ally: 'bg-brand-rivulet' }
-const TYPE_CYCLE = { mob: 'ally', ally: 'mob' }
-const TYPE_LABEL = { mob: 'M', ally: 'A' }
+import { TYPE_HEADER, TYPE_LABEL, TYPE_CYCLE } from '../../lib/unitType'
 
 function cloneWithFreshIds(noteFolders, notes) {
   const idMap = {}
