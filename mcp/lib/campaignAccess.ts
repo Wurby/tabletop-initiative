@@ -48,6 +48,7 @@ export interface InitiativeUnit {
   conditions?: string[];
   showSpellSlots?: boolean;
   spellSlots?: InitiativeSpellSlot[];
+  imageUrl?: string | null;
 }
 
 export interface GraveyardEntry {
@@ -67,6 +68,7 @@ export interface QuestXpEntry {
 export interface ImageEntry {
   id: string;
   url: string;
+  storagePath?: string;
   label: string;
   folderId: string | null;
   uploadedAt: number;
@@ -131,7 +133,7 @@ export interface Poi {
   whatIsHere: string;
   whoIsHere: string;
   quests: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
 }
 
 export interface Cluster {
@@ -143,7 +145,7 @@ export interface Cluster {
   nightArrival?: string;
   situation: string;
   plotHooks: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   poiGridRows?: number | null;
   poiGridCols?: number | null;
   pois: Poi[];

@@ -20,6 +20,7 @@ import { upsertCluster, deleteCluster, upsertPoi, deletePoi } from './locations.
 import { upsertTemplate, deleteTemplate, upsertTemplateFolder, deleteTemplateFolder } from './templates.js';
 import { upsertNote, deleteNote, upsertNoteFolder, deleteNoteFolder } from './notes.js';
 import { upsertItem, deleteItem, upsertItemFolder, deleteItemFolder } from './items.js';
+import { upsertImage, deleteImage, upsertImageFolder, deleteImageFolder } from './images.js';
 
 export interface ToolContent {
   content: Array<{ type: 'text'; text: string }>;
@@ -342,6 +343,48 @@ export const TOOLS = [
       required: ['id'],
     },
   },
+
+  // ── Image writes ──────────────────────────────────────────────────────────
+  {
+    name: 'upsert_image',
+    description: 'Update an existing image\'s label and/or folder (move it between folders, rename it). Images can\'t be created via MCP — uploading or AI-generating art goes through the app\'s UI, not this server. Requires an existing image id from list_images.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Image id from list_images.' },
+        label: { type: 'string' },
+        folder_id: { type: 'string', description: 'Image folder id, or omit/null for unfiled.' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'delete_image',
+    description: 'Delete an image from the library and null out every reference to it (locations, POIs, items, templates, initiative units) — mirrors the app\'s own delete behavior. This server has no Firebase Storage access, so the underlying file is not removed, only the library entry and its references.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string' } },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'upsert_image_folder',
+    description: 'Create a new image folder or rename an existing one.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string' }, name: { type: 'string' } },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'delete_image_folder',
+    description: 'Delete an image folder. Images inside it become unfiled, not deleted.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'string' } },
+      required: ['id'],
+    },
+  },
 ];
 
 function text(str: string): ToolContent {
@@ -428,6 +471,15 @@ export async function callTool(mcpKey: string, params: unknown): Promise<ToolCon
         return text(await upsertItemFolder(code, campaign, args));
       case 'delete_item_folder':
         return text(await deleteItemFolder(code, campaign, args));
+
+      case 'upsert_image':
+        return text(await upsertImage(code, campaign, args));
+      case 'delete_image':
+        return text(await deleteImage(code, campaign, args));
+      case 'upsert_image_folder':
+        return text(await upsertImageFolder(code, campaign, args));
+      case 'delete_image_folder':
+        return text(await deleteImageFolder(code, campaign, args));
 
       default:
         return errorText(`Unknown tool: ${p.name}`);
