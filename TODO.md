@@ -15,6 +15,7 @@ Phase 5 (Merge Follower + Ally) — shipped 2026-07-08.
 - Clicking the turn indicator on an initiative card does not start the timer ✓
 - When a unit dies, the turn sometimes advances unexpectedly (current-turn index not adjusted when the initiative array shrinks) ✓
 - "End Combat" silently deleted every ally/mob with zero DM input and zero XP awarded ✓ — replaced with `EndCombatModal.jsx`: DM resolves each non-party unit as Kill (same CR-indexed XP picker as the card's Kill flow, awards XP to `graveyard[]`), Remove (no XP), or Leave (stays in `initiative[]`). `mob` rows start unresolved (forces a deliberate choice); `ally`/legacy-`follower` rows default to Leave. Nothing writes until the final confirm, which is disabled until every `mob` row is resolved; closing the modal is a full cancel. Supersedes the `endCombat()` survivor carve-out for `'follower'` from Phase 5 — see `AGENTS.md`
+- POI-generated images each got their own image-library folder (named `"{cluster} — {poi}"`) instead of sharing their parent cluster's folder ✓ — `PoiDetail.jsx` now passes `imageFolderName: cluster.name` explicitly, correcting the Phase 1 "per-location image folders" behavior so a cluster's POIs land alongside the cluster's own art, one folder per cluster rather than one per POI
 
 ---
 

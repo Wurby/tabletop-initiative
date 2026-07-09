@@ -37,6 +37,7 @@ export default function PoiDetail({ poi, cluster, onUpdate, onBack, onDelete, ca
         name: `${cluster.name} — ${poi.name}`,
         descriptionText,
         entityType: 'point of interest',
+        imageFolderName: cluster.name,
       })
       onUpdate({ ...poi, imageUrl: url })
     } catch (err) {
