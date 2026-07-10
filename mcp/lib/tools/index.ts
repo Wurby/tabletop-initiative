@@ -20,7 +20,7 @@ import { upsertCluster, deleteCluster, upsertPoi, deletePoi } from './locations.
 import { upsertTemplate, deleteTemplate, upsertTemplateFolder, deleteTemplateFolder } from './templates.js';
 import { upsertNote, deleteNote, upsertNoteFolder, deleteNoteFolder } from './notes.js';
 import { upsertItem, deleteItem, upsertItemFolder, deleteItemFolder } from './items.js';
-import { upsertImage, deleteImage, upsertImageFolder, deleteImageFolder } from './images.js';
+import { updateImage, deleteImage, upsertImageFolder, deleteImageFolder } from './images.js';
 
 export interface ToolContent {
   content: Array<{ type: 'text'; text: string }>;
@@ -346,7 +346,7 @@ export const TOOLS = [
 
   // ── Image writes ──────────────────────────────────────────────────────────
   {
-    name: 'upsert_image',
+    name: 'update_image',
     description: 'Update an existing image\'s label and/or folder (move it between folders, rename it). Images can\'t be created via MCP — uploading or AI-generating art goes through the app\'s UI, not this server. Requires an existing image id from list_images.',
     inputSchema: {
       type: 'object',
@@ -472,8 +472,8 @@ export async function callTool(mcpKey: string, params: unknown): Promise<ToolCon
       case 'delete_item_folder':
         return text(await deleteItemFolder(code, campaign, args));
 
-      case 'upsert_image':
-        return text(await upsertImage(code, campaign, args));
+      case 'update_image':
+        return text(await updateImage(code, campaign, args));
       case 'delete_image':
         return text(await deleteImage(code, campaign, args));
       case 'upsert_image_folder':

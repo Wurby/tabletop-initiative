@@ -85,16 +85,23 @@ function fmtSpellSlots(slots: SpellSlot[] | undefined): string {
 
 export function listTemplates(campaign: Campaign): string {
   const templates = campaign.templates ?? [];
-  if (templates.length === 0) return 'No templates yet.';
+  const folders = campaign.templateFolders ?? [];
   const folderName = (id: string | null) =>
-    id ? (campaign.templateFolders ?? []).find((f) => f.id === id)?.name ?? null : null;
-  return templates
+    id ? folders.find((f) => f.id === id)?.name ?? null : null;
+  const templateList = templates
     .map((t) => {
       const folder = folderName(t.folderId);
       const slots = fmtSpellSlots(t.spellSlots);
       return `- [${t.id}] ${t.name} (${t.type}, HP ${t.hp?.max ?? 0}, AC ${t.ac ?? 0})${folder ? ` — folder: ${folder}` : ''}${slots ? ` — slots: ${slots}` : ''}`;
     })
     .join('\n');
+  return [
+    'Folders:',
+    folders.map((f) => `- [${f.id}] ${f.name}`).join('\n') || '(none)',
+    '',
+    'Templates:',
+    templateList || '(none)',
+  ].join('\n');
 }
 
 export function getTemplate(campaign: Campaign, args: { id: string }): string {
@@ -129,15 +136,15 @@ export function getDmNote(campaign: Campaign, args: { id: string }): string {
 
 export function listItems(campaign: Campaign): string {
   const items = campaign.items ?? [];
-  if (items.length === 0) return 'No items yet.';
+  const folders = campaign.itemFolders ?? [];
   const folderName = (id: string | null) =>
-    id ? (campaign.itemFolders ?? []).find((f) => f.id === id)?.name ?? null : null;
+    id ? folders.find((f) => f.id === id)?.name ?? null : null;
   const ownerNames = (ids: string[]) =>
     ids
       .map((id) => (campaign.party ?? []).find((m) => m.id === id)?.name)
       .filter(Boolean)
       .join(', ');
-  return items
+  const itemList = items
     .map((i) => {
       const folder = folderName(i.folderId);
       const owners = ownerNames(i.ownerIds ?? []);
@@ -151,6 +158,13 @@ export function listItems(campaign: Campaign): string {
       ].join('');
     })
     .join('\n');
+  return [
+    'Folders:',
+    folders.map((f) => `- [${f.id}] ${f.name}`).join('\n') || '(none)',
+    '',
+    'Items:',
+    itemList || '(none)',
+  ].join('\n');
 }
 
 export function getItem(campaign: Campaign, args: { id: string }): string {
@@ -173,15 +187,22 @@ export function getItem(campaign: Campaign, args: { id: string }): string {
 
 export function listImages(campaign: Campaign): string {
   const images = campaign.images ?? [];
-  if (images.length === 0) return 'No images yet.';
+  const folders = campaign.folders ?? [];
   const folderName = (id: string | null) =>
-    id ? (campaign.folders ?? []).find((f) => f.id === id)?.name ?? null : null;
-  return images
+    id ? folders.find((f) => f.id === id)?.name ?? null : null;
+  const imageList = images
     .map((img) => {
       const folder = folderName(img.folderId);
       return `- [${img.id}] ${img.label || '(untitled)'}${folder ? ` (folder: ${folder})` : ''} — ${img.url}`;
     })
     .join('\n');
+  return [
+    'Folders:',
+    folders.map((f) => `- [${f.id}] ${f.name}`).join('\n') || '(none)',
+    '',
+    'Images:',
+    imageList || '(none)',
+  ].join('\n');
 }
 
 export function getParty(campaign: Campaign): string {

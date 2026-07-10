@@ -4,15 +4,15 @@ import { writeCampaign } from '../campaignAccess.js';
 // Images can't be created via MCP — no Firebase Storage access is configured for this
 // server (see lib/firebaseAdmin.ts, which only wires up Firestore), and uploading or
 // AI-generating art is a binary/file operation that belongs to the app's UI, not a
-// text-based JSON-RPC tool. So unlike every other upsert_X tool, `id` is required here —
-// this is update-only (label/folder reassignment), never create.
-export interface UpsertImageArgs {
+// text-based JSON-RPC tool. So this is a plain update (label/folder reassignment) on an
+// existing image, not an upsert_X-style tool — `id` is required, there's no create path.
+export interface UpdateImageArgs {
   id: string;
   label?: string;
   folder_id?: string | null;
 }
 
-export async function upsertImage(code: string, campaign: Campaign, args: UpsertImageArgs): Promise<string> {
+export async function updateImage(code: string, campaign: Campaign, args: UpdateImageArgs): Promise<string> {
   const images = campaign.images ?? [];
   const existing = images.find((i) => i.id === args.id);
   if (!existing) throw new Error(`No image with id "${args.id}".`);
