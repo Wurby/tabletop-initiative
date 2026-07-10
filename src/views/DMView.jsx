@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useToast } from '../lib/toast'
-import { dmUpdate } from '../lib/campaign'
+import { dmUpdate, clearTableDisplay } from '../lib/campaign'
 import InitiativeTracker from '../components/initiative/InitiativeTracker'
 import PartyModal from '../components/party/PartyModal'
 import LocationsPanel from '../components/locations/LocationsPanel'
@@ -40,6 +40,8 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
 
   const lastSplit = campaign.combat?.lastSplit
   const tableError = campaign.combat?.tableError
+  const tableDisplay = campaign.combat?.display
+  const isShowingToTable = tableDisplay && tableDisplay.type !== 'none'
   const [shownAt, setShownAt] = useState(lastSplit?.clearedAt ?? null)
   const [showSplitModal, setShowSplitModal] = useState(false)
 
@@ -131,6 +133,21 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
           </button>
         </div>
       </header>
+
+      {isShowingToTable && (
+        <div className="bg-brand-rivulet px-6 py-1.5 flex items-center justify-center gap-2">
+          <span className="w-1.5 h-1.5 bg-white shrink-0" />
+          <span className="text-white text-xs font-normal truncate">
+            Showing to table: {tableDisplay.type === 'item' ? tableDisplay.name : (tableDisplay.label || 'Image')}
+          </span>
+          <button
+            onClick={() => clearTableDisplay(campaignCode)}
+            className="text-white/70 hover:text-white text-xs font-normal underline transition-colors shrink-0"
+          >
+            Clear
+          </button>
+        </div>
+      )}
 
       <div className="pb-6 flex flex-col gap-8">
         <InitiativeTracker campaign={campaign} campaignCode={campaignCode} />
