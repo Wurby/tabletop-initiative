@@ -49,6 +49,8 @@ export interface InitiativeUnit {
   showSpellSlots?: boolean;
   spellSlots?: InitiativeSpellSlot[];
   imageUrl?: string | null;
+  notes?: Note[];
+  noteFolders?: NamedFolder[];
 }
 
 export interface GraveyardEntry {

@@ -9,8 +9,11 @@ function ClearModal({ totalXp, defaultPartySize, graveyard, questXp, onConfirm, 
   const perMember = Math.floor(totalXp / size)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
-      <div className="bg-brand-mint-dark shadow-modal w-80 flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40" onClick={onClose}>
+      <div
+        className="bg-brand-mint-dark shadow-modal w-80 flex flex-col max-h-[85vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-brand-forest px-4 py-3 flex items-center justify-between shrink-0">
           <h2 className="text-white font-normal text-base">End Session</h2>
           <button

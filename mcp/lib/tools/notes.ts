@@ -1,7 +1,7 @@
-import type { Campaign, NamedFolder, Note, Template } from '../campaignAccess.js';
+import type { Campaign, InitiativeUnit, NamedFolder, Note, Template } from '../campaignAccess.js';
 import { writeCampaign } from '../campaignAccess.js';
 
-export type NoteScope = 'dm' | 'template';
+export type NoteScope = 'dm' | 'template' | 'unit';
 
 interface NoteTarget {
   label: string;
@@ -10,13 +10,35 @@ interface NoteTarget {
   writeBack: (notes: Note[], folders: NamedFolder[]) => Record<string, unknown>;
 }
 
-function resolveTarget(campaign: Campaign, scope: NoteScope, templateId?: string): NoteTarget {
+export function resolveTarget(
+  campaign: Campaign,
+  scope: NoteScope,
+  templateId?: string,
+  unitId?: string
+): NoteTarget {
   if (scope === 'dm') {
     return {
       label: 'DM notes',
       notes: campaign.dmNotes ?? [],
       folders: campaign.dmNoteFolders ?? [],
       writeBack: (notes, folders) => ({ dmNotes: notes, dmNoteFolders: folders }),
+    };
+  }
+
+  if (scope === 'unit') {
+    if (!unitId) throw new Error('scope "unit" requires unit_id.');
+    const units = campaign.initiative ?? [];
+    const unit = units.find((u) => u.id === unitId);
+    if (!unit) throw new Error(`No initiative unit with id "${unitId}".`);
+
+    return {
+      label: `unit "${unit.name}"`,
+      notes: unit.notes ?? [],
+      folders: unit.noteFolders ?? [],
+      writeBack: (notes, folders) => {
+        const updated: InitiativeUnit = { ...unit, notes, noteFolders: folders };
+        return { initiative: units.map((u) => (u.id === unitId ? updated : u)) };
+      },
     };
   }
 
@@ -39,6 +61,7 @@ function resolveTarget(campaign: Campaign, scope: NoteScope, templateId?: string
 export interface UpsertNoteArgs {
   scope: NoteScope;
   template_id?: string;
+  unit_id?: string;
   id?: string;
   title?: string;
   body: string;
@@ -46,7 +69,7 @@ export interface UpsertNoteArgs {
 }
 
 export async function upsertNote(code: string, campaign: Campaign, args: UpsertNoteArgs): Promise<string> {
-  const target = resolveTarget(campaign, args.scope, args.template_id);
+  const target = resolveTarget(campaign, args.scope, args.template_id, args.unit_id);
 
   if (args.id) {
     const existing = target.notes.find((n) => n.id === args.id);
@@ -76,9 +99,9 @@ export async function upsertNote(code: string, campaign: Campaign, args: UpsertN
 export async function deleteNote(
   code: string,
   campaign: Campaign,
-  args: { scope: NoteScope; template_id?: string; id: string }
+  args: { scope: NoteScope; template_id?: string; unit_id?: string; id: string }
 ): Promise<string> {
-  const target = resolveTarget(campaign, args.scope, args.template_id);
+  const target = resolveTarget(campaign, args.scope, args.template_id, args.unit_id);
   const existing = target.notes.find((n) => n.id === args.id);
   if (!existing) throw new Error(`No note with id "${args.id}" in ${target.label}.`);
   const nextNotes = target.notes.filter((n) => n.id !== args.id);
@@ -89,12 +112,13 @@ export async function deleteNote(
 export interface UpsertNoteFolderArgs {
   scope: NoteScope;
   template_id?: string;
+  unit_id?: string;
   id?: string;
   name: string;
 }
 
 export async function upsertNoteFolder(code: string, campaign: Campaign, args: UpsertNoteFolderArgs): Promise<string> {
-  const target = resolveTarget(campaign, args.scope, args.template_id);
+  const target = resolveTarget(campaign, args.scope, args.template_id, args.unit_id);
 
   if (args.id) {
     const existing = target.folders.find((f) => f.id === args.id);
@@ -113,9 +137,9 @@ export async function upsertNoteFolder(code: string, campaign: Campaign, args: U
 export async function deleteNoteFolder(
   code: string,
   campaign: Campaign,
-  args: { scope: NoteScope; template_id?: string; id: string }
+  args: { scope: NoteScope; template_id?: string; unit_id?: string; id: string }
 ): Promise<string> {
-  const target = resolveTarget(campaign, args.scope, args.template_id);
+  const target = resolveTarget(campaign, args.scope, args.template_id, args.unit_id);
   const existing = target.folders.find((f) => f.id === args.id);
   if (!existing) throw new Error(`No note folder with id "${args.id}" in ${target.label}.`);
   const nextFolders = target.folders.filter((f) => f.id !== args.id);

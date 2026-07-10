@@ -3,8 +3,14 @@ export default function SplitModal({ split, onClose, canDismiss = false }) {
   const questXp = split.questXpEntries ?? []
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
-      <div className="bg-brand-mint-dark shadow-modal w-80 flex flex-col max-h-[85vh]">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40"
+      onClick={canDismiss ? onClose : undefined}
+    >
+      <div
+        className="bg-brand-mint-dark shadow-modal w-80 flex flex-col max-h-[85vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-brand-forest px-4 py-3 flex items-center justify-between shrink-0">
           <h2 className="text-white font-normal text-base">Session Summary</h2>
           {canDismiss && (

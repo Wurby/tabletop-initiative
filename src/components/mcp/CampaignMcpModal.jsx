@@ -33,8 +33,11 @@ export default function CampaignMcpModal({ campaign, campaignCode, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
-      <div className="bg-brand-mint-dark shadow-modal w-[30rem] max-w-[95vw] flex flex-col max-h-[80vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40" onClick={onClose}>
+      <div
+        className="bg-brand-mint-dark shadow-modal w-[30rem] max-w-[95vw] flex flex-col max-h-[80vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-brand-forest px-4 py-3 flex items-center justify-between shrink-0">
           <h2 className="text-white font-normal text-base">MCP Server</h2>
           <button

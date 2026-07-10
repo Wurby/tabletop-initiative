@@ -1,15 +1,23 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { useToast } from '../../lib/toast'
 import { ITEM_TYPE_LABELS, RARITY_LABELS } from './itemConstants'
+import { Sparkles } from '../icons'
+import { generateEntityImage } from '../../lib/imageGen'
 import ImagePreviewModal from '../images/ImagePreviewModal'
-import { pushItemToTable, clearTableDisplay } from '../../lib/campaign'
+import ImagePickerModal from '../images/ImagePickerModal'
+import { dmUpdate, pushItemToTable, clearTableDisplay } from '../../lib/campaign'
 
 const PILL = 'inline-block px-2 py-1 text-xs font-normal border bg-brand-forest text-white border-brand-forest'
 const PILL_NEUTRAL = 'inline-block px-2 py-1 text-xs font-normal border border-brand-ink/20 text-brand-ink'
 const PILL_OWNER = 'inline-block px-2 py-0.5 text-xs font-normal border bg-brand-rivulet text-white border-brand-rivulet'
 
 export default function ItemViewModal({ item, folders, party, campaign, campaignCode, onEdit, onClose }) {
+  const showError = useToast()
   const [showPreview, setShowPreview] = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
+  const [generatingImage, setGeneratingImage] = useState(false)
+  const [imageError, setImageError] = useState(null)
   const folderName = item.folderId ? folders.find((f) => f.id === item.folderId)?.name : null
   const owners = (item.ownerIds ?? [])
     .map((id) => party.find((m) => m.id === id))
@@ -17,9 +25,43 @@ export default function ItemViewModal({ item, folders, party, campaign, campaign
   const display = campaign.combat?.display
   const isLive = display?.type === 'item' && display?.itemId === item.id
 
+  async function persistImageUrl(url) {
+    const items = campaign.items ?? []
+    const next = items.map((i) => (i.id === item.id ? { ...i, imageUrl: url } : i))
+    try {
+      await dmUpdate(campaignCode, { items: next })
+    } catch {
+      showError('Failed to save — check your connection.')
+    }
+  }
+
+  async function handleGenerateImage() {
+    setGeneratingImage(true)
+    setImageError(null)
+    try {
+      const imageFolderName = folders.find((f) => f.id === item.folderId)?.name ?? 'Items'
+      const url = await generateEntityImage({
+        campaignCode,
+        campaign,
+        name: item.name,
+        descriptionText: item.notes,
+        entityType: 'item',
+        imageFolderName,
+      })
+      await persistImageUrl(url)
+    } catch (err) {
+      setImageError(err.message || 'Image generation failed.')
+    } finally {
+      setGeneratingImage(false)
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-ink/40">
-      <div className="bg-brand-mint-dark shadow-modal flex max-h-[85vh] w-[760px] max-w-[95vw]">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-ink/40" onClick={onClose}>
+      <div
+        className="bg-brand-mint-dark shadow-modal flex max-h-[85vh] w-[760px] max-w-[95vw]"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Left pane — core stats */}
         <div className="flex flex-col w-72 shrink-0 border-r border-brand-mint">
           <div className="bg-brand-forest px-4 py-3 shrink-0">
@@ -118,18 +160,54 @@ export default function ItemViewModal({ item, folders, party, campaign, campaign
 
             <div className="flex flex-col gap-1.5">
               <span className="text-brand-forest text-xs">Image</span>
-              {item.imageUrl ? (
-                <button onClick={() => setShowPreview(true)} className="shrink-0 self-start">
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className="w-32 h-32 object-cover border border-brand-ink/10"
-                  />
-                </button>
-              ) : (
-                <p className="text-brand-ink/40 text-xs font-light">No image</p>
-              )}
+              <div className="flex items-start gap-3">
+                {item.imageUrl ? (
+                  <button onClick={() => setShowPreview(true)} className="shrink-0">
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="w-32 h-32 object-cover border border-brand-ink/10"
+                    />
+                  </button>
+                ) : (
+                  <div className="w-32 h-32 shrink-0 bg-brand-mint flex items-center justify-center">
+                    <Sparkles size={28} className="text-brand-ink/15" />
+                  </div>
+                )}
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    onClick={handleGenerateImage}
+                    disabled={generatingImage}
+                    className="text-xs font-normal text-brand-ink/60 hover:text-brand-ink border border-brand-ink/20 hover:border-brand-ink/40 px-2 py-1 transition-colors disabled:opacity-40 flex items-center gap-1.5"
+                  >
+                    <Sparkles size={11} />
+                    {generatingImage ? 'Generating…' : item.imageUrl ? 'Regenerate' : 'Generate'}
+                  </button>
+                  <button
+                    onClick={() => setShowPicker(true)}
+                    className="text-xs font-normal text-brand-ink/60 hover:text-brand-ink border border-brand-ink/20 hover:border-brand-ink/40 px-2 py-1 transition-colors"
+                  >
+                    Choose existing
+                  </button>
+                  {item.imageUrl && (
+                    <button
+                      onClick={() => persistImageUrl(null)}
+                      className="text-xs font-normal text-brand-ink/40 hover:text-brand-danger transition-colors text-left"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+              {imageError && <p className="text-brand-danger text-xs">{imageError}</p>}
             </div>
+            {showPicker && (
+              <ImagePickerModal
+                campaign={campaign}
+                onSelect={(url) => { persistImageUrl(url); setShowPicker(false) }}
+                onClose={() => setShowPicker(false)}
+              />
+            )}
             {showPreview && item.imageUrl && (
               <ImagePreviewModal
                 url={item.imageUrl}

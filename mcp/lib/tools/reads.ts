@@ -1,4 +1,5 @@
-import type { Campaign, SpellSlot } from '../campaignAccess.js';
+import type { Campaign, Note, SpellSlot } from '../campaignAccess.js';
+import { resolveTarget, type NoteScope } from './notes.js';
 
 function fmtNotes(notes: Campaign['dmNotes'], folders: Campaign['dmNoteFolders']): string {
   if (!notes || notes.length === 0) return '(no notes)';
@@ -108,14 +109,19 @@ export function getTemplate(campaign: Campaign, args: { id: string }): string {
   const t = (campaign.templates ?? []).find((tpl) => tpl.id === args.id);
   if (!t) throw new Error(`No template with id "${args.id}".`);
   const slots = fmtSpellSlots(t.spellSlots);
-  return [
+  const notes = t.notes ?? [];
+  const lines = [
     `**${t.name}** (id: ${t.id}, ${t.type})`,
     `HP: ${t.hp?.max ?? 0} | AC: ${t.ac ?? 0}`,
     `Spell slots: ${slots || '(none)'}`,
     '',
     'Notes:',
     fmtNotes(t.notes, t.noteFolders),
-  ].join('\n');
+  ];
+  if (notes.length > 0) {
+    lines.push('', `(Use get_dm_note with scope: "template", template_id: "${t.id}" to fetch a note's full body.)`);
+  }
+  return lines.join('\n');
 }
 
 export function listDmNotes(campaign: Campaign): string {
@@ -128,9 +134,13 @@ export function listDmNotes(campaign: Campaign): string {
   ].join('\n');
 }
 
-export function getDmNote(campaign: Campaign, args: { id: string }): string {
-  const n = (campaign.dmNotes ?? []).find((note) => note.id === args.id);
-  if (!n) throw new Error(`No DM note with id "${args.id}".`);
+export function getDmNote(
+  campaign: Campaign,
+  args: { scope?: NoteScope; template_id?: string; unit_id?: string; id: string }
+): string {
+  const target = resolveTarget(campaign, args.scope ?? 'dm', args.template_id, args.unit_id);
+  const n = target.notes.find((note) => note.id === args.id);
+  if (!n) throw new Error(`No note with id "${args.id}" in ${target.label}.`);
   return `**${n.title || '(untitled)'}** (id: ${n.id})\n\n${n.body}`;
 }
 
@@ -211,6 +221,12 @@ export function getParty(campaign: Campaign): string {
   return party.map((p) => `- [${p.id}] ${p.name} (AC ${p.ac})`).join('\n');
 }
 
+function fmtNoteTitlesCompact(notes: Note[] | undefined): string {
+  const list = notes ?? [];
+  if (list.length === 0) return '';
+  return list.map((n) => `[${n.id}] ${n.title || '(untitled)'}`).join(', ');
+}
+
 export function getInitiative(campaign: Campaign): string {
   const units = campaign.initiative ?? [];
   if (units.length === 0) return 'No units in initiative.';
@@ -220,7 +236,8 @@ export function getInitiative(campaign: Campaign): string {
         .sort((a, b) => a.level - b.level)
         .map((s) => `L${s.level} ${s.used.filter(Boolean).length}/${s.max} used`)
         .join(', ');
-      return `- [${u.id}] ${u.name} (init ${u.initiative}, HP ${u.hp?.current ?? 0}/${u.hp?.max ?? 0}, AC ${u.ac}, ${u.visible ? 'visible' : 'hidden'})${slots ? ` — slots: ${slots}` : ''}`;
+      const notes = fmtNoteTitlesCompact(u.notes);
+      return `- [${u.id}] ${u.name} (init ${u.initiative}, HP ${u.hp?.current ?? 0}/${u.hp?.max ?? 0}, AC ${u.ac}, ${u.visible ? 'visible' : 'hidden'})${slots ? ` — slots: ${slots}` : ''}${notes ? ` — notes: ${notes}` : ''}`;
     })
     .join('\n');
 }

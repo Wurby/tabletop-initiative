@@ -191,8 +191,8 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
-      <div className="relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40" onClick={onClose}>
+      <div className="relative" onClick={(e) => e.stopPropagation()}>
       <div className="bg-brand-mint-dark shadow-modal flex max-h-[60vh] w-[860px] max-w-[97vw]">
 
         {/* Left sidebar — step list */}

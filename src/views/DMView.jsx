@@ -233,8 +233,14 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
       )}
 
       {lockDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
-          <div className="bg-brand-mint-dark shadow-modal w-72 flex flex-col">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40"
+          onClick={() => setLockDialogOpen(false)}
+        >
+          <div
+            className="bg-brand-mint-dark shadow-modal w-72 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="bg-brand-forest px-4 py-3 flex items-center gap-2">
               {locked ? <Lock size={13} className="text-white shrink-0" /> : <LockOpen size={13} className="text-white shrink-0" />}
               <h2 className="text-white font-normal text-base">

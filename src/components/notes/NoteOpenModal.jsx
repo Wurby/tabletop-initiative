@@ -18,8 +18,11 @@ export default function NoteOpenModal({ note, onUpdate, onDelete, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-ink/50">
-      <div className="bg-white shadow-modal w-[1120px] max-w-[95vw] max-h-[85vh] flex flex-col">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-ink/50" onClick={onClose}>
+      <div
+        className="bg-white shadow-modal w-[1120px] max-w-[95vw] max-h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="bg-brand-forest px-5 py-3 flex items-center justify-between shrink-0 gap-4">
           {editing ? (

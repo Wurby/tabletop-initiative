@@ -28,8 +28,9 @@ export interface ToolContent {
 }
 
 const NOTE_SCOPE_PROPS = {
-  scope: { type: 'string', enum: ['dm', 'template'], description: 'Which notes to target: campaign-wide DM notes, or a specific template\'s notes.' },
+  scope: { type: 'string', enum: ['dm', 'template', 'unit'], description: 'Which notes to target: campaign-wide DM notes, a specific template\'s notes, or a specific initiative unit\'s notes.' },
   template_id: { type: 'string', description: 'Required when scope is "template" — the template\'s id.' },
+  unit_id: { type: 'string', description: 'Required when scope is "unit" — the initiative unit\'s id from get_initiative.' },
 };
 
 const ITEM_TYPE_ENUM = ['weapon', 'armor', 'consumable', 'wondrous', 'gear', 'treasure', 'misc'];
@@ -80,10 +81,13 @@ export const TOOLS = [
   },
   {
     name: 'get_dm_note',
-    description: 'Fetch the full body of a single DM note.',
+    description: 'Fetch the full body of a single note — a campaign-wide DM note by default, or a specific template\'s note (scope: "template") or initiative unit\'s note (scope: "unit"). get_template and get_initiative only list note ids/titles, never bodies — this is how you fetch one. Existing calls with just `id` keep working unchanged, since scope defaults to "dm".',
     inputSchema: {
       type: 'object',
-      properties: { id: { type: 'string', description: 'Note id from list_dm_notes.' } },
+      properties: {
+        ...NOTE_SCOPE_PROPS,
+        id: { type: 'string', description: 'Note id from list_dm_notes, or from a template\'s Notes list in get_template.' },
+      },
       required: ['id'],
     },
   },
@@ -113,7 +117,7 @@ export const TOOLS = [
   },
   {
     name: 'get_initiative',
-    description: 'List units currently in the initiative tracker, with HP, AC, and visibility.',
+    description: 'List units currently in the initiative tracker, with HP, AC, visibility, and note ids/titles (use get_dm_note with scope: "unit" to fetch a note\'s full body).',
     inputSchema: { type: 'object', properties: {} },
   },
   {
@@ -249,7 +253,7 @@ export const TOOLS = [
   // ── Note writes ───────────────────────────────────────────────────────────
   {
     name: 'upsert_note',
-    description: 'Create a new note or update an existing one, in either campaign-wide DM notes or a specific template\'s notes.',
+    description: 'Create a new note or update an existing one, in campaign-wide DM notes, a specific template\'s notes, or a specific initiative unit\'s notes.',
     inputSchema: {
       type: 'object',
       properties: {

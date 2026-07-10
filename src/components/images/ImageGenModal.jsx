@@ -87,8 +87,14 @@ export default function ImageGenModal({ campaign, campaignCode, onClose }) {
   const expanded = selected !== null || phase === 'generating'
 
   return (
-    <div className={`fixed inset-0 z-40 bg-brand-ink/60 flex items-center justify-center ${expanded ? 'p-[5%]' : 'p-6'}`}>
-      <div className={`bg-brand-mint-dark flex flex-col shadow-modal ${expanded ? 'w-full h-full max-w-none' : 'w-full max-w-md'}`}>
+    <div
+      className={`fixed inset-0 z-40 bg-brand-ink/60 flex items-center justify-center ${expanded ? 'p-[5%]' : 'p-6'}`}
+      onClick={() => { if (!busy) onClose() }}
+    >
+      <div
+        className={`bg-brand-mint-dark flex flex-col shadow-modal ${expanded ? 'w-full h-full max-w-none' : 'w-full max-w-md'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-brand-forest px-4 py-2 flex items-center justify-between">
           <h2 className="text-white font-normal text-base">Generate Image</h2>
           <button

@@ -106,8 +106,11 @@ export default function AdminModal({ onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/60">
-      <div className="bg-brand-mint-dark shadow-modal w-[640px] max-w-[95vw] flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/60" onClick={onClose}>
+      <div
+        className="bg-brand-mint-dark shadow-modal w-[640px] max-w-[95vw] flex flex-col max-h-[85vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-brand-forest px-4 py-3 flex items-center justify-between shrink-0">
           <h2 className="text-white font-normal text-base">Admin</h2>
           <button

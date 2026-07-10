@@ -81,8 +81,11 @@ export default function ItemDetailModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-ink/40">
-      <div className="bg-brand-mint-dark shadow-modal flex max-h-[85vh] w-[760px] max-w-[95vw]">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-ink/40" onClick={onClose}>
+      <div
+        className="bg-brand-mint-dark shadow-modal flex max-h-[85vh] w-[760px] max-w-[95vw]"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Left pane — core stats */}
         <div className="flex flex-col w-72 shrink-0 border-r border-brand-mint">
           <div className="bg-brand-forest px-4 py-3 shrink-0">

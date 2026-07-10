@@ -9,8 +9,11 @@ export default function ImagePickerModal({ campaign, onSelect, onClose }) {
     activeFolderId === null ? images : images.filter((img) => img.folderId === activeFolderId)
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-brand-ink/50">
-      <div className="bg-white shadow-modal w-[540px] max-w-[95vw] max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-brand-ink/50" onClick={onClose}>
+      <div
+        className="bg-white shadow-modal w-[540px] max-w-[95vw] max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-brand-forest px-4 py-3 flex items-center justify-between shrink-0">
           <h2 className="text-white font-normal text-base">Choose Image</h2>
           <button

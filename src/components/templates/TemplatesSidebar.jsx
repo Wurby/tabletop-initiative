@@ -80,8 +80,11 @@ function TemplateModal({ template, defaultFolderId, folders, campaign, campaignC
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40">
-      <div className="bg-brand-mint-dark shadow-modal flex max-h-[85vh] w-[720px] max-w-[95vw]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40" onClick={onClose}>
+      <div
+        className="bg-brand-mint-dark shadow-modal flex max-h-[85vh] w-[720px] max-w-[95vw]"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Left pane — stats */}
         <div className="flex flex-col w-72 shrink-0 border-r border-brand-mint">
           <div className={`${TYPE_HEADER[editType] ?? TYPE_HEADER.mob} px-4 py-3 shrink-0`}>
