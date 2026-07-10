@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { ITEM_TYPE_LABELS, RARITY_LABELS } from './itemConstants'
 import ImagePreviewModal from '../images/ImagePreviewModal'
+import { pushItemToTable, clearTableDisplay } from '../../lib/campaign'
 
 const PILL = 'inline-block px-2 py-1 text-xs font-normal border bg-brand-forest text-white border-brand-forest'
 const PILL_NEUTRAL = 'inline-block px-2 py-1 text-xs font-normal border border-brand-ink/20 text-brand-ink'
@@ -13,6 +14,8 @@ export default function ItemViewModal({ item, folders, party, campaign, campaign
   const owners = (item.ownerIds ?? [])
     .map((id) => party.find((m) => m.id === id))
     .filter(Boolean)
+  const display = campaign.combat?.display
+  const isLive = display?.type === 'item' && display?.itemId === item.id
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-ink/40">
@@ -21,6 +24,23 @@ export default function ItemViewModal({ item, folders, party, campaign, campaign
         <div className="flex flex-col w-72 shrink-0 border-r border-brand-mint">
           <div className="bg-brand-forest px-4 py-3 shrink-0">
             <h2 className="text-white font-normal text-base">View Item</h2>
+          </div>
+          <div className="px-4 py-2 border-b border-brand-mint shrink-0 flex items-center gap-2">
+            <button
+              onClick={() => pushItemToTable(campaignCode, item)}
+              disabled={isLive}
+              className="flex-1 text-xs font-normal text-white bg-brand-rivulet hover:bg-brand-rivulet-dark px-2 py-1.5 transition-colors disabled:opacity-60 disabled:hover:bg-brand-rivulet"
+            >
+              {isLive ? 'Shown on table ✓' : 'Show to Table'}
+            </button>
+            {isLive && (
+              <button
+                onClick={() => clearTableDisplay(campaignCode)}
+                className="text-xs font-normal text-brand-ink/50 hover:text-brand-ink transition-colors shrink-0"
+              >
+                Clear
+              </button>
+            )}
           </div>
           <div className="flex flex-col gap-3 p-4 flex-1 overflow-y-auto">
             <p className="text-brand-ink text-sm font-normal">{item.name}</p>

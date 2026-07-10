@@ -47,9 +47,10 @@ Phase 5 (Merge Follower + Ally) — shipped 2026-07-08.
 - New pinnable drawer panel, left-anchored (mirrors `TemplatesSidebar` but on the left):
   - Unpinned (default): floating overlay, covers `DMNotesPanel` (left column of the 3-col grid), closes on backdrop click — same behavior as the Templates drawer today
   - Pinned (toggle button in the drawer header): stays open regardless of outside clicks, and the DM view's 3-column grid gains a left margin so `DMNotesPanel` is never covered
-- DM-only — items are never surfaced to players in Table view
+- DM-only by default — items never surface to players automatically; a DM-triggered "Show to Table" reveal is the only path to the Table view (see below) ✓
 - MCP integration: `mcp/lib/tools/items.ts` adds `list_items`/`get_item` reads and `upsert_item`/`delete_item`/`upsert_item_folder`/`delete_item_folder` writes, registered in `mcp/lib/tools/index.ts`; `get_campaign_summary` now includes an item count
 - `ItemViewModal.jsx` — read-only detail view (rendered Markdown notes, image, stats) reachable via a "View" button on each item card, separate from the always-editable `ItemDetailModal` ✓
+- "Show to Table" for items ✓ — richer than the existing raw-image push: `pushItemToTable` (`lib/campaign.js`) snapshots the item's full card (name, type, rarity, attunement, value, weight, notes, image) into a new `combat.display.type === 'item'`, rendered player-side by the new `ItemDisplayModal.jsx` (mirrors `ImageModal.jsx`'s self-gating idiom, rendered unconditionally alongside it in `TableView.jsx`). Trigger + `isLive`/"Shown on table ✓"/"Clear" lives in `ItemViewModal.jsx`, mirroring `ImagePreviewModal`'s pattern. The item's raw image can still be pushed on its own separately (unchanged, via the image thumbnail's own peek); no laser-pointer/marker support for item-card displays, scoped to images only
 
 ---
 

@@ -6,6 +6,7 @@ import InitiativeList from '../components/initiative/InitiativeList'
 import GraveyardView from '../components/graveyard/GraveyardView'
 import SplitModal from '../components/session/SplitModal'
 import ImageModal from '../components/images/ImageModal'
+import ItemDisplayModal from '../components/items/ItemDisplayModal'
 
 export default function TableView({ campaign, campaignCode, onLeave }) {
   const lastSplit = campaign.combat?.lastSplit
@@ -90,6 +91,7 @@ export default function TableView({ campaign, campaignCode, onLeave }) {
 
       {showSplitModal && lastSplit && <SplitModal split={lastSplit} onClose={handleDismissSplit} />}
       <ImageModal campaign={campaign} />
+      <ItemDisplayModal campaign={campaign} />
     </div>
   )
 }
