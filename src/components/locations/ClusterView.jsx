@@ -11,6 +11,17 @@ const INDEX_SECTIONS = [
   { key: 'plotHooks', label: 'Plot Hooks' },
 ]
 
+// POIs can be dragged to arbitrary cells, so placement can't assume sequential
+// packing from index 0 — scan for the first cell nothing already occupies.
+function findFreeCell(placed, cols) {
+  const occupied = new Set(placed.map((p) => `${p.gridRow},${p.gridCol}`))
+  for (let idx = 0; ; idx++) {
+    const row = Math.floor(idx / cols)
+    const col = idx % cols
+    if (!occupied.has(`${row},${col}`)) return { row, col }
+  }
+}
+
 function EditableField({ value, editMode, onChange, placeholder, rows = 5 }) {
   const [inlineEditing, setInlineEditing] = useState(false)
   const [draft, setDraft] = useState(value)
@@ -187,12 +198,13 @@ export default function ClusterView({ cluster, onPoiClick, onBack, onUpdate, onD
     const letter = String.fromCharCode(65 + existing.length)
     const n = existing.length
     const cols = cluster.poiGridCols ?? Math.max(2, Math.ceil(Math.sqrt(n + 3)))
+    const { row, col } = findFreeCell(existing, cols)
     const newPoi = {
       id: crypto.randomUUID(),
       letter,
       name: `Location ${letter}`,
-      gridRow: Math.floor(n / cols),
-      gridCol: n % cols,
+      gridRow: row,
+      gridCol: col,
       description: '',
       encounters: '',
       whatIsHere: '',

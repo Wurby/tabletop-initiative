@@ -15,6 +15,17 @@ const INDEX_STEPS = [
   { phase: 'index', key: 'plotHooks', label: 'Plot Hooks', description: 'What quests or complications exist here?' },
 ]
 
+// POIs can be dragged to arbitrary cells, so placement can't assume sequential
+// packing from index 0 — scan for the first cell nothing already occupies.
+function findFreeCell(placed, cols) {
+  const occupied = new Set(placed.map((p) => `${p.gridRow},${p.gridCol}`))
+  for (let idx = 0; ; idx++) {
+    const row = Math.floor(idx / cols)
+    const col = idx % cols
+    if (!occupied.has(`${row},${col}`)) return { row, col }
+  }
+}
+
 const POI_STEPS = [
   { phase: 'poi', key: 'name', label: 'POI Name', isName: true, description: 'Name this first point of interest.' },
   { phase: 'poi', key: 'description', label: 'Description', description: 'What does this POI look like?' },
@@ -172,14 +183,16 @@ export default function LocationWizardModal({ mode = 'full', existingCluster, ca
       }
       onComplete({ cluster })
     } else {
-      const n = existingCluster?.pois?.length ?? 0
+      const existingPois = existingCluster?.pois ?? []
+      const n = existingPois.length
       const cols = existingCluster?.poiGridCols ?? Math.max(2, Math.ceil(Math.sqrt(n + 3)))
+      const { row, col } = findFreeCell(existingPois, cols)
       const poi = {
         id: crypto.randomUUID(),
         letter,
         name: poiDraft.name || `Location ${letter}`,
-        gridRow: Math.floor(n / cols),
-        gridCol: n % cols,
+        gridRow: row,
+        gridCol: col,
         description: poiDraft.description,
         encounters: poiDraft.encounters,
         whatIsHere: poiDraft.whatIsHere,

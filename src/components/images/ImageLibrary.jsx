@@ -105,7 +105,7 @@ export default function ImageLibrary({ campaign, campaignCode }) {
   }
 
   return (
-    <section>
+    <section className="flex flex-col h-full">
       {showGenModal && (
         <ImageGenModal
           campaign={campaign}
@@ -121,7 +121,7 @@ export default function ImageLibrary({ campaign, campaignCode }) {
         />
       )}
 
-      <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center justify-between">
+      <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center justify-between shrink-0">
         <h2 className="text-xl font-normal text-white">Images</h2>
         <div className="flex items-center gap-3">
           {active && (
@@ -135,7 +135,7 @@ export default function ImageLibrary({ campaign, campaignCode }) {
         </div>
       </div>
 
-      <div className="px-6 flex flex-col gap-4">
+      <div className="flex-1 overflow-y-auto px-6 flex flex-col gap-4">
         {/* Folder tabs */}
         <div className="flex gap-1.5 flex-wrap items-center">
           {folders.length > 0 && (

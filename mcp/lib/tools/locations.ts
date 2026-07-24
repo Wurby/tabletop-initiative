@@ -14,10 +14,10 @@ function nextPoiLetter(existing: Poi[]): string {
   return String.fromCharCode(65 + existing.length);
 }
 
-// Clusters can be dragged to arbitrary cells in the UI, so placement can't assume
+// Clusters/POIs can be dragged to arbitrary cells in the UI, so placement can't assume
 // sequential packing from index 0 — scan for the first cell nothing already occupies.
-function findFreeCell(clusters: Cluster[], cols: number): { row: number; col: number } {
-  const occupied = new Set(clusters.map((c) => `${c.gridRow},${c.gridCol}`));
+function findFreeCell(placed: { gridRow: number; gridCol: number }[], cols: number): { row: number; col: number } {
+  const occupied = new Set(placed.map((p) => `${p.gridRow},${p.gridCol}`));
   for (let idx = 0; ; idx++) {
     const row = Math.floor(idx / cols);
     const col = idx % cols;
@@ -135,12 +135,13 @@ export async function upsertPoi(code: string, campaign: Campaign, args: UpsertPo
   }
 
   const cols = cluster.poiGridCols ?? Math.max(2, Math.ceil(Math.sqrt(pois.length + 3)));
+  const { row: poiRow, col: poiCol } = findFreeCell(pois, cols);
   const poi: Poi = {
     id: crypto.randomUUID(),
     letter: args.letter ?? nextPoiLetter(pois),
     name: args.name,
-    gridRow: Math.floor(pois.length / cols),
-    gridCol: pois.length % cols,
+    gridRow: poiRow,
+    gridCol: poiCol,
     description: args.description ?? '',
     encounters: args.encounters ?? '',
     whatIsHere: args.what_is_here ?? '',
