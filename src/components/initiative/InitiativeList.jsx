@@ -133,7 +133,7 @@ function SpellSlotsDisplay({ slots }) {
 
 export default function InitiativeList({ campaign }) {
   const units = [...(campaign.initiative ?? [])].sort(
-    (a, b) => (b.initiative - a.initiative) || ((a.tiebreak ?? 0) - (b.tiebreak ?? 0))
+    (a, b) => (b.initiative - a.initiative) || ((b.tiebreak ?? 0) - (a.tiebreak ?? 0))
   )
   const activeIndex = campaign.combat?.activeIndex ?? 0
   const round = campaign.combat?.round ?? 1

@@ -271,11 +271,11 @@ export default function UnitCard({
                   <div className="flex items-center gap-1">
                     <button
                       className="shrink-0 w-6 h-6 text-xs font-normal border border-brand-mint text-brand-ink hover:bg-brand-mint active:bg-brand-mint-dark transition-colors"
-                      onClick={() => commit('tiebreak', (local.tiebreak ?? 0) - 1)} title="Move up">▲</button>
+                      onClick={() => commit('tiebreak', (local.tiebreak ?? 0) + 1)} title="Move up">▲</button>
                     <span className="text-xs text-brand-ink/40 w-6 text-center">{local.tiebreak ?? 0}</span>
                     <button
                       className="shrink-0 w-6 h-6 text-xs font-normal border border-brand-mint text-brand-ink hover:bg-brand-mint active:bg-brand-mint-dark transition-colors"
-                      onClick={() => commit('tiebreak', (local.tiebreak ?? 0) + 1)} title="Move down">▼</button>
+                      onClick={() => commit('tiebreak', (local.tiebreak ?? 0) - 1)} title="Move down">▼</button>
                   </div>
                 </div>
               )}

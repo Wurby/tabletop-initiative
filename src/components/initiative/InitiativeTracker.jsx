@@ -148,7 +148,7 @@ function EmptyCard() {
 export default function InitiativeTracker({ campaign, campaignCode, showGraveyard = true }) {
   const showError = useToast()
   const units = [...(campaign.initiative ?? [])].sort(
-    (a, b) => (b.initiative - a.initiative) || ((a.tiebreak ?? 0) - (b.tiebreak ?? 0))
+    (a, b) => (b.initiative - a.initiative) || ((b.tiebreak ?? 0) - (a.tiebreak ?? 0))
   )
   const initiativeCounts = units.reduce((acc, u) => {
     acc[u.initiative] = (acc[u.initiative] || 0) + 1

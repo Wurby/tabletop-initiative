@@ -22,11 +22,11 @@ export default function DMNotesPanel({ campaign, campaignCode }) {
   }
 
   return (
-    <section className="flex flex-col h-full">
-      <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center shrink-0">
+    <section>
+      <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center">
         <h2 className="text-xl font-normal text-white">Notes</h2>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="max-h-[70vh] overflow-y-auto">
         <NotesEditor
           folders={campaign.dmNoteFolders ?? []}
           notes={campaign.dmNotes ?? []}
