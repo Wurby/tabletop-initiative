@@ -14,6 +14,17 @@ function defaultGridDims(n) {
   return { rows, cols }
 }
 
+// Clusters can be dragged to arbitrary cells, so placement can't assume sequential
+// packing from index 0 — scan for the first cell nothing already occupies.
+function findFreeCell(clusters, cols) {
+  const occupied = new Set(clusters.map((c) => `${c.gridRow},${c.gridCol}`))
+  for (let idx = 0; ; idx++) {
+    const row = Math.floor(idx / cols)
+    const col = idx % cols
+    if (!occupied.has(`${row},${col}`)) return { row, col }
+  }
+}
+
 export default function LocationsPanel({ campaign, campaignCode }) {
   const showError = useToast()
   const clusters = campaign.locations ?? []
@@ -57,13 +68,13 @@ export default function LocationsPanel({ campaign, campaignCode }) {
 
   // Add a blank cluster directly (skip wizard)
   async function handleAddBlankCluster() {
-    const count = clusters.length
     const cols = gridCols
+    const { row, col } = findFreeCell(clusters, cols)
     const newCluster = {
       id: crypto.randomUUID(),
       name: 'New Location',
-      gridRow: Math.floor(count / cols),
-      gridCol: count % cols,
+      gridRow: row,
+      gridCol: col,
       arrival: '', nightArrival: '', situation: '', plotHooks: '',
       poiGridRows: null, poiGridCols: null,
       pois: [{
@@ -73,7 +84,8 @@ export default function LocationsPanel({ campaign, campaignCode }) {
         description: '', encounters: '', whatIsHere: '', whoIsHere: '', quests: '',
       }],
     }
-    await saveClusters([...clusters, newCluster])
+    const nextRows = row >= gridRows ? row + 1 : null
+    await saveClusters([...clusters, newCluster], nextRows)
     setActiveClusterId(newCluster.id)
     setView('cluster')
   }
@@ -86,14 +98,15 @@ export default function LocationsPanel({ campaign, campaignCode }) {
 
   async function handleWizardComplete({ cluster, poi }) {
     if (wizardMode === 'full' && cluster) {
-      const count = clusters.length
       const cols = gridCols
+      const { row, col } = findFreeCell(clusters, cols)
       const positioned = {
         ...cluster,
-        gridRow: Math.floor(count / cols),
-        gridCol: count % cols,
+        gridRow: row,
+        gridCol: col,
       }
-      await saveClusters([...clusters, positioned])
+      const nextRows = row >= gridRows ? row + 1 : null
+      await saveClusters([...clusters, positioned], nextRows)
       setActiveClusterId(positioned.id)
       setView('cluster')
     } else if (wizardMode === 'poi' && poi && wizardClusterId) {

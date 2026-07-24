@@ -14,6 +14,17 @@ function nextPoiLetter(existing: Poi[]): string {
   return String.fromCharCode(65 + existing.length);
 }
 
+// Clusters can be dragged to arbitrary cells in the UI, so placement can't assume
+// sequential packing from index 0 — scan for the first cell nothing already occupies.
+function findFreeCell(clusters: Cluster[], cols: number): { row: number; col: number } {
+  const occupied = new Set(clusters.map((c) => `${c.gridRow},${c.gridCol}`));
+  for (let idx = 0; ; idx++) {
+    const row = Math.floor(idx / cols);
+    const col = idx % cols;
+    if (!occupied.has(`${row},${col}`)) return { row, col };
+  }
+}
+
 export interface UpsertClusterArgs {
   campaign_code: string;
   id?: string;
@@ -44,11 +55,12 @@ export async function upsertCluster(code: string, campaign: Campaign, args: Upse
   // Create — always seeded with a first POI, matching the app's own invariant
   // that no cluster can exist with just an INDEX.
   const cols = campaign.locationsGridCols ?? defaultGridCols(clusters.length);
+  const { row, col } = findFreeCell(clusters, cols);
   const cluster: Cluster = {
     id: crypto.randomUUID(),
     name: args.name,
-    gridRow: Math.floor(clusters.length / cols),
-    gridCol: clusters.length % cols,
+    gridRow: row,
+    gridCol: col,
     arrival: args.arrival ?? '',
     situation: args.situation ?? '',
     plotHooks: args.plot_hooks ?? '',
@@ -69,7 +81,11 @@ export async function upsertCluster(code: string, campaign: Campaign, args: Upse
       },
     ],
   };
-  await writeCampaign(code, { locations: [...clusters, cluster] });
+  const update: Record<string, unknown> = { locations: [...clusters, cluster] };
+  if (campaign.locationsGridRows != null && row >= campaign.locationsGridRows) {
+    update.locationsGridRows = row + 1;
+  }
+  await writeCampaign(code, update);
   return `Created cluster "${cluster.name}" (id: ${cluster.id}) with a starter POI (id: ${cluster.pois[0]!.id}). Use upsert_poi to fill it in or add more.`;
 }
 
