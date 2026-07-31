@@ -173,7 +173,11 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
             ))}
           </div>
           <div className="pt-4">
-            {activePanel === 'locations' && <LocationsPanel campaign={campaign} campaignCode={campaignCode} />}
+            {activePanel === 'locations' && (
+              <div className="h-[70vh]">
+                <LocationsPanel campaign={campaign} campaignCode={campaignCode} />
+              </div>
+            )}
             {activePanel === 'images' && <ImageLibrary campaign={campaign} campaignCode={campaignCode} />}
             {activePanel === 'notes' && <DMNotesPanel campaign={campaign} campaignCode={campaignCode} />}
           </div>
@@ -182,7 +186,9 @@ export default function DMView({ campaign, campaignCode, onLeave }) {
         {/* Large desktop: three-column grid */}
         <div className="hidden xl:grid xl:grid-cols-[3fr_3fr_2fr] gap-4 items-start">
           <DMNotesPanel campaign={campaign} campaignCode={campaignCode} />
-          <LocationsPanel campaign={campaign} campaignCode={campaignCode} />
+          <div className="h-[70vh]">
+            <LocationsPanel campaign={campaign} campaignCode={campaignCode} />
+          </div>
           <ImageLibrary campaign={campaign} campaignCode={campaignCode} />
         </div>
       </div>

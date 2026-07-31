@@ -191,7 +191,7 @@ export default function LocationsPanel({ campaign, campaignCode }) {
   ]
 
   return (
-    <section className="flex flex-col max-h-[70vh]">
+    <section className="flex flex-col h-full">
       <div className="bg-brand-forest px-6 py-2 mb-4 flex items-center shrink-0 relative z-10">
         <div className="flex items-center gap-2 flex-wrap">
           {crumbs.map((c, i) => {
