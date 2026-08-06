@@ -304,7 +304,7 @@ export default function UnitNotesModal({ unit, onUpdate, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/40" onClick={onClose}>
       <div
-        className="bg-brand-mint-dark shadow-modal w-96 flex flex-col max-h-[80vh]"
+        className="bg-brand-mint-dark shadow-modal w-1/3 min-w-[320px] max-w-[95vw] flex flex-col max-h-[80vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="bg-brand-forest px-4 py-3 flex items-center justify-between shrink-0">
